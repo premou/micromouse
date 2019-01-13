@@ -216,6 +216,7 @@ int main(void)
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
+
 		  float vitesse = 0;
 		  uint32_t fin_avance = avance(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
 		  // *get encodeur
