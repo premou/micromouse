@@ -1,0 +1,4 @@
+fonc.c:34:6:run	16	static
+fonc.c:107:6:get_encoder_value	0	static
+fonc.c:132:6:init_avance	0	static
+fonc.c:138:10:avance	0	static
