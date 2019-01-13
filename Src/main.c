@@ -214,22 +214,17 @@ int main(void)
 	  case AVANT :
 	  {
 
-		  htim9.Instance->PSC = 1000; //300..3000
-		  htim9.Instance->CCR1 = 200; // 00..1000
-
-	      __HAL_TIM_SET_COMPARE(&htim9,TIM_CHANNEL_1,50);
-
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
-//		  float vitesse = 0;
-//		  uint32_t fin_avance = avance(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
-//		  // *get encodeur
-//		  //calcul de l'erreur'
-//		  run(vitesse*20.0,vitesse*20.0);
-//		  if(fin_avance==1)
-//		  {
-//			  current_state = IDLE;
-//		  }
+		  float vitesse = 0;
+		  uint32_t fin_avance = avance(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
+		  // *get encodeur
+		  //calcul de l'erreur'
+		  run(vitesse*20.0,vitesse*20.0);
+		  if(fin_avance==1)
+		  {
+			  current_state = IDLE;
+		  }
 
 		  /*end_led = HAL_GetTick();
 		  if(end_led >= begin_led + 1000 )
