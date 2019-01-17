@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2019 STMicroelectronics
+  * COPYRIGHT(c) 2018 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -53,7 +53,6 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
-TIM_HandleTypeDef htim9;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -69,7 +68,6 @@ static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_TIM9_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
@@ -118,7 +116,6 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM5_Init();
   MX_ADC1_Init();
-  MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
   HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
@@ -134,10 +131,6 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim4,TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim5,TIM_CHANNEL_ALL);
-
-  //Buzzer
-  HAL_TIM_PWM_Start(&htim9,TIM_CHANNEL_1);
-
   HAL_Delay(1000);
   /* USER CODE END 2 */
 
@@ -156,21 +149,13 @@ int main(void)
   uint32_t tim_start=0;
   /*		avancer			*/
 
-  position = (TIM2->CNT - TIM3->CNT + TIM4->CNT + TIM5->CNT); //vitesse de rotation des moteurs /12 car 12 impulsions/mesures par tour de roue par les encodeurs
   while (1)
   {
-	  //TODO a mettre dans le bon sens
-
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
-	  //variables intermédiaires
-//	  pos_tmp = - TIM3->CNT;
-//	  pos_tmp += TIM4->CNT;
-//	  position = ((pos_tmp + TIM2->CNT + TIM5->CNT)/(4.0*12.0))/50.0; //nbr de tour de la roue avec reducteur 1/50
-	  //position = position * (2.0*3.1415*0.0135); //distance parcourue en mètre
-	  //distance = position * (2.0*3.1415*0.0135); //distance parcourue en mètre
+ //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
+
 	  switch(current_state)
 	  {
 	  case IDLE :
@@ -213,10 +198,17 @@ int main(void)
 	  break;
 	  case AVANT :
 	  {
-
+		  /*
+		   * A gauche ET à droite
+		   *   avance -> get consigne non corrigée
+		   *   encoder -> get valeur réel
+		   *
+		   *   gain (consigne non corrigée, valeur réel) -> consigne corrigée en fonction de l'erreur
+		   *
+		   * run (consigne corrigée gauche, consigne corrigée droite)
+		   */
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
-
 		  float vitesse = 0;
 		  uint32_t fin_avance = avance(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
 		  // *get encodeur
@@ -580,36 +572,6 @@ static void MX_TIM5_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
-}
-
-/* TIM9 init function */
-static void MX_TIM9_Init(void)
-{
-
-  TIM_OC_InitTypeDef sConfigOC;
-
-  htim9.Instance = TIM9;
-  htim9.Init.Prescaler = 0;
-  htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim9.Init.Period = 0;
-  htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_PWM_Init(&htim9) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-  HAL_TIM_MspPostInit(&htim9);
 
 }
 

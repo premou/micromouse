@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2019 STMicroelectronics
+  * COPYRIGHT(c) 2018 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -51,8 +51,6 @@
 
 #define LED2_Pin GPIO_PIN_2
 #define LED2_GPIO_Port GPIOE
-#define BUZZER_Pin GPIO_PIN_5
-#define BUZZER_GPIO_Port GPIOE
 #define IR_LED_DR_Pin GPIO_PIN_0
 #define IR_LED_DR_GPIO_Port GPIOC
 #define IR_LED_DL_Pin GPIO_PIN_1
