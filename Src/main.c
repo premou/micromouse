@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * COPYRIGHT(c) 2018 STMicroelectronics
+  * COPYRIGHT(c) 2019 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -42,6 +42,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "fonc.h"
+#include "serial.h"
 
 /* USER CODE END Includes */
 
@@ -54,20 +55,27 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
 
+UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+HAL_Serial_Handler com;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_USART1_UART_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
@@ -110,12 +118,14 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
   MX_ADC1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
   HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
@@ -131,6 +141,11 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim4,TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim5,TIM_CHANNEL_ALL);
+
+
+  HAL_Serial_Init(&huart1, &com);
+  HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
+
   HAL_Delay(1000);
   /* USER CODE END 2 */
 
@@ -183,6 +198,7 @@ int main(void)
 			  HAL_ADC_PollForConversion(&hadc1,1);
 			  uint32_t  value = HAL_ADC_GetValue(&hadc1);
 		 	 */
+			  HAL_Serial_Print(&com,"AVANT\r\n");
 		  }
 		  else
 		  {
@@ -217,6 +233,7 @@ int main(void)
 		  if(fin_avance==1)
 		  {
 			  current_state = IDLE;
+			  HAL_Serial_Print(&com,"IDLE\r\n");
 		  }
 
 		  /*end_led = HAL_GetTick();
@@ -261,6 +278,7 @@ void SystemClock_Config(void)
 
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
     /**Configure the main internal regulator output voltage 
     */
@@ -301,6 +319,13 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+  PeriphClkInitStruct.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -575,12 +600,46 @@ static void MX_TIM5_Init(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
-        * Output
-        * EVENT_OUT
-        * EXTI
+/* USART1 init function */
+static void MX_USART1_UART_Init(void)
+{
+
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA2_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+
+}
+
+/** Configure pins
 */
 static void MX_GPIO_Init(void)
 {
