@@ -54,6 +54,7 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
+TIM_HandleTypeDef htim9;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
@@ -76,6 +77,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM9_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
@@ -126,6 +128,7 @@ int main(void)
   MX_TIM5_Init();
   MX_ADC1_Init();
   MX_USART1_UART_Init();
+  MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
   HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
@@ -142,6 +145,12 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim4,TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim5,TIM_CHANNEL_ALL);
 
+  HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
+
+  htim9.Instance->PSC = 500;
+  htim9.Instance->CCR1 = 100;
+  HAL_Delay(500);
+  HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
 
   HAL_Serial_Init(&huart1, &com);
   HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
@@ -597,6 +606,48 @@ static void MX_TIM5_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+
+}
+
+/* TIM9 init function */
+static void MX_TIM9_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_OC_InitTypeDef sConfigOC;
+
+  htim9.Instance = TIM9;
+  htim9.Init.Prescaler = 215;
+  htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim9.Init.Period = 1000;
+  htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim9) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim9, &sClockSourceConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  if (HAL_TIM_PWM_Init(&htim9) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  HAL_TIM_MspPostInit(&htim9);
 
 }
 
