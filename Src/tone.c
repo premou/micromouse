@@ -53,6 +53,7 @@ void play_startup_song2(TIM_HandleTypeDef* htim, uint32_t channel){
 	tone(htim, NOTE_E7, 200, channel);
 	HAL_Delay(100);
 
+	tone(htim, NOTE_E7, 200, channel);
 	HAL_Delay(100);
 
 	tone(htim, NOTE_E7, 200, channel);
