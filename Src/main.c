@@ -43,6 +43,7 @@
 /* USER CODE BEGIN Includes */
 #include "fonc.h"
 #include "serial.h"
+#include "tone.h"
 
 /* USER CODE END Includes */
 
@@ -145,12 +146,7 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim4,TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim5,TIM_CHANNEL_ALL);
 
-  HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
-
-  htim9.Instance->PSC = 500;
-  htim9.Instance->CCR1 = 100;
-  HAL_Delay(500);
-  HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
+  play_startup_song(&htim9, TIM_CHANNEL_1);
 
   HAL_Serial_Init(&huart1, &com);
   HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
@@ -690,7 +686,12 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins
+/** Configure pins as 
+        * Analog 
+        * Input 
+        * Output
+        * EVENT_OUT
+        * EXTI
 */
 static void MX_GPIO_Init(void)
 {
