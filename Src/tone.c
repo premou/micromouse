@@ -50,29 +50,22 @@ void play_startup_song2(TIM_HandleTypeDef* htim, uint32_t channel){
 	(void) NOTE_A7;
 	(void) NOTE_G6;
 
-	  //digitalWrite(ledPin, HIGH);
-	  tone(htim, NOTE_E7, 200, channel);
-	  HAL_Delay(100);
-	  //digitalWrite(ledPin, LOW);
-	  //digitalWrite(ledPin, HIGH);
-	  tone(htim, NOTE_E7, 200, channel);
-	  HAL_Delay(100);
-	  //digitalWrite(ledPin, LOW, channel);
-	  //digitalWrite(ledPin, HIGH, channel);
-	  tone(htim, NOTE_E7, 200, channel);
-	  HAL_Delay(100);
-	  //digitalWrite(ledPin, LOW, channel);
-	  //digitalWrite(ledPin, HIGH, channel);
-	  tone(htim, NOTE_G7, 200, channel);
-	  HAL_Delay(50);
-	  //digitalWrite(ledPin, LOW, channel);
-	  //digitalWrite(ledPin, HIGH, channel);
-	  tone(htim, NOTE_E7, 200, channel);
-	  HAL_Delay(100);
-	  //digitalWrite(ledPin, LOW, channel);
-	  //digitalWrite(ledPin, HIGH, channel);
-	  tone(htim, NOTE_C7, 200, channel);
-	  HAL_Delay(200);
+	tone(htim, NOTE_E7, 200, channel);
+	HAL_Delay(100);
+
+	HAL_Delay(100);
+
+	tone(htim, NOTE_E7, 200, channel);
+	HAL_Delay(100);
+
+	tone(htim, NOTE_G7, 200, channel);
+	HAL_Delay(50);
+
+	tone(htim, NOTE_E7, 200, channel);
+	HAL_Delay(100);
+
+	tone(htim, NOTE_C7, 200, channel);
+	HAL_Delay(200);
 
 }
 
