@@ -83,6 +83,7 @@ static void MX_TIM9_Init(void);
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
 
+
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -175,7 +176,8 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
  //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
-
+	  HAL_Delay(1);
+	  get_encoder_raw_value(&htim2, &htim3, &htim4, &htim5);
 	  switch(current_state)
 	  {
 	  case IDLE :
@@ -183,6 +185,8 @@ int main(void)
 		  //run(0);
 		  if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET)
 		  {
+
+			  play_startup_song2(&htim9, TIM_CHANNEL_1);
 
 			  current_state = AVANT;
 			  init_avance();

@@ -122,6 +122,74 @@ void get_encoder_value ()
 	// retour du résultat
 
 }
+
+/*
+ *
+ */
+uint32_t get_encoder_raw_value(TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5){
+
+	//TIM5
+	static uint32_t front_left = 0;
+	//TIM2
+	static uint32_t back_left = 0;
+
+	//TIM4
+	static uint16_t front_right = 0;
+	//TIM3  reversed
+	static uint16_t back_right = 0;
+
+
+	//TIM5
+	static uint32_t last_front_left = 0;
+	//TIM2
+	static uint32_t last_back_left = 0;
+	//TIM4
+	static uint16_t last_front_right = 0;
+	//TIM3  reversed
+	static uint16_t last_back_right = 0;
+
+
+	//TIM5
+	static int32_t diff_front_left = 0;
+	//TIM2
+	static int32_t diff_back_left = 0;
+	//TIM4
+	static int16_t diff_front_right = 0;
+	//TIM3  reversed
+	static int16_t diff_back_right = 0;
+
+
+	last_front_left = front_left;
+	last_back_left = back_left;
+	last_front_right = front_right;
+	last_back_right = back_right;
+
+	//! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
+	back_left = htim2->Instance->CNT;
+	back_right = - htim3->Instance->CNT;
+	front_right = htim4->Instance->CNT;
+	front_left = htim5->Instance->CNT;
+
+	diff_front_left = front_left - last_front_left;
+	diff_back_left = back_left - last_back_left;
+	diff_front_right = front_right - last_front_right;
+	diff_back_right = back_right - last_back_right;
+
+	//total_dist = nombre de tick
+
+	static float total_dist = 0;
+	total_dist += (diff_front_left + diff_back_left + diff_front_right + diff_back_right) / (4.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+
+	static float speed_right = 0;
+	static float speed_left = 0;
+
+	//TODO
+	speed_right += (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	speed_left += (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+
+	return 0;
+}
+
  //TODO : void avancer_case(int32_t speed)
 /* param
  * in  : int32_t t : temps écoulé en seconde
