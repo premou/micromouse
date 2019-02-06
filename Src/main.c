@@ -81,7 +81,6 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM9_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-                                
 
 
 /* USER CODE BEGIN PFP */
@@ -110,7 +109,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  context_t* ctx_mouse = init_context();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -170,6 +169,9 @@ int main(void)
   uint32_t tim_start=0;
   /*		avancer			*/
 
+
+
+
   while (1)
   {
   /* USER CODE END WHILE */
@@ -177,7 +179,6 @@ int main(void)
   /* USER CODE BEGIN 3 */
  //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
 	  HAL_Delay(1);
-	  get_encoder_raw_value(&htim2, &htim3, &htim4, &htim5);
 	  switch(current_state)
 	  {
 	  case IDLE :
@@ -186,10 +187,8 @@ int main(void)
 		  if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET)
 		  {
 
-			  play_startup_song2(&htim9, TIM_CHANNEL_1);
-
 			  current_state = AVANT;
-			  init_avance();
+			  init_setpoint();
 			  tim_start=HAL_GetTick();
 			  run(0,0);
 
@@ -234,11 +233,22 @@ int main(void)
 		   */
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
+
+		  uint32_t ret = get_total_dist_from_encoder(ctx_mouse, &htim2, &htim3, &htim4, &htim5);
+
 		  float vitesse = 0;
-		  uint32_t fin_avance = avance(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
-		  // *get encodeur
-		  //calcul de l'erreur'
+
+		  uint32_t fin_avance = get_setpoint(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
+
+
+		  //asservissement
+		  // get_vitesse()
+		  // get_erreur (vitesse_th, vitesse_réel)
+		  // get consigne modifiée
+
+		  // application de la consigne corrigée
 		  run(vitesse*20.0,vitesse*20.0);
+
 		  if(fin_avance==1)
 		  {
 			  current_state = IDLE;

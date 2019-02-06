@@ -34,7 +34,7 @@ void tone(TIM_HandleTypeDef* htim,uint32_t frequence, uint32_t delay, uint32_t c
 
 
 void play_startup_song(TIM_HandleTypeDef* htim, uint32_t channel){
-	  for (int i=50;i<400;i+=50){
+	  for (int i=400;i>=0;i-=50){
 		  tone(htim, i, 100, channel);
 	  }
 }

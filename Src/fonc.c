@@ -31,6 +31,22 @@ typedef  enum {
 	RIGHT
 } side;
 
+
+context_t* init_context(){
+
+	context_t* ctx = (context_t*) malloc(sizeof(context_t));
+
+	ctx->total_dist = 0;
+	ctx->total_dist = 0;
+	ctx->total_dist = 0;
+
+	return ctx;
+}
+
+void free_context(context_t* ctx){
+	free(ctx);
+}
+
 void run(int32_t speed_right, int32_t speed_left)
 {
 	//GESTION moteur DROIT
@@ -104,35 +120,20 @@ void run(int32_t speed_right, int32_t speed_left)
 	}
 }
 
-void get_encoder_value ()
-{
-	//récupération des ... des encodeurs
-	//htim2_channel_1_value = __HAL_TIM_GET_COMPARE(&htim2,TIM_CHANNEL_1);
-	//htim2_channel_2_value = __HAL_TIM_GET_COMPARE(&htim2,TIM_CHANNEL_1);
-	//__HAL_TIM_GET_CLOCKDIVISION();
-	//__HAL_TIM_GET
-
-	//htim3_channel_1_value = __HAL_TIM_GET_COMPARE(&htim2,TIM_CHANNEL_1);
-	//...
-
-	// Sum
-
-	// produit par le gain de boucle de retour
-
-	// retour du résultat
-
-}
 
 /*
  *
  */
-uint32_t get_encoder_raw_value(TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5){
+uint32_t get_total_dist_from_encoder(context_t* ctx_mouse,TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5){
+
+	if (!ctx_mouse){
+		return -1;
+	}
 
 	//TIM5
 	static uint32_t front_left = 0;
 	//TIM2
 	static uint32_t back_left = 0;
-
 	//TIM4
 	static uint16_t front_right = 0;
 	//TIM3  reversed
@@ -175,20 +176,24 @@ uint32_t get_encoder_raw_value(TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3
 	diff_front_right = front_right - last_front_right;
 	diff_back_right = back_right - last_back_right;
 
-	//total_dist = nombre de tick
 
-	static float total_dist = 0;
-	total_dist += (diff_front_left + diff_back_left + diff_front_right + diff_back_right) / (4.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->total_dist += (diff_front_left + diff_back_left + diff_front_right + diff_back_right) / (4.0 * 12.0 * 30.0) * 3.1415 * 0.026;
 
-	static float speed_right = 0;
-	static float speed_left = 0;
-
-	//TODO
-	speed_right += (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
-	speed_left += (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->total_dist_right += (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->total_dist_left += (diff_front_left + diff_back_left) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
 
 	return 0;
 }
+
+/*
+ * Return speed in m/s
+ */
+float get_speed(float dist, uint32_t time){
+	return dist*1000/time;
+}
+
+
+
 
  //TODO : void avancer_case(int32_t speed)
 /* param
@@ -197,15 +202,15 @@ uint32_t get_encoder_raw_value(TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3
 */
 enum state {ETAT1_ACC,ETAT2_CST,ETAT3_DEC, FIN};
 enum state current_state;
-void init_avance()
+void init_setpoint()
 {
 	current_state = ETAT1_ACC;
 }
 
 //bool
-uint32_t avance(float t, float * vitesse)
+uint32_t get_setpoint(float t, float * vitesse)
 {
-	uint32_t curr = 0; // si curr == 0, avance() non terminée, si curr==1 , avance terminée
+	uint32_t curr = 0; // si curr == 0, get_setpoint() non terminée, si curr==1 , get_setpoint terminée
 
 	 switch(current_state)
 	 {
