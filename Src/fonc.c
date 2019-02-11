@@ -40,6 +40,12 @@ context_t* init_context(){
 	ctx->total_dist = 0;
 	ctx->total_dist = 0;
 
+	ctx->delta_dist = 0;
+	ctx->delta_dist_left = 0;
+	ctx->delta_dist_right = 0;
+
+	ctx->time = HAL_GetTick();
+
 	return ctx;
 }
 
@@ -159,6 +165,8 @@ uint32_t get_total_dist_from_encoder(context_t* ctx_mouse,TIM_HandleTypeDef* hti
 	//TIM3  reversed
 	static int16_t diff_back_right = 0;
 
+	//get current time
+	uint32_t current_tick = HAL_GetTick() ;
 
 	last_front_left = front_left;
 	last_back_left = back_left;
@@ -176,11 +184,23 @@ uint32_t get_total_dist_from_encoder(context_t* ctx_mouse,TIM_HandleTypeDef* hti
 	diff_front_right = front_right - last_front_right;
 	diff_back_right = back_right - last_back_right;
 
+	//Récupération du delta entre le temps précédent et le courant
+	uint32_t delta_time = current_tick - ctx_mouse->time;
+	ctx_mouse->time = current_tick;
 
-	ctx_mouse->total_dist += (diff_front_left + diff_back_left + diff_front_right + diff_back_right) / (4.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->delta_dist = (diff_front_left + diff_back_left + diff_front_right + diff_back_right) / (4.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->total_dist += ctx_mouse->delta_dist;
 
-	ctx_mouse->total_dist_right += (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
-	ctx_mouse->total_dist_left += (diff_front_left + diff_back_left) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->delta_dist_right = (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+	ctx_mouse->delta_dist_left = (diff_front_left + diff_back_left) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
+
+	ctx_mouse->total_dist_right += ctx_mouse->delta_dist_right;
+	ctx_mouse->total_dist_left += ctx_mouse->delta_dist_left;
+
+
+	ctx_mouse->current_speed = (float) (ctx_mouse->delta_dist * 1000) / delta_time;
+	ctx_mouse->current_speed_right = (float) (ctx_mouse->delta_dist_right * 1000) / delta_time;
+	ctx_mouse->current_speed_left = (float) (ctx_mouse->delta_dist_left * 1000) / delta_time;
 
 	return 0;
 }

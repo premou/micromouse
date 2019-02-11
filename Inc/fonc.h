@@ -22,6 +22,16 @@ typedef struct  {
 	float total_dist_right;
 	float total_dist_left;
 
+	float delta_dist;
+	float delta_dist_right;
+	float delta_dist_left;
+
+	float current_speed;
+	float current_speed_right;
+	float current_speed_left;
+
+	uint32_t time;
+
 }context_t;
 
 void run(int32_t speed_right, int32_t speed_left);
