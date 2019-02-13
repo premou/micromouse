@@ -31,6 +31,7 @@ typedef struct  {
 	float current_speed_left;
 
 	uint32_t time;
+	uint32_t action_current;
 
 }context_t;
 
