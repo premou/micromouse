@@ -8,56 +8,12 @@
 #include "fonc.h"
 
 extern TIM_HandleTypeDef htim1;
-//constante de temps pour acceleration/decceleration en seconde
-/* Alice 4 cases */
-//#define t1 1.0 //en seconde
-//#define t2 2.22 //en seconde
-//#define t3 3.22//en seconde
-//#define V1 1.0 //en m/s
 
-#define t1 1.0 //en seconde
-#define t2 2.0 //en seconde
-#define t3 3.0//en seconde
-#define V1 2.0 //en m/s
 
-/* Rémi 4 cases */
-//#define t1 0.25 //en seconde
-//#define t2 0.5 //en seconde
-//#define t3 0.75//en seconde
-//#define V1 4.0 //en m/s
 
-/* slopes for speed (in m/s-2) */
-#define SLOPE_ACC 2
-#define SLOPE_DEC 2
-#define SPEED_TARGET 0.5 //in m/s
-#define DIST_START 0.09 //in m
-#define DIST_RUN_1 0.18 //in m
-#define DIST_STOP 0.09 //in m
 
-typedef  enum {
-	LEFT,
-	RIGHT
-} side;
 
-typedef enum {
-	ACTION_IDLE,
-	ACTION_START, //avance de 8 cm puis RUN_1
-	ACTION_RUN_1,
-	ACTION_STOP,
-	ACTION_CTR
-} action;
 
-typedef struct {
-	float speed_target;
-	float distance; //distance à parcourir
-} action_ctx_t;
-
-action_ctx_t actions_desc[] = {
-		{0,0},
-		{SPEED_TARGET, DIST_START},
-		{SPEED_TARGET, DIST_RUN_1},
-		{0,DIST_STOP}
-};
 
 action actions_scenario[] = {
 		ACTION_START,
