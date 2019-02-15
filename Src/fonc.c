@@ -15,12 +15,13 @@ extern TIM_HandleTypeDef htim1;
 
 
 
-action actions_scenario[] = {
+/*action actions_scenario[] = {
 		ACTION_START,
 		ACTION_RUN_1,
 		ACTION_RUN_1,
 		ACTION_END
 };
+*/
 //code d'erreur
 //1 : action non definie
 //2 : context non defini
@@ -49,6 +50,7 @@ uint32_t exec_actions(action action, context_t* p_ctx)
 	}
 }
 */
+/*
 context_t* init_context(){
 
 	context_t* ctx = (context_t*) malloc(sizeof(context_t));
@@ -65,10 +67,12 @@ context_t* init_context(){
 
 	return ctx;
 }
-
+*/
+/*
 void free_context(context_t* ctx){
 	free(ctx);
 }
+*/
 
 void run(int32_t speed_right, int32_t speed_left)
 {
@@ -145,84 +149,6 @@ void run(int32_t speed_right, int32_t speed_left)
 
 
 /*
- *
- */
-uint32_t get_total_dist_from_encoder(context_t* ctx_mouse,TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5){
-
-	if (!ctx_mouse){
-		return -1;
-	}
-
-	//TIM5
-	static uint32_t front_left = 0;
-	//TIM2
-	static uint32_t back_left = 0;
-	//TIM4
-	static uint16_t front_right = 0;
-	//TIM3  reversed
-	static uint16_t back_right = 0;
-
-
-	//TIM5
-	static uint32_t last_front_left = 0;
-	//TIM2
-	static uint32_t last_back_left = 0;
-	//TIM4
-	static uint16_t last_front_right = 0;
-	//TIM3  reversed
-	static uint16_t last_back_right = 0;
-
-
-	//TIM5
-	static int32_t diff_front_left = 0;
-	//TIM2
-	static int32_t diff_back_left = 0;
-	//TIM4
-	static int16_t diff_front_right = 0;
-	//TIM3  reversed
-	static int16_t diff_back_right = 0;
-
-	//get current time
-	uint32_t current_tick = HAL_GetTick() ;
-
-	last_front_left = front_left;
-	last_back_left = back_left;
-	last_front_right = front_right;
-	last_back_right = back_right;
-
-	//! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
-	back_left = htim2->Instance->CNT;
-	back_right = - htim3->Instance->CNT;
-	front_right = htim4->Instance->CNT;
-	front_left = htim5->Instance->CNT;
-
-	diff_front_left = front_left - last_front_left;
-	diff_back_left = back_left - last_back_left;
-	diff_front_right = front_right - last_front_right;
-	diff_back_right = back_right - last_back_right;
-
-	//Récupération du delta entre le temps précédent et le courant
-	uint32_t delta_time = current_tick - ctx_mouse->time;
-	ctx_mouse->time = current_tick;
-
-	ctx_mouse->delta_dist = (diff_front_left + diff_back_left + diff_front_right + diff_back_right) / (4.0 * 12.0 * 30.0) * 3.1415 * 0.026;
-	ctx_mouse->total_dist += ctx_mouse->delta_dist;
-
-	ctx_mouse->delta_dist_right = (diff_front_right + diff_back_right) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
-	ctx_mouse->delta_dist_left = (diff_front_left + diff_back_left) / (2.0 * 12.0 * 30.0) * 3.1415 * 0.026;
-
-	ctx_mouse->total_dist_right += ctx_mouse->delta_dist_right;
-	ctx_mouse->total_dist_left += ctx_mouse->delta_dist_left;
-
-
-	ctx_mouse->current_speed = (float) (ctx_mouse->delta_dist * 1000) / delta_time;
-	ctx_mouse->current_speed_right = (float) (ctx_mouse->delta_dist_right * 1000) / delta_time;
-	ctx_mouse->current_speed_left = (float) (ctx_mouse->delta_dist_left * 1000) / delta_time;
-
-	return 0;
-}
-
-/*
  * Return speed in m/s
  */
 float get_speed(float dist, uint32_t time){
@@ -245,6 +171,7 @@ void init_setpoint()
 }
 
 //bool
+/*
 uint32_t get_setpoint(float t, float * vitesse)
 {
 	uint32_t curr = 0; // si curr == 0, get_setpoint() non terminée, si curr==1 , get_setpoint terminée
@@ -285,18 +212,18 @@ uint32_t get_setpoint(float t, float * vitesse)
 		  curr = 1;
 	  }
 	  break;
-	  /*
+
 	  case default :
 	  {
 		  curr = 1;
 	  }
 	  break;
-	  */
+
 	 }
 	 return curr;
 }
 
-
+*/
 
 
 /*

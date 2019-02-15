@@ -8,7 +8,34 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
+#include "stm32f7xx_hal.h"
+
 // GLOBAL VARIABLES
+
+/*
+ * The tick to meter factor is computed by using :
+ *  - A generic part FACTOR_TICK_2_METER_GEN
+ *    built with :
+ *     - Pi : 3.1415
+ *
+ *     - The wheel diameter (m) : 0.026
+ *
+ *     - A factor that convert the number of 'ticks' provided by the timer
+ *       into a number of motor rounds.
+ *       Since a motor has two Hall effect sensors, each composed of 6 polar transitions,
+ *       therefore creating 6 clock edges per motor round,
+ *       we can deduce that this factor equals 2 * 6 = 12.
+ *
+ *  - A reduction factor FACTOR_TICK_2_METER_<X>, that depends on the motor we use.
+ *    We currently use 2 kinds of motors, with the following reductions factors :
+ *     - 30
+ *     - 50
+ */
+#define FACTOR_TICK_2_METER_GEN (3.1415 * 0.026 / 12.0)
+#define FACTOR_TICK_2_METER_30 (FACTOR_TICK_2_METER_GEN / 30)
+#define FACTOR_TICK_2_METER_50 (FACTOR_TICK_2_METER_GEN / 50)
+#define FACTOR_TICK_2_METER FACTOR_TICK_2_METER_30
+
 /* slopes for speed (in m/s-2) */
 #define SLOPE_ACC 2
 #define SLOPE_DEC 2
@@ -46,25 +73,42 @@ typedef struct {
 	float dist;
 	float speed;
 
-	uint32 dist_ref_front;
-	uint32 dist_ref_back;
+	// TIM front
+	// TIM bask
 
-} side_t;
+	uint32_t dist_ref_front;
+	uint32_t dist_ref_back;
+
+} motors_side_t;
 
 typedef struct  {
 
 	float dist;
 	float speed;
 
-	side_t left;
-	side_t right;
+	motors_side_t left;
+	motors_side_t right;
 
 	uint32_t time;
 
 	action_target_t **p_actions;
-	uint32            actions_nb;
+	uint32_t          actions_nb;
 	action_target_t  *p_action_curr;
 
 } motors_t;
+
+
+// FUNCTIONS
+
+/*
+* Update state variables
+*/
+uint32_t motors_ctx_update (motors_t* p_motors, TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5);
+
+
+motors_t *motors_ctx_init ();
+
+
+
 
 #endif /* MOTOR_H_ */

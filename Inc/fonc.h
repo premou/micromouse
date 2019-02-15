@@ -25,9 +25,7 @@ void run(int32_t speed_right, int32_t speed_left);
 void init_setpoint();
 
 /**
- * Return la distance totale parcourue par les roues
- */
-uint32_t get_total_dist_from_encoder(context_t* ctx_mouse, TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5);
+
 
 /**
  * Return la valeur de la vitesse en m/s

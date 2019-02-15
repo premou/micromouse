@@ -41,7 +41,7 @@
 #include "stm32f7xx_hal.h"
 
 /* USER CODE BEGIN Includes */
-#include "fonc.h"
+#include "motor.h"
 #include "serial.h"
 #include "tone.h"
 
@@ -109,7 +109,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  context_t* ctx_mouse = init_context();
+  motors_t* motors_ctx = motors_ctx_init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -234,7 +234,7 @@ int main(void)
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
 
-		  uint32_t ret = get_total_dist_from_encoder(ctx_mouse, &htim2, &htim3, &htim4, &htim5);
+		  uint32_t ret = motors_ctx_update (motors_ctx, &htim2, &htim3, &htim4, &htim5);
 
 		  float vitesse = 0;
 
