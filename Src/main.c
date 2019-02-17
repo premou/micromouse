@@ -170,11 +170,16 @@ int main(void)
   /*		avancer			*/
 
 
-  action actions_scenario[] = {
-  		ACTION_START,
-  		ACTION_RUN_1,
-  		ACTION_RUN_1,
-  		ACTION_STOP
+  /*
+   * TODO Include this whole &(actions_targets[.]) thing into the load_actions function ?
+   *      That would simplify the definition of scenarios.
+   */
+  action_target_t* actions_scenario[] = {
+		&(actions_targets[ACTION_START]),
+		&(actions_targets[ACTION_RUN_1]),
+		&(actions_targets[ACTION_RUN_1]),
+		&(actions_targets[ACTION_STOP]),
+  		NULL
   };
 
   motors_load_actions (p_motors, actions_scenario);
