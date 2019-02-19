@@ -29,19 +29,15 @@ uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 		return -1;
 	}
 
-	//TIM5
 	uint32_t dist_ref_front_left = 0;
-	//TIM2
 	uint32_t dist_ref_back_left = 0;
-	//TIM4
-	uint16_t dist_ref_front_right = 0;
-	//TIM3  reversed
-	uint16_t dist_ref_back_right = 0;
+	uint32_t dist_ref_front_right = 0;
+	uint32_t dist_ref_back_right = 0;
 
 	int32_t dist_ref_front_left_diff = 0;
 	int32_t dist_ref_back_left_diff = 0;
-	int16_t dist_ref_front_right_diff = 0;
-	int16_t dist_ref_back_right_diff = 0;
+	int32_t dist_ref_front_right_diff = 0;
+	int32_t dist_ref_back_right_diff = 0;
 
 	int32_t dist_total_diff = 0;
 	int32_t dist_right_diff = 0;
@@ -57,8 +53,8 @@ uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 	// ! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
 	// ! TIM3 is coutning in reverse order, that's why we use a "-" in the expression below
 	dist_ref_back_left   = htim2->Instance->CNT;
-	dist_ref_back_right  = - htim3->Instance->CNT;
-	dist_ref_front_right = htim4->Instance->CNT;
+	dist_ref_back_right  = - (uint32_t)htim3->Instance->CNT;
+	dist_ref_front_right = (uint32_t)htim4->Instance->CNT;
 	dist_ref_front_left  = htim5->Instance->CNT;
 
 	dist_ref_front_left_diff  = dist_ref_front_left  - p_motors->left.dist_ref_front;
@@ -78,6 +74,11 @@ uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 	p_motors->speed       = (float) (dist_total_diff * 1000) / delta_time;
 	p_motors->right.speed = (float) (dist_right_diff * 1000) / delta_time;
 	p_motors->left.speed = (float) (dist_left_diff * 1000) / delta_time;
+
+	p_motors->left.dist_ref_front = dist_ref_front_left;
+	p_motors->left.dist_ref_back = dist_ref_back_left;
+	p_motors->right.dist_ref_front = dist_ref_front_right;
+	p_motors->right.dist_ref_back = dist_ref_back_right;
 
 	return 0;
 }
