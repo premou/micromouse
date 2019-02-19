@@ -116,7 +116,6 @@ action_target_t actions_targets[] = {
 
 motors_t *motors_ctx_init ();
 
-void motors_ctx_init ();
 
 /*
 * Update state variables

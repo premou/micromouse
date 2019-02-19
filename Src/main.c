@@ -109,7 +109,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  motors_t* motors_ctx = motors_ctx_init();
+  motors_t* p_motors = motors_ctx_init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -194,7 +194,7 @@ int main(void)
 	   * We update state variables of all functions according to "hardware" registers
 	   * So that our structures reflect the new current reality.
 	  */
-	  uint32_t ret = motors_ctx_update (motors_ctx, &htim2, &htim3, &htim4, &htim5);
+	  uint32_t ret = motors_ctx_update (p_motors, &htim2, &htim3, &htim4, &htim5);
 
       //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
 

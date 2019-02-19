@@ -16,7 +16,7 @@ extern TIM_HandleTypeDef htim1;
 
 motors_t* motors_ctx_init ()
 {
-	motors_t *p_motors = (context_t*) calloc(sizeof(motors_t));
+	motors_t *p_motors = (motors_t*) calloc(sizeof(motors_t), 0);
 
 	p_motors->time = HAL_GetTick();
 
@@ -104,7 +104,7 @@ uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_ta
 		return 1;
 	}
 
-	if (motors->p_actions_table) {
+	if (p_motors->p_actions_table) {
 		// Preventing to load new actions if there are still pending ones.
 		// TODO decide what to do in this case :
 		//  - Remove older ones ?
@@ -112,6 +112,6 @@ uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_ta
 		return 2;
 	}
 
-	motors->p_actions_table = p_actions_targets_table;
-	p_action_curr = *p_actions_targets_table;
+	p_motors->p_actions_table = p_actions_targets_table;
+	p_motors->p_action_curr = *p_actions_targets_table;
 }
