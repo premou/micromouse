@@ -170,14 +170,34 @@ int main(void)
   /*		avancer			*/
 
 
+  /*
+   * TODO Include this whole &(actions_targets[.]) thing into the load_actions function ?
+   *      That would simplify the definition of scenarios.
+   */
+  action_target_t* actions_scenario[] = {
+		&(actions_targets[ACTION_START]),
+		&(actions_targets[ACTION_RUN_1]),
+		&(actions_targets[ACTION_RUN_1]),
+		&(actions_targets[ACTION_STOP]),
+  		NULL
+  };
 
+  motors_load_actions (p_motors, actions_scenario);
 
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
- //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
+
+	  /*
+	   * We update state variables of all functions according to "hardware" registers
+	   * So that our structures reflect the new current reality.
+	  */
+	  uint32_t ret = motors_ctx_update (motors_ctx, &htim2, &htim3, &htim4, &htim5);
+
+      //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
+
 	  HAL_Delay(1);
 	  switch(current_state)
 	  {
@@ -234,7 +254,7 @@ int main(void)
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
 
-		  uint32_t ret = motors_ctx_update (motors_ctx, &htim2, &htim3, &htim4, &htim5);
+
 
 		  float vitesse = 0;
 

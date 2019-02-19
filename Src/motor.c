@@ -13,15 +13,30 @@
  */
 extern TIM_HandleTypeDef htim1;
 
-// GLOBAL VARIABLES
 
-action_target_t actions_targets[] = {
-		{0,0},
-		{SPEED_TARGET, DIST_START},
-		{SPEED_TARGET, DIST_RUN_1},
-		{0,DIST_STOP}
-};
+motors_t* motors_ctx_init ()
+{
+	motors_t *p_motors = (context_t*) calloc(sizeof(motors_t));
 
+	p_motors->time = HAL_GetTick();
+
+    return p_motors;
+}
+
+void motors_ctx_free (motors_t *p_motors)
+{
+	if (!p_motors) {
+		return;
+	}
+
+	// TODO Deal later with free of :
+	//  - Action structure
+	//  - Table of actions structures (if not statically allocated inside the table)
+	//
+	// Maybe by implementing a free on those kinds of structures.
+
+	free (p_motors);
+}
 
 uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5){
 
@@ -83,7 +98,20 @@ uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 	return 0;
 }
 
-motors_t* motors_ctx_init ()
-{
-    return NULL;
+uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_targets_table) {
+
+	if (!p_motors || !p_actions_targets_table) {
+		return 1;
+	}
+
+	if (motors->p_actions_table) {
+		// Preventing to load new actions if there are still pending ones.
+		// TODO decide what to do in this case :
+		//  - Remove older ones ?
+		//  - Append new ones at the end ?
+		return 2;
+	}
+
+	motors->p_actions_table = p_actions_targets_table;
+	p_action_curr = *p_actions_targets_table;
 }

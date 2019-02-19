@@ -91,22 +91,40 @@ typedef struct  {
 
 	uint32_t time;
 
-	action_target_t **p_actions;
+	// Note that here we store a pointer to the table,
+	// rather than directly the table,
+	// so that we can clear memory in the end
+	action_target_t **p_actions_table;
+	// TODO Do we really need this ?
 	uint32_t          actions_nb;
 	action_target_t  *p_action_curr;
 
 } motors_t;
 
 
+// GLOBAL VARIABLES
+
+action_target_t actions_targets[] = {
+		{0,0},
+		{SPEED_TARGET, DIST_START},
+		{SPEED_TARGET, DIST_RUN_1},
+		{0,DIST_STOP}
+};
+
+
 // FUNCTIONS
+
+motors_t *motors_ctx_init ();
+
+void motors_ctx_init ();
 
 /*
 * Update state variables
 */
 uint32_t motors_ctx_update (motors_t* p_motors, TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5);
 
+uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_targets_table);
 
-motors_t *motors_ctx_init ();
 
 
 

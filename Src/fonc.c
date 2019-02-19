@@ -15,13 +15,8 @@ extern TIM_HandleTypeDef htim1;
 
 
 
-/*action actions_scenario[] = {
-		ACTION_START,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_END
-};
-*/
+
+
 //code d'erreur
 //1 : action non definie
 //2 : context non defini
