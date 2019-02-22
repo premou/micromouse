@@ -44,6 +44,7 @@
 #include "motor.h"
 #include "serial.h"
 #include "tone.h"
+#include "fonc.h"
 
 /* USER CODE END Includes */
 
@@ -258,7 +259,7 @@ int main(void)
 
 		  float vitesse = 0;
 
-		  uint32_t fin_avance = get_setpoint(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
+		  //uint32_t fin_avance = get_setpoint(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
 
 
 		  //asservissement
@@ -269,11 +270,13 @@ int main(void)
 		  // application de la consigne corrigée
 		  run(vitesse*20.0,vitesse*20.0);
 
+		  /*
 		  if(fin_avance==1)
 		  {
 			  current_state = IDLE;
 			  HAL_Serial_Print(&com,"IDLE\r\n");
 		  }
+		  */
 
 		  /*end_led = HAL_GetTick();
 		  if(end_led >= begin_led + 1000 )

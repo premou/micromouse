@@ -11,7 +11,7 @@ Welcome to the micro-mouse robots project
      at each step all along the way ?
    * How do we manage to detect obstacles ?
 
-   Those are only a few examples of all the questions that will we will addressed here :-)
+   Those are only a few examples of all the questions that will be addressed here :-)
 
 .. contents::
    :local:

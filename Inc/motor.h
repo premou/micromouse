@@ -83,8 +83,8 @@ typedef struct {
 
 typedef struct  {
 
-	float dist;
-	float speed;
+	float dist;  //current distance
+	float speed; //current speed
 
 	motors_side_t left;
 	motors_side_t right;
@@ -125,7 +125,8 @@ uint32_t motors_ctx_update (motors_t* p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_targets_table);
 
 
-
+action_t motors_find_state(motors_t *p_motors);
+int motors_fsm(motors_t *p_motors);
 
 
 #endif /* MOTOR_H_ */

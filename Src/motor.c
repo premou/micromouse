@@ -97,7 +97,12 @@ uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 
 	return 0;
 }
-
+/*
+ * return values :
+ * 0 : ok, table loaded
+ * 1 : ko, empty input(s)
+ * 2 : ...
+ */
 uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_targets_table) {
 
 	if (!p_motors || !p_actions_targets_table) {
@@ -114,4 +119,84 @@ uint32_t motors_load_actions (motors_t *p_motors, action_target_t **p_actions_ta
 
 	p_motors->p_actions_table = p_actions_targets_table;
 	p_motors->p_action_curr = *p_actions_targets_table;
+	return 0;
+}
+
+
+/*
+ * return values :
+ * 1 : error : could not get current action from p_motors
+ *
+ *
+ */
+action_t motors_find_state(motors_t *p_motors)
+{
+	action_t current_state;
+	//get current state from speed and distance of current action
+		if(p_motors->p_action_curr->speed == 0)
+		{
+			current_state=ACTION_STOP;
+		}
+		else if(p_motors->p_action_curr->speed == SPEED_TARGET)
+		{
+			if(p_motors->p_action_curr->distance == DIST_START)
+			{
+				current_state=ACTION_START;
+			}
+			else if(p_motors->p_action_curr->distance == DIST_RUN_1)
+			{
+				current_state=ACTION_RUN_1;
+			}
+			else
+			{
+				return ACTION_IDLE;
+			}
+		}
+		else
+		{
+			return ACTION_IDLE;
+		}
+	return current_state;
+}
+
+int motors_fsm(motors_t *p_motors)
+{
+	action_t current_state = motors_find_state(p_motors);
+	switch(current_state)
+	{
+	case ACTION_IDLE :
+	{
+		//do nothing ?
+	}
+	break;
+	case ACTION_START :
+	{
+		//if dist_remontée > dist consigne --> transition
+		//current speed :
+		//p_motors->speed
+		if(p_motors->dist > p_motors->p_action_curr->distance)
+		{
+			//current_state=ACTION_IDLE;//transition
+			//comment passer a l'action suivante ?
+			//p_motors->p_action_curr = (p_motors->p_action_curr)+1; //go to next action
+			current_state = motors_find_state(p_motors);
+		}
+	}
+	break;
+	case ACTION_RUN_1 :
+	{
+		//
+	}
+	break;
+	case ACTION_STOP :
+	{
+		//
+	}
+	break;
+	case ACTION_CTR :
+	{
+		//
+	}
+	break;
+	}
 }
