@@ -5,8 +5,18 @@
  *      Author: premc
  */
 
+
+#include "stm32f7xx_hal.h"
+
+
 #ifndef INC_ENCODER_H_
 #define INC_ENCODER_H_
+
+
+/*
+ *
+ */
+uint32_t init_encoders(TIM_HandleTypeDef* p_htim2, TIM_HandleTypeDef* p_htim3, TIM_HandleTypeDef* p_htim4, TIM_HandleTypeDef* p_htim5);
 
 /*
  * Encoder in 32bits

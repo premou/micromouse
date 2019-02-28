@@ -8,7 +8,7 @@
 #include "motor.h"
 
 /*
- * !!!!!!! What's the fuck ?
+ * !!!!!!! What's the ?
  * why do we define this include only for htim1 ?
  */
 extern TIM_HandleTypeDef htim1;
@@ -199,4 +199,11 @@ int motors_fsm(motors_t *p_motors)
 	}
 	break;
 	}
+}
+
+/*
+ * Send the setpoint to the motor
+ */
+uint32_t motor_set_pwm(){
+
 }

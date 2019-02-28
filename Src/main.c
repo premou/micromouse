@@ -52,10 +52,6 @@
 ADC_HandleTypeDef hadc1;
 
 static TIM_HandleTypeDef htim1;
-static TIM_HandleTypeDef htim2;
-static TIM_HandleTypeDef htim3;
-static TIM_HandleTypeDef htim4;
-static TIM_HandleTypeDef htim5;
 static TIM_HandleTypeDef htim9;
 
 UART_HandleTypeDef huart1;
