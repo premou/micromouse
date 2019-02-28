@@ -51,12 +51,12 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
-TIM_HandleTypeDef htim1;
-TIM_HandleTypeDef htim2;
-TIM_HandleTypeDef htim3;
-TIM_HandleTypeDef htim4;
-TIM_HandleTypeDef htim5;
-TIM_HandleTypeDef htim9;
+static TIM_HandleTypeDef htim1;
+static TIM_HandleTypeDef htim2;
+static TIM_HandleTypeDef htim3;
+static TIM_HandleTypeDef htim4;
+static TIM_HandleTypeDef htim5;
+static TIM_HandleTypeDef htim9;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
