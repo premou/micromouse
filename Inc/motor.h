@@ -31,10 +31,6 @@
  *     - 30
  *     - 50
  */
-#define FACTOR_TICK_2_METER_GEN (3.1415 * 0.026 / 12.0)
-#define FACTOR_TICK_2_METER_30 (FACTOR_TICK_2_METER_GEN / 30)
-#define FACTOR_TICK_2_METER_50 (FACTOR_TICK_2_METER_GEN / 50)
-#define FACTOR_TICK_2_METER FACTOR_TICK_2_METER_30
 
 /* slopes for speed (in m/s-2) */
 #define SLOPE_ACC 2

@@ -7,50 +7,110 @@
 
 #include "encoder.h"
 
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim5;
 
-static TIM_HandleTypeDef* htim2;
-static TIM_HandleTypeDef* htim3;
-static TIM_HandleTypeDef* htim4;
-static TIM_HandleTypeDef* htim5;
+typedef struct {
+
+	float dist_absolute;
+	float dist_right_relative;
+	float dist_left_relative;
+
+	uint32_t back_left;
+	uint16_t back_right;
+	uint16_t front_right;
+	uint32_t front_left;
+
+} encoder_t;
+
+static encoder_t encoder;
+
+
+/*
+ * Avoir une commande de reset
+ * Une commande de la distance totale
+ * Une distance droite et gauche depuis le dernier appel (delta)
+ *
+ *
+ * avoir une fonction d'update qui recalcule les delta
+ *
+ * avoir une fonction pid
+ */
 
 
 /*
  *
  */
-uint32_t init_encoders(TIM_HandleTypeDef* p_htim2, TIM_HandleTypeDef* p_htim3, TIM_HandleTypeDef* p_htim4, TIM_HandleTypeDef* p_htim5){
-	  htim2 = p_htim2;
-	  htim3 = p_htim3;
-	  htim4 = p_htim4;
-	  htim5 = p_htim5;
-	  return 0;
-}
+void encoder_init(){
 
+	encoder.dist_absolute = 0;
 
-/*
- * Encoder in 32bits
- */
-uint32_t get_back_left_encoder_value(){
-	return htim2->Instance->CNT;
+	HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim4,TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim5,TIM_CHANNEL_ALL);
+
 }
 
 /*
- * Encoder in 16bits
- * reversed
+ * Reset the absolute distance
  */
-uint32_t get_back_right_encoder_value(){
-	return -(htim3->Instance->CNT);
+void encoder_reset(){
+	encoder.dist_absolute = 0;
+	encoder.dist_left_relative = 0;
+	encoder.dist_right_relative = 0;
 }
 
 /*
- * Encoder in 16bits
+ * Return the absolute distance of the 4 encoders
  */
-uint32_t get_front_right_encoder_value(){
-	return htim4->Instance->CNT;
+float encoder_absolute(){
+	return encoder.dist_absolute;
+}
+
+
+void encoder_update(){
+
+	uint32_t back_left = htim2.Instance->CNT;
+	uint16_t back_right = - htim3.Instance->CNT;
+	uint16_t front_right = htim4.Instance->CNT;
+	uint32_t front_left = htim5.Instance->CNT;
+
+	uint32_t relative32_back_left = back_left  - encoder.back_left;
+	uint16_t relative16_back_right = back_right   - encoder.back_right;
+	uint16_t relative16_front_right = front_right - encoder.front_right;
+	uint32_t relative32_front_left = front_left  - encoder.front_left;
+
+	int32_t relative_left = (int32_t)relative32_back_left + (int32_t) relative32_front_left;
+	int32_t relative_right = (int32_t)relative16_back_right + (int32_t) relative16_front_right;
+
+    encoder.dist_absolute += (relative_left + relative_right) * FACTOR_TICK_2_METER / 4.0;
+    encoder.dist_left_relative = relative_left * FACTOR_TICK_2_METER / 2.0;
+    encoder.dist_right_relative = relative_right * FACTOR_TICK_2_METER / 2.0;
+
 }
 
 /*
- * Encoder in 32bits
+ * return m
  */
-uint32_t get_front_left_encoder_value(){
-	return htim5->Instance->CNT;
+float encoder_get_absolute(){
+	return encoder.dist_absolute;
 }
+
+/*
+ * return m
+ */
+float encoder_get_delta_left(){
+	return encoder.dist_left_relative;
+}
+
+/*
+ * return m
+ */
+float encoder_get_delta_right(){
+	return encoder.dist_right_relative;
+}
+
+

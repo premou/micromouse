@@ -14,6 +14,12 @@
 extern TIM_HandleTypeDef htim1;
 
 
+/* //TODO
+ * Definir une fonction qui init les encoders
+ * Definir une fonction qui applique le PWM (droite et gauche)
+ * Definir plusieurs fonctions qui détermine la vitesse suivante en fonction de l'état (calcule avec les pentes acc et dec)
+ */
+
 motors_t* motors_ctx_init ()
 {
 	motors_t *p_motors = (motors_t*) calloc(sizeof(motors_t), 0);
@@ -78,9 +84,9 @@ uint32_t motors_ctx_update (motors_t *p_motors, TIM_HandleTypeDef* htim2,TIM_Han
 	dist_ref_back_right_diff  = dist_ref_back_right  - p_motors->right.dist_ref_back;
 
 	// Carefull: Here we go from 'tick' unit to 'm' unit
-    dist_total_diff += (dist_ref_front_left_diff + dist_ref_back_left_diff + dist_ref_front_right_diff + dist_ref_back_right_diff) * FACTOR_TICK_2_METER / 4.0;
-	dist_right_diff = (dist_ref_front_right_diff + dist_ref_back_right_diff) * FACTOR_TICK_2_METER / 2.0;
-	dist_left_diff = (dist_ref_front_left_diff + dist_ref_back_left_diff) * FACTOR_TICK_2_METER / 2.0;
+  //  dist_total_diff += (dist_ref_front_left_diff + dist_ref_back_left_diff + dist_ref_front_right_diff + dist_ref_back_right_diff) * FACTOR_TICK_2_METER / 4.0;
+//	dist_right_diff = (dist_ref_front_right_diff + dist_ref_back_right_diff) * FACTOR_TICK_2_METER / 2.0;
+//	dist_left_diff = (dist_ref_front_left_diff + dist_ref_back_left_diff) * FACTOR_TICK_2_METER / 2.0;
 
 	p_motors->dist       += dist_total_diff;
 	p_motors->right.dist += dist_right_diff;
