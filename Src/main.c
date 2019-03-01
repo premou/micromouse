@@ -47,6 +47,8 @@
 #include "serial.h"
 #include "tone.h"
 #include "fonc.h"
+#include "controller.h"
+#include "motor.h"
 
 /* USER CODE END Includes */
 
@@ -123,7 +125,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  motors_t* p_motors = motors_ctx_init();
+  controller_t* p_controller = controller_ctx_init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -193,7 +195,7 @@ int main(void)
   		NULL
   };
 
-  motors_load_actions (p_motors, actions_scenario);
+  controller_load_actions (p_controller, actions_scenario);
 
   while (1)
   {
@@ -205,7 +207,7 @@ int main(void)
 	   * We update state variables of all functions according to "hardware" registers
 	   * So that our structures reflect the new current reality.
 	  */
-	  uint32_t ret = motors_ctx_update (p_motors, &htim2, &htim3, &htim4, &htim5);
+	  uint32_t ret = controller_ctx_update (p_controller, &htim2, &htim3, &htim4, &htim5);
 
       //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
 

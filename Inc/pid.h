@@ -14,6 +14,19 @@
 /*
  *
  */
-uint32_t pid();
+typedef struct{
+	float Kp;
+	float Ki;
+	float Kd;
+
+	float err_previous;
+	float err_sum;
+}pid_context_t;
+
+void pid_init(pid_context_t *ctx, float Kp, float Ki, float Kd);
+
+void pid_reset(pid_context_t *ctx);
+
+float pid_output(pid_context_t *ctx, float error);
 
 #endif /* PID_H_ */

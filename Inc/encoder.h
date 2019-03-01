@@ -22,7 +22,7 @@
  */
 void encoder_init();
 
-
+void encoder_update();
 void encoder_reset();
 float encoder_get_absolute();
 float encoder_get_delta_left();
