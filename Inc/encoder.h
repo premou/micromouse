@@ -7,13 +7,13 @@
 
 
 #include "stm32f7xx_hal.h"
-#include <math.h>
+
+#define PI_FLOAT     3.14159265f
 
 #define FACTOR_TICK_2_METER_GEN (PI_FLOAT * 0.026 / 12.0)
 #define FACTOR_TICK_2_METER_30 (FACTOR_TICK_2_METER_GEN / 30.0)
 #define FACTOR_TICK_2_METER_50 (FACTOR_TICK_2_METER_GEN / 50.0)
 #define FACTOR_TICK_2_METER FACTOR_TICK_2_METER_30
-
 
 #ifndef INC_ENCODER_H_
 #define INC_ENCODER_H_

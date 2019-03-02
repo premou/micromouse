@@ -27,19 +27,6 @@ typedef struct {
 
 static encoder_t encoder;
 
-
-/*
- * Avoir une commande de reset
- * Une commande de la distance totale
- * Une distance droite et gauche depuis le dernier appel (delta)
- *
- *
- * avoir une fonction d'update qui recalcule les delta
- *
- * avoir une fonction pid
- */
-
-
 /*
  *
  */
@@ -63,14 +50,6 @@ void encoder_reset(){
 	encoder.dist_right_relative = 0;
 }
 
-/*
- * Return the absolute distance of the 4 encoders
- */
-float encoder_absolute(){
-	return encoder.dist_absolute;
-}
-
-
 void encoder_update(){
 
 	uint32_t back_left = htim2.Instance->CNT;
@@ -93,21 +72,24 @@ void encoder_update(){
 }
 
 /*
- * return m
+ * Return the absolute distance of the 4 encoders
+ * in meters
  */
 float encoder_get_absolute(){
 	return encoder.dist_absolute;
 }
 
 /*
- * return m
+ * return last call distance left wheels
+ * in meters
  */
 float encoder_get_delta_left(){
 	return encoder.dist_left_relative;
 }
 
 /*
- * return m
+ * return last call distance right wheels
+ * in meters
  */
 float encoder_get_delta_right(){
 	return encoder.dist_right_relative;
