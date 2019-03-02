@@ -52,15 +52,20 @@ void encoder_reset(){
 
 void encoder_update(){
 
-	uint32_t back_left = htim2.Instance->CNT;
-	uint16_t back_right = - htim3.Instance->CNT;
-	uint16_t front_right = htim4.Instance->CNT;
-	uint32_t front_left = htim5.Instance->CNT;
+	uint32_t back_left = __HAL_TIM_GetCounter(&htim2);
+	uint16_t back_right = - __HAL_TIM_GetCounter(&htim3);
+	uint16_t front_right = __HAL_TIM_GetCounter(&htim4);
+	uint32_t front_left = __HAL_TIM_GetCounter(&htim5);
 
 	uint32_t relative32_back_left = back_left  - encoder.back_left;
 	uint16_t relative16_back_right = back_right   - encoder.back_right;
 	uint16_t relative16_front_right = front_right - encoder.front_right;
 	uint32_t relative32_front_left = front_left  - encoder.front_left;
+
+	encoder.back_left = back_left;
+	encoder.back_right = back_right;
+	encoder.front_right = front_right;
+	encoder.front_left = front_left;
 
 	int32_t relative_left = (int32_t)relative32_back_left + (int32_t) relative32_front_left;
 	int32_t relative_right = (int32_t)relative16_back_right + (int32_t) relative16_front_right;
