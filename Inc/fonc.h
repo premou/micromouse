@@ -8,6 +8,7 @@
 #ifndef FONC_H_
 #define FONC_H_
 
+#include "main.h"
 #include "stm32f7xx_hal.h"
 
 /*

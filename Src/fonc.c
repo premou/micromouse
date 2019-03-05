@@ -10,13 +10,6 @@
 extern TIM_HandleTypeDef htim1;
 
 
-
-
-
-
-
-
-
 //code d'erreur
 //1 : action non definie
 //2 : context non defini
