@@ -30,17 +30,32 @@ Part 2
 
 Bluetooth
 ---------
-# download the driver (to find)
+# download the driver for usb/serial adapter : CP210x USB to UART Bridge VCP Drivers
+.. seealso::
+
+	https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers
+
+# usefull documentation 
 .. seealso::
    
    https://www.dfrobot.com/wiki/index.php/DF-BluetoothV3_Bluetooth_module_(SKU:TEL0026)
+   
+# full AT commands
+.. seealso::
+   
+   http://image.dfrobot.com/image/data/TEL0026/TEL0026_Datasheet.pdf
 
-# baudrate:38400 + echo local + line mode + AT swith ON 
-
+# How to configure the bluetooth module: 
+# Default serial software configuration is : baudrate 38400 + echo local + line mode + AT swith ON (see bluetooth module swith)  
 
 .. code-block:: bash
 
-   # Config robot
+   # Reset module to factory settings
+
+   > AT+ORG
+   OK
+   
+   # Config robot side
 
    > AT
    OK
@@ -60,7 +75,7 @@ Bluetooth
 
 .. code-block:: bash
 
-   # Config PC
+   # Config PC side
 
    > AT
    OK
