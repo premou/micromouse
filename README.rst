@@ -37,22 +37,24 @@ Bluetooth
 
 # baudrate:38400 + echo local + line mode + AT swith ON 
 
-# Config robot
+
 .. code-block:: bash
 
-   AT
+   # Config robot
+
+   > AT
    OK
    
-   AT+PSWD?
+   > AT+PSWD?
    +PSWD:1234
  
-   AT+NAME=ROBOT_FRANCOIS
+   > AT+NAME=ROBOT_FRANCOIS
    OK
    
-   AT+UART=115200,0,0
+   > AT+UART=115200,0,0
    OK
 
-   AT+ROLE=0
+   > AT+ROLE=0
    OK
 
 
@@ -60,19 +62,19 @@ Bluetooth
 
    # Config PC
 
-   AT
+   > AT
    OK
    
-   AT+PSWD?
+   > AT+PSWD?
    +PSWD:1234
  
-   AT+NAME=PC_FRANCOIS
+   > AT+NAME=PC_FRANCOIS
    OK
    
-   AT+UART=115200,0,0
+   > AT+UART=115200,0,0
    OK
 
-   AT+ROLE=1
+   > AT+ROLE=1
    OK
 
 Gyroscope
