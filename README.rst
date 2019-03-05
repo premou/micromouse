@@ -30,6 +30,52 @@ Part 2
 
 Bluetooth
 ---------
+# download the driver (to find)
+.. seealso::
+   
+   https://www.dfrobot.com/wiki/index.php/DF-BluetoothV3_Bluetooth_module_(SKU:TEL0026)
+
+# baudrate:38400 + echo local + line mode + AT swith ON 
+
+
+.. code-block:: bash
+
+   # Config robot
+
+   > AT
+   OK
+   
+   > AT+PSWD?
+   +PSWD:1234
+ 
+   > AT+NAME=ROBOT_FRANCOIS
+   OK
+   
+   > AT+UART=115200,0,0
+   OK
+
+   > AT+ROLE=0
+   OK
+
+
+.. code-block:: bash
+
+   # Config PC
+
+   > AT
+   OK
+   
+   > AT+PSWD?
+   +PSWD:1234
+ 
+   > AT+NAME=PC_FRANCOIS
+   OK
+   
+   > AT+UART=115200,0,0
+   OK
+
+   > AT+ROLE=1
+   OK
 
 Gyroscope
 ---------
