@@ -7,6 +7,7 @@
 
 #include "main.h"
 #include "motor.h"
+#include "math.h"
 
 extern TIM_HandleTypeDef htim1;
 
@@ -58,7 +59,7 @@ void motor_speed_right(float pwm){
 
 void motor_speed_left(float pwm){
 
-	int32_t speed_left = (int32_t)constraint(pwm, -100, 100);
+	int32_t speed_left = (int32_t)constraint(pwm, -100.0, 100.0);
 
 	//GESTION moteur GAUCHE
 	if(speed_left>0 )
