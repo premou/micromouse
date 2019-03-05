@@ -52,7 +52,7 @@ Bluetooth
 
    # Reset module to factory settings
 
-   > AT+ORG
+   > AT+ORGL
    OK
    
    # Config robot side
