@@ -14,9 +14,9 @@ extern TIM_HandleTypeDef htim5;
 
 typedef struct {
 
-	float dist_absolute;
-	float dist_right_relative;
-	float dist_left_relative;
+	int32_t dist_absolute;
+	int32_t dist_right_relative;
+	int32_t dist_left_relative;
 
 	uint32_t back_left;
 	uint16_t back_right;
@@ -27,25 +27,14 @@ typedef struct {
 
 static encoder_t encoder;
 
-
-/*
- * Avoir une commande de reset
- * Une commande de la distance totale
- * Une distance droite et gauche depuis le dernier appel (delta)
- *
- *
- * avoir une fonction d'update qui recalcule les delta
- *
- * avoir une fonction pid
- */
-
-
 /*
  *
  */
 void encoder_init(){
 
 	encoder.dist_absolute = 0;
+	encoder.dist_left_relative = 0;
+	encoder.dist_right_relative = 0;
 
 	HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
 	HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
@@ -63,54 +52,51 @@ void encoder_reset(){
 	encoder.dist_right_relative = 0;
 }
 
-/*
- * Return the absolute distance of the 4 encoders
- */
-float encoder_absolute(){
-	return encoder.dist_absolute;
-}
-
-
 void encoder_update(){
 
-	uint32_t back_left = htim2.Instance->CNT;
-	uint16_t back_right = - htim3.Instance->CNT;
-	uint16_t front_right = htim4.Instance->CNT;
-	uint32_t front_left = htim5.Instance->CNT;
+	uint32_t back_left = __HAL_TIM_GetCounter(&htim2);
+	uint16_t back_right = - __HAL_TIM_GetCounter(&htim3);
+	uint16_t front_right = __HAL_TIM_GetCounter(&htim4);
+	uint32_t front_left = __HAL_TIM_GetCounter(&htim5);
 
 	uint32_t relative32_back_left = back_left  - encoder.back_left;
 	uint16_t relative16_back_right = back_right   - encoder.back_right;
 	uint16_t relative16_front_right = front_right - encoder.front_right;
 	uint32_t relative32_front_left = front_left  - encoder.front_left;
 
-	int32_t relative_left = (int32_t)relative32_back_left + (int32_t) relative32_front_left;
-	int32_t relative_right = (int32_t)relative16_back_right + (int32_t) relative16_front_right;
+	encoder.back_left = back_left;
+	encoder.back_right = back_right;
+	encoder.front_right = front_right;
+	encoder.front_left = front_left;
 
-    encoder.dist_absolute += (relative_left + relative_right) * FACTOR_TICK_2_METER / 4.0;
-    encoder.dist_left_relative = relative_left * FACTOR_TICK_2_METER / 2.0;
-    encoder.dist_right_relative = relative_right * FACTOR_TICK_2_METER / 2.0;
+    encoder.dist_left_relative = (int32_t)relative32_back_left + (int32_t) relative32_front_left;
+    encoder.dist_right_relative = (int32_t)relative16_back_right + (int32_t) relative16_front_right;
+    encoder.dist_absolute += (encoder.dist_left_relative + encoder.dist_right_relative);
 
 }
 
 /*
- * return m
+ * Return the absolute distance of the 4 encoders
+ * in meters
  */
 float encoder_get_absolute(){
-	return encoder.dist_absolute;
+	return encoder.dist_absolute * FACTOR_TICK_2_METER / 4.0;
 }
 
 /*
- * return m
+ * return last call distance left wheels
+ * in meters
  */
 float encoder_get_delta_left(){
-	return encoder.dist_left_relative;
+	return encoder.dist_left_relative * FACTOR_TICK_2_METER / 2.0;
 }
 
 /*
- * return m
+ * return last call distance right wheels
+ * in meters
  */
 float encoder_get_delta_right(){
-	return encoder.dist_right_relative;
+	return encoder.dist_right_relative * FACTOR_TICK_2_METER / 2.0;
 }
 
 
