@@ -144,10 +144,9 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
-  //A completer avec les 2 nouvelles LED IR
+  // TODO : à completer avec les 2 nouvelles LED IR
   HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
   HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
-
 
   HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
   HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
@@ -157,7 +156,7 @@ int main(void)
   HAL_Serial_Init(&huart1, &com);
   HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
-  controller_ctx_init();
+  controller_init();
 
   /* USER CODE END 2 */
 
@@ -165,13 +164,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   enum state {IDLE, WARMUP, RUNNING, FINISH, UPLOAD, FAILSAFE};
   enum state current_state = IDLE;
-  /*		avancer			*/
-  uint32_t tim_start=0;
-  /*		avancer			*/
-
-
-//  controller_load_actions (p_controller, actions_scenario);
-
+  uint32_t tim_start = 0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -182,8 +175,16 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
-		  //run(0);
-		  if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET)
+		  if(0) // TODO : mettre le test de niveau de tension de la batterie
+		  {
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+
+			  HAL_Serial_Print(&com,"IDLE->FAILSAFE\r\n");
+
+			  current_state = FAILSAFE;
+		  }
+		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET)
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
@@ -204,6 +205,7 @@ int main(void)
 		  }
 	  }
 	  break;
+
 	  case WARMUP :
 	  {
 		  //WAit 1sec4'
@@ -219,6 +221,7 @@ int main(void)
 
 	  }
 	  break;
+
 	  case UPLOAD :
 	  {
 		  HAL_Delay(500);
@@ -251,6 +254,13 @@ int main(void)
 		  HAL_Serial_Print(&com,"FINISH->IDLE\r\n");
 	  }
 	  break;
+
+	  case FAILSAFE :
+	  {
+		  // nop
+	  }
+	  break;
+
 	  }
   }
 
