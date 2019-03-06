@@ -4,32 +4,175 @@
  *  Created on: 1 mars 2019
  *      Author: Invite
  */
-
+#include "pid.h"
 #include "controller.h"
+#include "motor.h"
+#include "fonc.h"
+#include "serial.h"
+#include "encoder.h"
+
+extern HAL_Serial_Handler com;
+void controller_fsm();
+
+typedef enum {
+	ACTION_IDLE,
+	ACTION_START, //avance de 8 cm puis RUN_1
+	ACTION_RUN_1,
+	ACTION_STOP,
+	ACTION_CTR
+} action_t;
+
+static action_t actions_scenario[] = {
+		ACTION_START,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_STOP,
+		ACTION_IDLE
+  };
+
+// GLOBAL VARIABLES
+
+/*
+ * The tick to meter factor is computed by using :
+ *  - A generic part FACTOR_TICK_2_METER_GEN
+ *    built with :
+ *     - Pi : 3.1415
+ *
+ *     - The wheel diameter (m) : 0.026
+ *
+ *     - A factor that convert the number of 'ticks' provided by the timer
+ *       into a number of motor rounds.
+ *       Since a motor has two Hall effect sensors, each composed of 6 polar transitions,
+ *       therefore creating 6 clock edges per motor round,
+ *       we can deduce that this factor equals 2 * 6 = 12.
+ *
+ *  - A reduction factor FACTOR_TICK_2_METER_<X>, that depends on the motor we use.
+ *    We currently use 2 kinds of motors, with the following reductions factors :
+ *     - 30
+ *     - 50
+ */
+
+
+
+/* slopes for speed (in m/s-2) */
+#define SLOPE_ACC 2
+#define SLOPE_DEC 2
+#define SPEED_TARGET 0.5 //in m/s
+#define DIST_START 0.09 //in m
+#define DIST_RUN_1 0.18 //in m
+#define DIST_STOP 0.09 //in m
+
+
+// ENUM
+
+typedef  enum {
+	LEFT,
+	RIGHT
+} side_t;
+
+
+
+
+// STRUCTURES DEFINITIONS
+
+typedef struct {
+	float speed;
+	float distance;
+
+} action_target_t;
+
+typedef struct {
+	float dist;
+	float speed;
+
+	// TIM front
+	// TIM bask
+
+	uint32_t dist_ref_front;
+	uint32_t dist_ref_back;
+
+} controller_side_t;
+
+typedef struct  {
+
+	uint32_t          actions_nb; //indicates current action
+	uint32_t time;
+	int32_t pwm;
+/*
+	float dist;  //current distance
+	float speed; //current speed
+
+	controller_side_t left;
+	controller_side_t right;
+
+
+
+	// Note that here we store a pointer to the table,
+	// rather than directly the table,
+	// so that we can clear memory in the end
+	action_target_t **p_actions_table;
+
+	action_target_t  *p_action_curr;
+
+	pid_context_t* speed_pid;
+	*/
+} controller_t;
+
+
+static controller_t ctx;
+
+void controller_ctx_init ()
+{
+	/*revenir au début de la liste des actions*/
+	ctx.actions_nb = 0;
+	ctx.time = 0;
+	ctx.pwm = 0;
+	motor_init();
+	encoder_init();
+}
+
+void controller_start(){
+	/*revenir au début de la liste des actions*/
+	ctx.actions_nb = 0;
+	ctx.time = HAL_GetTick();
+	ctx.pwm = 0;
+	encoder_reset();
+}
+
+void controller_update(){
+	//cadence a 1ms
+	uint32_t time_temp = HAL_GetTick();
+	if(time_temp > ctx.time)
+	{
+		ctx.time = time_temp;
+		//HAL_Serial_Print(&com,"current time is %d, cuurent action is %d\r\n", time_temp, ctx.actions_nb);
+		encoder_update();
+		controller_fsm();
+		/*
+		if(!controller_is_end())
+		{
+			++ctx.actions_nb;
+		}
+		*/
+	}
+
+}
+
+bool controller_is_end(){
+	return actions_scenario[ctx.actions_nb] == ACTION_IDLE;
+}
 
 
 /*
- * !!!!!!! What's the ?
- * why do we define this include only for htim1 ?
- */
-extern TIM_HandleTypeDef htim1;
+ * uint32_t controller_ctx_update (controller_t* p_motors, TIM_HandleTypeDef* htim2,TIM_HandleTypeDef* htim3,TIM_HandleTypeDef* htim4,TIM_HandleTypeDef* htim5);
+
+uint32_t controller_load_actions (controller_t *p_motors, action_target_t **p_actions_targets_table);
 
 
-/* //TODO
- * Definir une fonction qui init les encoders
- * Definir une fonction qui applique le PWM (droite et gauche)
- * Definir plusieurs fonctions qui détermine la vitesse suivante en fonction de l'état (calcule avec les pentes acc et dec)
- */
-
-controller_t* controller_ctx_init ()
-{
-	controller_t *p_motors = (controller_t*) calloc(sizeof(controller_t), 0);
-
-	p_motors->time = HAL_GetTick();
-
-    return p_motors;
-}
-
+action_t controller_find_state(controller_t *p_motors);
+int controller_fsm(controller_t *p_motors);
+*/
+/*
 void controller_ctx_free (controller_t *p_motors)
 {
 	if (!p_motors) {
@@ -50,66 +193,19 @@ uint32_t controller_ctx_update (controller_t *p_motors, TIM_HandleTypeDef* htim2
 	if (!p_motors){
 		return -1;
 	}
-
-	uint32_t dist_ref_front_left = 0;
-	uint32_t dist_ref_back_left = 0;
-	uint32_t dist_ref_front_right = 0;
-	uint32_t dist_ref_back_right = 0;
-
-	int32_t dist_ref_front_left_diff = 0;
-	int32_t dist_ref_back_left_diff = 0;
-	int32_t dist_ref_front_right_diff = 0;
-	int32_t dist_ref_back_right_diff = 0;
-
-	int32_t dist_total_diff = 0;
-	int32_t dist_right_diff = 0;
-	int32_t dist_left_diff = 0;
-
-	//get current time
-	uint32_t current_tick = HAL_GetTick() ;
-
-	//Récupération du delta entre le temps précédent et le courant
-	uint32_t delta_time = current_tick - p_motors->time;
-	p_motors->time = current_tick;
-
-	// ! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
-	// ! TIM3 is coutning in reverse order, that's why we use a "-" in the expression below
-	dist_ref_back_left   = htim2->Instance->CNT;
-	dist_ref_back_right  = - (uint32_t)htim3->Instance->CNT;
-	dist_ref_front_right = (uint32_t)htim4->Instance->CNT;
-	dist_ref_front_left  = htim5->Instance->CNT;
-
-	dist_ref_front_left_diff  = dist_ref_front_left  - p_motors->left.dist_ref_front;
-	dist_ref_back_left_diff   = dist_ref_back_left   - p_motors->left.dist_ref_back;
-	dist_ref_front_right_diff = dist_ref_front_right - p_motors->right.dist_ref_front;
-	dist_ref_back_right_diff  = dist_ref_back_right  - p_motors->right.dist_ref_back;
-
-	// Carefull: Here we go from 'tick' unit to 'm' unit
-  //  dist_total_diff += (dist_ref_front_left_diff + dist_ref_back_left_diff + dist_ref_front_right_diff + dist_ref_back_right_diff) * FACTOR_TICK_2_METER / 4.0;
-//	dist_right_diff = (dist_ref_front_right_diff + dist_ref_back_right_diff) * FACTOR_TICK_2_METER / 2.0;
-//	dist_left_diff = (dist_ref_front_left_diff + dist_ref_back_left_diff) * FACTOR_TICK_2_METER / 2.0;
-
-	p_motors->dist       += dist_total_diff;
-	p_motors->right.dist += dist_right_diff;
-	p_motors->left.dist  += dist_left_diff;
-
-	p_motors->speed       = (float) (dist_total_diff * 1000) / delta_time;
-	p_motors->right.speed = (float) (dist_right_diff * 1000) / delta_time;
-	p_motors->left.speed = (float) (dist_left_diff * 1000) / delta_time;
-
-	p_motors->left.dist_ref_front = dist_ref_front_left;
-	p_motors->left.dist_ref_back = dist_ref_back_left;
-	p_motors->right.dist_ref_front = dist_ref_front_right;
-	p_motors->right.dist_ref_back = dist_ref_back_right;
+	//Temps d execution
+	//update du context
 
 	return 0;
 }
+*/
 /*
  * return values :
  * 0 : ok, table loaded
  * 1 : ko, empty input(s)
  * 2 : ...
  */
+/*
 uint32_t controller_load_actions (controller_t *p_motors, action_target_t **p_actions_targets_table) {
 
 	if (!p_motors || !p_actions_targets_table) {
@@ -128,7 +224,7 @@ uint32_t controller_load_actions (controller_t *p_motors, action_target_t **p_ac
 	p_motors->p_action_curr = *p_actions_targets_table;
 	return 0;
 }
-
+*/
 
 /*
  * return values :
@@ -136,6 +232,7 @@ uint32_t controller_load_actions (controller_t *p_motors, action_target_t **p_ac
  *
  *
  */
+/*
 action_t controller_find_state(controller_t *p_motors)
 {
 	action_t current_state;
@@ -166,32 +263,40 @@ action_t controller_find_state(controller_t *p_motors)
 	return current_state;
 }
 
-int controller_fsm(controller_t *p_motors)
-{
-	action_t current_state = controller_find_state(p_motors);
+bool controller_is_end(){
+	return true;
+}
+*/
 
-	switch(current_state)
+void controller_fsm()
+{
+	switch(actions_scenario[ctx.actions_nb])
 	{
 	case ACTION_IDLE :
 	{
 		motor_speed_left(0);
 		motor_speed_right(0);
-		//do nothing ?
 	}
 	break;
 	case ACTION_START :
 	{
-		//
+		ctx.pwm = 10;
+		/*
 		p_motors->speed = next_speed(p_motors->p_action_curr->speed, SLOPE_ACC, SLOPE_DEC, 0.001, p_motors->speed);
 		encoder_update();
 		float real_speed = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2) / 0.001;
 		float pwm = pid_output(p_motors->speed_pid, real_speed - p_motors->speed);
+		 */
+		motor_speed_left(ctx.pwm);
+		motor_speed_right(ctx.pwm);
 
-		motor_speed_left(pwm);
-		motor_speed_right(pwm);
-
-		p_motors->dist = encoder_get_absolute();
-
+		float dist = encoder_get_absolute();
+		if(dist > DIST_START)
+		{
+			++ctx.actions_nb;
+			encoder_reset();
+		}
+		/*
 		//if dist_remontée > dist consigne --> transition
 		//current speed :
 		//p_motors->speed
@@ -202,22 +307,40 @@ int controller_fsm(controller_t *p_motors)
 			//p_motors->p_action_curr = (p_motors->p_action_curr)+1; //go to next action
 			current_state = controller_find_state(p_motors);
 		}
+		*/
 	}
 	break;
 	case ACTION_RUN_1 :
 	{
-		//
+		ctx.pwm = 10;
+
+		motor_speed_left(ctx.pwm);
+		motor_speed_right(ctx.pwm);
+		float dist = encoder_get_absolute();
+		if(dist > DIST_RUN_1)
+		{
+			++ctx.actions_nb;
+			encoder_reset();
+		}
 	}
 	break;
 	case ACTION_STOP :
 	{
-		//
-	}
-	break;
-	case ACTION_CTR :
-	{
-		//
+		ctx.pwm = 10;
+
+		motor_speed_left(ctx.pwm);
+		motor_speed_right(ctx.pwm);
+
+		float dist = encoder_get_absolute();
+		if(dist > DIST_STOP)
+		{
+			++ctx.actions_nb;
+			encoder_reset();
+			motor_speed_left(0);
+			motor_speed_right(0);
+		}
 	}
 	break;
 	}
 }
+

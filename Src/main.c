@@ -43,12 +43,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "motor.h"
 #include "serial.h"
 #include "tone.h"
-#include "fonc.h"
 #include "controller.h"
-#include "motor.h"
+
 
 /* USER CODE END Includes */
 
@@ -125,7 +123,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  controller_t* p_controller = controller_ctx_init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -147,55 +144,33 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
+  //A completer avec les 2 nouvelles LED IR
   HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
   HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
 
 
-  //boutons de gauche à droite : bouton 2, 1, 3
-  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
-  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
-
-  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
-
+  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
 
   play_startup_song(&htim9, TIM_CHANNEL_1);
 
   HAL_Serial_Init(&huart1, &com);
   HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
-  HAL_Delay(1000);
+  controller_ctx_init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  enum state {IDLE, AVANT, ARRIERE};
+  enum state {IDLE, WARMUP, RUNNING, FINISH, UPLOAD, FAILSAFE};
   enum state current_state = IDLE;
-  uint32_t begin_led = 0;
-  uint32_t end_led = 0;
-  float position = 0;
-  float distance = 0;
-  uint16_t pos_tmp=0;
-  //ENCODER
-
   /*		avancer			*/
   uint32_t tim_start=0;
   /*		avancer			*/
 
 
-  /*
-   * TODO Include this whole &(actions_targets[.]) thing into the load_actions function ?
-   *      That would simplify the definition of scenarios.
-   */
-  action_target_t* actions_scenario[] = {
-		&(actions_targets[ACTION_START]),
-		&(actions_targets[ACTION_RUN_1]),
-		&(actions_targets[ACTION_RUN_1]),
-		&(actions_targets[ACTION_STOP]),
-  		NULL
-  };
-
-  controller_load_actions (p_controller, actions_scenario);
+//  controller_load_actions (p_controller, actions_scenario);
 
   while (1)
   {
@@ -203,117 +178,77 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  /*
-	   * We update state variables of all functions according to "hardware" registers
-	   * So that our structures reflect the new current reality.
-	  */
-	  uint32_t ret = controller_ctx_update (p_controller, &htim2, &htim3, &htim4, &htim5);
-
-      //! TIM2 et TIM5 sur 32 bits, les autres timers sur 16 bits
-
-	  HAL_Delay(1);
 	  switch(current_state)
 	  {
 	  case IDLE :
 	  {
 		  //run(0);
-		  if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET)
+		  if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET)
 		  {
-
-			  current_state = AVANT;
-			  init_setpoint();
-			  tim_start=HAL_GetTick();
-			  run(0,0);
-
-			  //current_state = AVANT;
-			  //begin_led = HAL_GetTick();
-			  //distance=0;
-			  //HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_SET); // Allume la LED IR
-			  //HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_SET); // Allume la LED IR
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
-			  /*
-			  ADC_ChannelConfTypeDef sConfig;
-			  HAL_ADC_ConfigChannel&hadc1, &sConfig);
-			  HAL_ADC_PollForConversion(&hadc1,1);
-			  uint32_t  value = HAL_ADC_GetValue(&hadc1);
-		 	 */
-			  HAL_Serial_Print(&com,"AVANT\r\n");
+			  HAL_Serial_Print(&com,"IDLE->WARMUP\r\n");
+
+			  current_state = WARMUP;
+			  tim_start=HAL_GetTick();
 		  }
-		  else
+		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET)
 		  {
-			  //HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
-			  //HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
-			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
-			    HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
-//			  current_state = ARRIERE;
-//			  begin_led = HAL_GetTick();
-//			  distance=0;
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+
+			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
+
+			  current_state = UPLOAD;
 		  }
 	  }
 	  break;
-	  case AVANT :
+	  case WARMUP :
 	  {
-		  /*
-		   * A gauche ET à droite
-		   *   avance -> get consigne non corrigée
-		   *   encoder -> get valeur réel
-		   *
-		   *   gain (consigne non corrigée, valeur réel) -> consigne corrigée en fonction de l'erreur
-		   *
-		   * run (consigne corrigée gauche, consigne corrigée droite)
-		   */
+		  //WAit 1sec4'
+		  if (tim_start + 1400 < HAL_GetTick() ){
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+			  current_state = RUNNING;
+			  HAL_Serial_Print(&com,"WARMUP->RUNNING\r\n");
+
+			  controller_start();
+
+		  }
+
+	  }
+	  break;
+	  case UPLOAD :
+	  {
+		  HAL_Delay(500);
+		  current_state = IDLE;
+
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
 
-
-
-		  float vitesse = 0;
-
-		  //uint32_t fin_avance = get_setpoint(((float)HAL_GetTick() - (float)tim_start)*0.001, &vitesse);
-
-
-		  //asservissement
-		  // get_vitesse()
-		  // get_erreur (vitesse_th, vitesse_réel)
-		  // get consigne modifiée
-
-		  // application de la consigne corrigée
-		  run(vitesse*20.0,vitesse*20.0);
-
-		  /*
-		  if(fin_avance==1)
-		  {
-			  current_state = IDLE;
-			  HAL_Serial_Print(&com,"IDLE\r\n");
-		  }
-		  */
-
-		  /*end_led = HAL_GetTick();
-		  if(end_led >= begin_led + 1000 )
-		  {
-			  run(20);
-			  if(distance >= 0.18) //si le robot avance d'une case
-			  {
-				  current_state = IDLE;
-			  }
-		  }
-		  */
+		  HAL_Serial_Print(&com,"UPLOAD->IDLE\r\n");
 	  }
 	  break;
-	  case ARRIERE :
-	  {
-		  end_led = HAL_GetTick();
-		  if(end_led >= begin_led + 1000 )
-		  {
-			  run(-10,-10);
-			  if(distance <= 0.06) //si le robot recule d'une demi case
-			  {
-				  current_state = IDLE;
-			  }
-		  }
 
+	  case RUNNING :
+	  {
+		  controller_update();
+
+
+		  if(controller_is_end()){
+			  current_state = FINISH;
+			  HAL_Serial_Print(&com,"RUNNING->FINISH\r\n");
+		  }
+	  }
+	  break;
+
+	  case FINISH :
+	  {
+
+		  play_finishing_song(&htim9, TIM_CHANNEL_1);
+		  current_state = IDLE;
+		  HAL_Serial_Print(&com,"FINISH->IDLE\r\n");
 	  }
 	  break;
 	  }

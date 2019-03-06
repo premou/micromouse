@@ -39,6 +39,13 @@ void play_startup_song(TIM_HandleTypeDef* htim, uint32_t channel){
 	  }
 }
 
+void play_finishing_song(TIM_HandleTypeDef* htim, uint32_t channel){
+	  for (int i=0;i<=400;i+=50){
+		  tone(htim, i, 100, channel);
+	  }
+}
+
+
 void play_startup_song2(TIM_HandleTypeDef* htim, uint32_t channel){
 
 	(void) NOTE_A6;
