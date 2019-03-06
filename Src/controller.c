@@ -4,55 +4,15 @@
  *  Created on: 1 mars 2019
  *      Author: Invite
  */
-#include "pid.h"
 #include "controller.h"
-#include "motor.h"
-#include "fonc.h"
 #include "serial.h"
+#include "motor.h"
 #include "encoder.h"
+#include "pid.h"
 
 extern HAL_Serial_Handler com;
-void controller_fsm();
 
-typedef enum {
-	ACTION_IDLE,
-	ACTION_START, //avance de 8 cm puis RUN_1
-	ACTION_RUN_1,
-	ACTION_STOP,
-	ACTION_CTR
-} action_t;
-
-static action_t actions_scenario[] = {
-		ACTION_START,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_STOP,
-		ACTION_IDLE
-  };
-
-// GLOBAL VARIABLES
-
-/*
- * The tick to meter factor is computed by using :
- *  - A generic part FACTOR_TICK_2_METER_GEN
- *    built with :
- *     - Pi : 3.1415
- *
- *     - The wheel diameter (m) : 0.026
- *
- *     - A factor that convert the number of 'ticks' provided by the timer
- *       into a number of motor rounds.
- *       Since a motor has two Hall effect sensors, each composed of 6 polar transitions,
- *       therefore creating 6 clock edges per motor round,
- *       we can deduce that this factor equals 2 * 6 = 12.
- *
- *  - A reduction factor FACTOR_TICK_2_METER_<X>, that depends on the motor we use.
- *    We currently use 2 kinds of motors, with the following reductions factors :
- *     - 30
- *     - 50
- */
-
-
+// CONSTANT
 
 /* slopes for speed (in m/s-2) */
 #define SLOPE_ACC 2
@@ -62,40 +22,21 @@ static action_t actions_scenario[] = {
 #define DIST_RUN_1 0.18 //in m
 #define DIST_STOP 0.09 //in m
 
-
 // ENUM
 
-typedef  enum {
-	LEFT,
-	RIGHT
-} side_t;
-
-
-
+typedef enum {
+	ACTION_IDLE,
+	ACTION_START,
+	ACTION_RUN_1,
+	ACTION_STOP,
+	ACTION_CTR
+} action_t;
 
 // STRUCTURES DEFINITIONS
 
-typedef struct {
-	float speed;
-	float distance;
-
-} action_target_t;
-
-typedef struct {
-	float dist;
-	float speed;
-
-	// TIM front
-	// TIM bask
-
-	uint32_t dist_ref_front;
-	uint32_t dist_ref_back;
-
-} controller_side_t;
-
 typedef struct  {
 
-	uint32_t          actions_nb; //indicates current action
+	uint32_t actions_nb; // index of current action in the scenario array
 	uint32_t time;
 	int32_t pwm;
 /*
@@ -118,10 +59,21 @@ typedef struct  {
 	*/
 } controller_t;
 
+// GLOBAL VARIABLES
+
+static action_t actions_scenario[] = {
+	ACTION_START,
+	ACTION_RUN_1,
+	ACTION_RUN_1,
+	ACTION_STOP,
+	ACTION_IDLE
+  };
 
 static controller_t ctx;
 
-void controller_ctx_init ()
+// PUBLIC FUNCTIONS
+
+void controller_init ()
 {
 	/*revenir au début de la liste des actions*/
 	ctx.actions_nb = 0;
@@ -138,6 +90,8 @@ void controller_start(){
 	ctx.pwm = 0;
 	encoder_reset();
 }
+
+void controller_fsm(); // forward declaration
 
 void controller_update(){
 	//cadence a 1ms
@@ -161,6 +115,103 @@ void controller_update(){
 bool controller_is_end(){
 	return actions_scenario[ctx.actions_nb] == ACTION_IDLE;
 }
+
+// PRIVATE FUNCTIONS
+
+void controller_fsm()
+{
+	switch(actions_scenario[ctx.actions_nb])
+	{
+	case ACTION_IDLE :
+	{
+		motor_speed_left(0);
+		motor_speed_right(0);
+	}
+	break;
+
+	case ACTION_START :
+	{
+		ctx.pwm = 10;
+		/*
+		p_motors->speed = next_speed(p_motors->p_action_curr->speed, SLOPE_ACC, SLOPE_DEC, 0.001, p_motors->speed);
+		encoder_update();
+		float real_speed = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2) / 0.001;
+		float pwm = pid_output(p_motors->speed_pid, real_speed - p_motors->speed);
+		 */
+		motor_speed_left(ctx.pwm);
+		motor_speed_right(ctx.pwm);
+
+		float dist = encoder_get_absolute();
+		if(dist > DIST_START)
+		{
+			++ctx.actions_nb;
+			encoder_reset();
+			// TODO : positionner distance au début du mouvement (remaining distance)
+			// TODO : remplacer reset par incrémentation de la distance pour conserver l'éventuelle erreur de position
+		}
+		/*
+		//if dist_remontée > dist consigne --> transition
+		//current speed :
+		//p_motors->speed
+		if(p_motors->dist > p_motors->p_action_curr->distance)
+		{
+			//current_state=ACTION_IDLE;//transition
+			//comment passer a l'action suivante ?
+			//p_motors->p_action_curr = (p_motors->p_action_curr)+1; //go to next action
+			current_state = controller_find_state(p_motors);
+		}
+		*/
+	}
+	break;
+
+	case ACTION_RUN_1 :
+	{
+		ctx.pwm = 10;
+
+		motor_speed_left(ctx.pwm);
+		motor_speed_right(ctx.pwm);
+		float dist = encoder_get_absolute();
+		if(dist > DIST_RUN_1)
+		{
+			++ctx.actions_nb;
+			encoder_reset();
+		}
+	}
+	break;
+
+	case ACTION_STOP :
+	{
+		ctx.pwm = 10;
+
+		motor_speed_left(ctx.pwm);
+		motor_speed_right(ctx.pwm);
+
+		float dist = encoder_get_absolute();
+		if(dist > DIST_STOP)
+		{
+			++ctx.actions_nb;
+			encoder_reset();
+			motor_speed_left(0);
+			motor_speed_right(0);
+		}
+	}
+	break;
+
+	case ACTION_CTR :
+	{
+		// nop
+	}
+	break;
+
+	}
+}
+
+
+
+//typedef  enum {
+//	LEFT,
+//	RIGHT
+//} side_t;
 
 
 /*
@@ -268,79 +319,23 @@ bool controller_is_end(){
 }
 */
 
-void controller_fsm()
-{
-	switch(actions_scenario[ctx.actions_nb])
-	{
-	case ACTION_IDLE :
-	{
-		motor_speed_left(0);
-		motor_speed_right(0);
-	}
-	break;
-	case ACTION_START :
-	{
-		ctx.pwm = 10;
-		/*
-		p_motors->speed = next_speed(p_motors->p_action_curr->speed, SLOPE_ACC, SLOPE_DEC, 0.001, p_motors->speed);
-		encoder_update();
-		float real_speed = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2) / 0.001;
-		float pwm = pid_output(p_motors->speed_pid, real_speed - p_motors->speed);
-		 */
-		motor_speed_left(ctx.pwm);
-		motor_speed_right(ctx.pwm);
 
-		float dist = encoder_get_absolute();
-		if(dist > DIST_START)
-		{
-			++ctx.actions_nb;
-			encoder_reset();
-		}
-		/*
-		//if dist_remontée > dist consigne --> transition
-		//current speed :
-		//p_motors->speed
-		if(p_motors->dist > p_motors->p_action_curr->distance)
-		{
-			//current_state=ACTION_IDLE;//transition
-			//comment passer a l'action suivante ?
-			//p_motors->p_action_curr = (p_motors->p_action_curr)+1; //go to next action
-			current_state = controller_find_state(p_motors);
-		}
-		*/
-	}
-	break;
-	case ACTION_RUN_1 :
-	{
-		ctx.pwm = 10;
+//typedef struct {
+//	float speed;
+//	float distance;
+//
+//} action_target_t;
 
-		motor_speed_left(ctx.pwm);
-		motor_speed_right(ctx.pwm);
-		float dist = encoder_get_absolute();
-		if(dist > DIST_RUN_1)
-		{
-			++ctx.actions_nb;
-			encoder_reset();
-		}
-	}
-	break;
-	case ACTION_STOP :
-	{
-		ctx.pwm = 10;
-
-		motor_speed_left(ctx.pwm);
-		motor_speed_right(ctx.pwm);
-
-		float dist = encoder_get_absolute();
-		if(dist > DIST_STOP)
-		{
-			++ctx.actions_nb;
-			encoder_reset();
-			motor_speed_left(0);
-			motor_speed_right(0);
-		}
-	}
-	break;
-	}
-}
+//
+//typedef struct {
+//	float dist;
+//	float speed;
+//
+//	// TIM front
+//	// TIM bask
+//
+//	uint32_t dist_ref_front;
+//	uint32_t dist_ref_back;
+//
+//} controller_side_t;
 

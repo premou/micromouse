@@ -11,9 +11,9 @@
 #include "stm32f7xx_hal.h"
 #include <stdbool.h>
 
-void controller_ctx_init();
+void controller_init();
 void controller_start();
-void controller_ctx_update();
+void controller_update();
 bool controller_is_end();
 
 #endif /* CONTROLLER_H_ */
