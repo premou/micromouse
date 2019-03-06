@@ -9,6 +9,7 @@
 #include "motor.h"
 #include "encoder.h"
 #include "pid.h"
+#include "datalogger.h"
 
 extern HAL_Serial_Handler com;
 
@@ -81,6 +82,7 @@ void controller_init ()
 	ctx.pwm = 0;
 	motor_init();
 	encoder_init();
+	HAL_DataLogger_Init(1,4); // TODO : to be completed with each recorded field size
 }
 
 void controller_start(){
@@ -89,6 +91,7 @@ void controller_start(){
 	ctx.time = HAL_GetTick();
 	ctx.pwm = 0;
 	encoder_reset();
+	HAL_DataLogger_Clear();
 }
 
 void controller_fsm(); // forward declaration
@@ -102,12 +105,7 @@ void controller_update(){
 		//HAL_Serial_Print(&com,"current time is %d, cuurent action is %d\r\n", time_temp, ctx.actions_nb);
 		encoder_update();
 		controller_fsm();
-		/*
-		if(!controller_is_end())
-		{
-			++ctx.actions_nb;
-		}
-		*/
+		HAL_DataLogger_Record(1,0); // TODO : to be completed with field values
 	}
 
 }

@@ -46,6 +46,7 @@
 #include "serial.h"
 #include "tone.h"
 #include "controller.h"
+#include "datalogger.h"
 
 
 /* USER CODE END Includes */
@@ -224,7 +225,8 @@ int main(void)
 
 	  case UPLOAD :
 	  {
-		  HAL_Delay(500);
+		  HAL_DataLogger_Send();
+
 		  current_state = IDLE;
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
