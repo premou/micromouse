@@ -103,3 +103,9 @@ Buzzer
 
 Battery
 -------
+#HW: Robot is powered with a LIPO 2S (8.4V) 200mA.h (or more) battery, connected to the STM32 (PA3), through a voltage divider (ratio about 1:10).
+
+#HAL: PA3 input is configured as Alternate Function (ADC3). ADC3 channel 3 (IN3) is configured to measure battery voltage, with 12 bits resolution, continuous scan conversion and continuous DMA requests, with a maximum conversion cycles (480 cycles) per measure.
+
+#Software: ADC3 is started at Power On Reset in DMA mode (HAL_ADC_Start_DMA(&hadc3..)) using HAL API. User RAM is then periodically updated (overwrited) with last ADC3 channel 3 measure. A simple user function applies the ratio (once calibrated), in order to provide battery voltage in Volts (float) from ADC3 channel 3 measures (uint16). When battery voltage is lower than about 3.2V per element (6.4V), robot shall stops (FAILSAFE mode). Main robot FSM checks the battery voltage at the begining of each run. While running (learning run or fast run), the robot does'nt stop until end of run.
+
