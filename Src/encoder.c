@@ -69,8 +69,8 @@ void encoder_update(){
 	encoder.front_right = front_right;
 	encoder.front_left = front_left;
 
-    encoder.dist_left_relative = (int32_t)relative32_back_left + (int32_t) relative32_front_left;
-    encoder.dist_right_relative = (int32_t)relative16_back_right + (int32_t) relative16_front_right;
+    encoder.dist_left_relative = (int32_t)relative32_back_left + (int32_t)relative32_front_left;
+    encoder.dist_right_relative = (int32_t)relative16_back_right + (int32_t)relative16_front_right;
     encoder.dist_absolute += (encoder.dist_left_relative + encoder.dist_right_relative);
 
 }
@@ -80,7 +80,7 @@ void encoder_update(){
  * in meters
  */
 float encoder_get_absolute(){
-	return encoder.dist_absolute * FACTOR_TICK_2_METER / 4.0;
+	return (float)(encoder.dist_absolute) * FACTOR_TICK_2_METER / 4.0;
 }
 
 /*
@@ -88,7 +88,7 @@ float encoder_get_absolute(){
  * in meters
  */
 float encoder_get_delta_left(){
-	return encoder.dist_left_relative * FACTOR_TICK_2_METER / 2.0;
+	return (float)(encoder.dist_left_relative) * FACTOR_TICK_2_METER / 2.0;
 }
 
 /*
@@ -96,7 +96,7 @@ float encoder_get_delta_left(){
  * in meters
  */
 float encoder_get_delta_right(){
-	return encoder.dist_right_relative * FACTOR_TICK_2_METER / 2.0;
+	return (float)(encoder.dist_right_relative) * FACTOR_TICK_2_METER / 2.0;
 }
 
 

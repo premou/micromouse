@@ -33,10 +33,10 @@ float pid_output(pid_context_t *ctx, float error)
 {
 	float p_term = error*ctx->Kp;
 	ctx->err_sum += error;
-	float integral = ctx->err_sum*ctx->Ki;
-	float derivative = (error - ctx->err_previous)*ctx->Kd;
+	float i_term = ctx->err_sum*ctx->Ki;
+	float d_term = (error - ctx->err_previous)*ctx->Kd;
 	ctx->err_previous = error;
 
-	return p_term + integral + derivative;
+	return p_term + i_term + d_term;
 }
 
