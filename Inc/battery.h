@@ -27,13 +27,13 @@ enum VBATT_ID
 };
 
 static float const hal_battery_voltage_hw_ration[VBATT_COUNT] = {
-	0.175f, // calibrated, measured on board
-	0.175f
+	0.092f, // calibrated, measured on board
+	0.092f
 };
 
 static float const hal_battery_voltage_low_threshold[VBATT_COUNT] = {
-	7.2, // V
-	7.2
+	6.6, // V
+	6.6
 };
 
 /* HAL Public Data ------------------------------------------------------------------*/
@@ -43,7 +43,7 @@ static float const hal_battery_voltage_low_threshold[VBATT_COUNT] = {
 
 void HAL_Battery_Init(void);
 
-bool HAL_Battery_Is_Low();
+bool HAL_Battery_Is_Low(int id);
 
 float HAL_Battery_Get(int id); // volt
 

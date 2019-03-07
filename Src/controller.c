@@ -10,6 +10,7 @@
 #include "encoder.h"
 #include "pid.h"
 #include "datalogger.h"
+#include "math.h"
 
 extern HAL_Serial_Handler com;
 
@@ -22,6 +23,10 @@ extern HAL_Serial_Handler com;
 #define DIST_START 0.09 //in m
 #define DIST_RUN_1 0.18 //in m
 #define DIST_STOP 0.09 //in m
+
+#define SPEED_KP 5.0
+#define SPEED_KI 1.0
+#define SPEED_KD 1.0
 
 // ENUM
 
@@ -39,10 +44,23 @@ typedef struct  {
 
 	uint32_t actions_nb; // index of current action in the scenario array
 	uint32_t time;
+
 	int32_t pwm;
+
+
+	float speed_target;
+	float speed_setpoint;
+	float speed_current;
+	float speed_error;
+	float speed_pwm;
+
+
+
 /*
 	float dist;  //current distance
 	float speed; //current speed
+
+
 
 	controller_side_t left;
 	controller_side_t right;
@@ -56,8 +74,8 @@ typedef struct  {
 
 	action_target_t  *p_action_curr;
 
-	pid_context_t* speed_pid;
 	*/
+	pid_context_t speed_pid;
 } controller_t;
 
 // GLOBAL VARIABLES
@@ -70,6 +88,11 @@ static action_t actions_scenario[] = {
 	ACTION_IDLE
   };
 
+typedef struct {
+	float dist;
+	float speed;
+} action_values_t;
+
 static controller_t ctx;
 
 // PUBLIC FUNCTIONS
@@ -79,17 +102,38 @@ void controller_init ()
 	/*revenir au début de la liste des actions*/
 	ctx.actions_nb = 0;
 	ctx.time = 0;
-	ctx.pwm = 0;
+
+	ctx.speed_target = 0;
+	ctx.speed_current = 0;
+	ctx.speed_error = 0;
+	ctx.speed_setpoint = 0;
+	ctx.speed_pwm = 0;
+
 	motor_init();
 	encoder_init();
-	HAL_DataLogger_Init(1,4); // TODO : to be completed with each recorded field size
+
+	pid_init(&ctx.speed_pid, SPEED_KP, SPEED_KI, SPEED_KD);
+
+	HAL_DataLogger_Init(5,
+			4,
+			4,
+			4,
+			4,
+			1); // TODO : to be completed with each recorded field size
 }
 
 void controller_start(){
 	/*revenir au début de la liste des actions*/
 	ctx.actions_nb = 0;
 	ctx.time = HAL_GetTick();
-	ctx.pwm = 0;
+
+	ctx.speed_target = 0;
+	ctx.speed_current = 0;
+	ctx.speed_error = 0;
+	ctx.speed_setpoint = 0;
+	ctx.speed_pwm = 0;
+
+	pid_reset(&ctx.speed_pid);
 	encoder_reset();
 	HAL_DataLogger_Clear();
 }
@@ -105,7 +149,12 @@ void controller_update(){
 		//HAL_Serial_Print(&com,"current time is %d, cuurent action is %d\r\n", time_temp, ctx.actions_nb);
 		encoder_update();
 		controller_fsm();
-		HAL_DataLogger_Record(1,0); // TODO : to be completed with field values
+		HAL_DataLogger_Record(5,
+				(int32_t)(ctx.speed_target * 1000.0),
+				(int32_t)(ctx.speed_setpoint * 1000.0),
+				(int32_t)(ctx.speed_current * 1000.0),
+				(int32_t)(ctx.speed_error * 1000.0),
+				(int32_t)ctx.speed_pwm);
 	}
 
 }
@@ -129,15 +178,21 @@ void controller_fsm()
 
 	case ACTION_START :
 	{
-		ctx.pwm = 10;
-		/*
-		p_motors->speed = next_speed(p_motors->p_action_curr->speed, SLOPE_ACC, SLOPE_DEC, 0.001, p_motors->speed);
+
+//		ctx.pwm = 10;
+		ctx.speed_target = SPEED_TARGET;
+		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
+
 		encoder_update();
-		float real_speed = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2) / 0.001;
-		float pwm = pid_output(p_motors->speed_pid, real_speed - p_motors->speed);
+		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2) / 0.001;
+
+		ctx.speed_error = ctx.speed_target - ctx.speed_current;
+
+		ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
+		/*
 		 */
-		motor_speed_left(ctx.pwm);
-		motor_speed_right(ctx.pwm);
+		motor_speed_left(ctx.speed_pwm);
+		motor_speed_right(ctx.speed_pwm);
 
 		float dist = encoder_get_absolute();
 		if(dist > DIST_START)

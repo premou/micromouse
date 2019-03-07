@@ -102,6 +102,7 @@ void HAL_DataLogger_Send(void)
             data_index = 0;
             ++row_index;
             //HAL_Serial_Print(&serial, "\n");
+            HAL_Delay(2);
         }
     }
     HAL_Serial_Print(&com, "\nEOL\n");

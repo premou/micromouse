@@ -70,6 +70,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;
+DMA_HandleTypeDef hdma_adc3;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
@@ -173,6 +174,8 @@ int main(void)
   enum state {IDLE, WARMUP, RUNNING, FINISH, UPLOAD, FAILSAFE};
   enum state current_state = IDLE;
   uint32_t tim_start = 0;
+
+  HAL_Delay(1000);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -183,7 +186,7 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
-		  if(HAL_Battery_Is_Low())
+		  if(HAL_Battery_Is_Low(VBATT))
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
@@ -836,6 +839,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);

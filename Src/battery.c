@@ -12,7 +12,7 @@
 
 extern ADC_HandleTypeDef hadc3;
 
-__IO uint16_t HAL_Battery_ADC_Converted_Values[2] = {0,0}; /// I used two storage values to use circular DMA mode in continuous/scan ADM mode. This allow 32-bit DMA transfer.
+__IO uint16_t HAL_Battery_ADC_Converted_Values[2] = {0,0}; /// I used two storage values to use circular DMA mode in continuous/scan ADM mode. This allows 32-bit DMA transfer.
 
 /* Private functions ---------------------------------------------------------*/
 
