@@ -44,7 +44,9 @@ typedef struct  {
 
 	uint32_t actions_nb; // index of current action in the scenario array
 	uint32_t time;
+	// TODO : add sub_action_state
 
+	// speed
 	float speed_target;
 	float speed_setpoint;
 	float speed_current;
@@ -52,6 +54,10 @@ typedef struct  {
 	float speed_pwm;
 
 	pid_context_t speed_pid;
+
+	// rotation speed
+	// TODO : To Be Completed
+
 } controller_t;
 
 // GLOBAL VARIABLES
@@ -74,6 +80,7 @@ void controller_init ()
 	ctx.actions_nb = 0;
 	ctx.time = 0;
 
+	// speed
 	ctx.speed_target = 0;
 	ctx.speed_current = 0;
 	ctx.speed_error = 0;
@@ -81,6 +88,9 @@ void controller_init ()
 	ctx.speed_pwm = 0;
 
 	pid_init(&ctx.speed_pid, SPEED_KP, SPEED_KI, SPEED_KD);
+
+	// rotation speed
+	// TODO : To Be Completed
 
 	motor_init();
 	encoder_init();
@@ -192,6 +202,16 @@ void controller_fsm()
 
 	case ACTION_STOP :
 	{
+		// TODO : STOP is a two-phase action
+		// TODO : add a sub_action_state into ctx
+		// TODO : reset sub_action_state at the beginning of each action
+		// TODO : use sub_action_index to make a local fsm : switch(sub_action_state) { case 0: /.../ case 1: /..../}
+		// TODO : first phase : keep running at cruise speed
+		// TODO : second phase : decrease speed until stop
+		// TODO : first to second action transition : use have_to_break()
+
+
+
 		ctx.speed_target = SPEED_TARGET;
 		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
 		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
