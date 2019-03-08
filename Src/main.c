@@ -255,6 +255,11 @@ int main(void)
 			  current_state = FINISH;
 			  HAL_Serial_Print(&com,"RUNNING->FINISH\r\n");
 		  }
+
+		  // TODO : if BUTTON3 is pressed, then emergency STOPs.
+		  // TODO : if BUTTON3 is pressed, then emergency STOPs.
+		  // TODO : if BUTTON3 is pressed, then emergency STOPs.
+
 	  }
 	  break;
 

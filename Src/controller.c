@@ -134,7 +134,6 @@ void controller_update(){
 	if(time_temp > ctx.time)
 	{
 		ctx.time = time_temp;
-		//HAL_Serial_Print(&com,"current time is %d, cuurent action is %d\r\n", time_temp, ctx.actions_nb);
 		encoder_update();
 		controller_fsm();
 		HAL_DataLogger_Record(7,
@@ -215,14 +214,6 @@ void controller_fsm()
 
 	case ACTION_STOP :
 	{
-		// TODO : STOP is a two-phase action
-		// TODO : add a sub_action_state into ctx
-		// TODO : reset sub_action_state at the beginning of each action
-		// TODO : use sub_action_index to make a local fsm : switch(sub_action_state) { case 0: /.../ case 1: /..../}
-		// TODO : first phase : keep running at cruise speed
-		// TODO : second phase : decrease speed until stop
-		// TODO : first to second action transition : use have_to_break()
-
 		switch (ctx.sub_action_state) {
 			case 0 :
 			{
@@ -250,7 +241,7 @@ void controller_fsm()
 				motor_speed_left(ctx.speed_pwm);
 				motor_speed_right(ctx.speed_pwm);
 
-				if(ctx.speed_setpoint==0)
+				if(ctx.speed_setpoint==ctx.speed_target)
 				{
 					++ctx.sub_action_state;
 				}
