@@ -17,14 +17,14 @@ extern HAL_Serial_Handler com;
 // CONSTANT
 
 /* slopes for speed (in m/s-2) */
-#define SLOPE_ACC 2
-#define SLOPE_DEC 2
+#define SLOPE_ACC 2.0
+#define SLOPE_DEC 2.0
 #define SPEED_TARGET 0.5 //in m/s
 #define DIST_START 0.09 //in m
 #define DIST_RUN_1 0.18 //in m
 #define DIST_STOP 0.09 //in m
 
-#define SPEED_KP 100.0
+#define SPEED_KP 800.0
 #define SPEED_KI 0.0
 #define SPEED_KD 0.0
 
@@ -44,7 +44,7 @@ typedef struct  {
 
 	uint32_t actions_nb; // index of current action in the scenario array
 	uint32_t time;
-	// TODO : add sub_action_state
+	uint32_t sub_action_state;
 
 	// speed
 	float speed_target;
@@ -86,6 +86,7 @@ void controller_init ()
 	ctx.speed_error = 0;
 	ctx.speed_setpoint = 0;
 	ctx.speed_pwm = 0;
+	ctx.sub_action_state = 0;
 
 	pid_init(&ctx.speed_pid, SPEED_KP, SPEED_KI, SPEED_KD);
 
@@ -95,7 +96,9 @@ void controller_init ()
 	motor_init();
 	encoder_init();
 
-	HAL_DataLogger_Init(5,
+	HAL_DataLogger_Init(7,
+			1,
+			1,
 			4,
 			4,
 			4,
@@ -107,7 +110,9 @@ void controller_start(){
 	/*revenir au début de la liste des actions*/
 	ctx.actions_nb = 0;
 	ctx.time = HAL_GetTick();
+	ctx.sub_action_state = 0;
 
+	// speed
 	ctx.speed_target = 0;
 	ctx.speed_current = 0;
 	ctx.speed_error = 0;
@@ -132,12 +137,15 @@ void controller_update(){
 		//HAL_Serial_Print(&com,"current time is %d, cuurent action is %d\r\n", time_temp, ctx.actions_nb);
 		encoder_update();
 		controller_fsm();
-		HAL_DataLogger_Record(5,
+		HAL_DataLogger_Record(7,
+				(int32_t)(ctx.actions_nb),
+				(int32_t)(ctx.sub_action_state),
 				(int32_t)(ctx.speed_target * 1000.0),
 				(int32_t)(ctx.speed_setpoint * 1000.0),
 				(int32_t)(ctx.speed_current * 1000.0),
 				(int32_t)(ctx.speed_error * 1000.0),
-				(int32_t)ctx.speed_pwm);
+				(int32_t)(ctx.speed_pwm)
+				);
 	}
 }
 
@@ -163,7 +171,7 @@ void controller_fsm()
 		ctx.speed_target = SPEED_TARGET;
 		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
 		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-		ctx.speed_error = ctx.speed_target - ctx.speed_current;
+		ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
 		ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
 		motor_speed_left(ctx.speed_pwm);
 		motor_speed_right(ctx.speed_pwm);
@@ -173,28 +181,33 @@ void controller_fsm()
 		if(dist > DIST_START)
 		{
 			++ctx.actions_nb;
+			ctx.sub_action_state = 0;
+
 			encoder_reset();
 			// TODO : positionner distance au début du mouvement (remaining distance)
 			// TODO : remplacer reset par incrémentation de la distance pour conserver l'éventuelle erreur de position
 		}
+
 	}
 	break;
 
 	case ACTION_RUN_1 :
 	{
+
 		ctx.speed_target = SPEED_TARGET;
 		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
 		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-		ctx.speed_error = ctx.speed_target - ctx.speed_current;
+		ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
 		ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
 		motor_speed_left(ctx.speed_pwm);
 		motor_speed_right(ctx.speed_pwm);
-
 
 		float dist = encoder_get_absolute();
 		if(dist > DIST_RUN_1)
 		{
 			++ctx.actions_nb;
+			ctx.sub_action_state = 0;
+
 			encoder_reset();
 		}
 	}
@@ -210,25 +223,58 @@ void controller_fsm()
 		// TODO : second phase : decrease speed until stop
 		// TODO : first to second action transition : use have_to_break()
 
+		switch (ctx.sub_action_state) {
+			case 0 :
+			{
+				ctx.speed_target = SPEED_TARGET;
+				ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
+				ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
+				ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
+				motor_speed_left(ctx.speed_pwm);
+				motor_speed_right(ctx.speed_pwm);
 
+				if(have_to_break(0, ctx.speed_setpoint, DIST_STOP-encoder_get_absolute(), SLOPE_DEC))
+				{
+					++ctx.sub_action_state;
+				}
+			}
+				break;
+			case 1 :
+			{
+				ctx.speed_target = 0;
+				ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
+				ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
+				ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
+				motor_speed_left(ctx.speed_pwm);
+				motor_speed_right(ctx.speed_pwm);
 
-		ctx.speed_target = SPEED_TARGET;
-		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
-		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-		ctx.speed_error = ctx.speed_target - ctx.speed_current;
-		//ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
-		ctx.speed_pwm = 10; // To Be Deleted
-		motor_speed_left(ctx.speed_pwm);
-		motor_speed_right(ctx.speed_pwm);
+				if(ctx.speed_setpoint==0)
+				{
+					++ctx.sub_action_state;
+				}
 
-		float dist = encoder_get_absolute();
-		if(dist > DIST_STOP)
-		{
-			++ctx.actions_nb;
-			encoder_reset();
-			motor_speed_left(0);
-			motor_speed_right(0);
+			}
+				break;
+			case 2 :
+			{
+				ctx.speed_target = 0;
+				ctx.speed_setpoint = 0;
+				ctx.speed_current = 0;
+				ctx.speed_error = 0;
+				ctx.speed_pwm = 0;
+				motor_speed_left(ctx.speed_pwm);
+				motor_speed_right(ctx.speed_pwm);
+
+				++ctx.actions_nb;
+				ctx.sub_action_state = 0;
+
+				encoder_reset();
+			}
+				break;
 		}
+
 	}
 	break;
 
