@@ -35,9 +35,9 @@ def main():
   sampleCtx[2] = { "title": "phase",           "unit": "su", "color": "g"}
   sampleCtx[3] = { "title": "target speed",    "unit": "mm/ms", "color": "*b"}
   sampleCtx[4] = { "title": "set point speed", "unit": "mm/ms", "color": "r"}
-  sampleCtx[5] = { "title": "real speed",      "unit": "mm/ms", "color": "y"}
-  sampleCtx[6] = { "title": "speed error",     "unit": "mm/ms", "color": "g"}
-  sampleCtx[7] = { "title": "pwm",             "unit": "su",    "color": "c"}
+  sampleCtx[5] = { "title": "real speed",      "unit": "mm/ms", "color": "g"}
+  sampleCtx[6] = { "title": "speed error",     "unit": "mm/ms", "color": "c"}
+  sampleCtx[7] = { "title": "pwm",             "unit": "su",    "color": "b"}
 
   # Variable
   nbSample      = 0
@@ -143,7 +143,7 @@ def main():
 
   # Build plot excepted the first and the last plot
   fig, ax = plt.subplots()
-  for i in range(NB_SAMPLE_PER_LINE - 2):
+  for i in range(NB_SAMPLE_PER_LINE - 1):
     txt_label = "%s [%s]" % (sampleCtx[i+1]["title"], sampleCtx[i+1]["unit"])
     txt_color = "%s" % (sampleCtx[i+1]["color"])
     ax.plot(np.array(sample_list[0]), np.array(sample_list[i+1]), txt_color, label=txt_label)
@@ -156,7 +156,7 @@ def main():
   plt.xlabel(txt_label)
   txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
   plt.title(txt_label)
-  plt.legend()
+  #plt.legend()
   plt.show()
 
 # Main
