@@ -27,29 +27,44 @@ def main():
   NB_SAMPLE_PER_LINE = 8
   SPLIT_PATTERN      = ' '
   TELEMETRIE_PATTERN = 'LOG'
+  WINDOW_SIZE        = 1500
+
+  # Available color
+  # b : blue.
+  # g : green.
+  # r : red.
+  # c : cyan.
+  # m : magenta.
+  # y : yellow.
+  # k : black.
+  # w : white.
 
   # Telemetrie context
   sampleCtx    = {}
-  sampleCtx[0] = { "title": "time",            "unit": "ms",    "color": "b"}  
-  sampleCtx[1] = { "title": "action number",   "unit": "su", "color": "g"}
-  sampleCtx[2] = { "title": "phase",           "unit": "su", "color": "g"}
-  sampleCtx[3] = { "title": "target speed",    "unit": "mm/ms", "color": "*b"}
-  sampleCtx[4] = { "title": "set point speed", "unit": "mm/ms", "color": "r"}
-  sampleCtx[5] = { "title": "real speed",      "unit": "mm/ms", "color": "y"}
-  sampleCtx[6] = { "title": "speed error",     "unit": "mm/ms", "color": "g"}
-  sampleCtx[7] = { "title": "pwm",             "unit": "su",    "color": "c"}
+  sampleCtx[0] = { "title": "time",            "unit": "ms",    "color": "w",  "enable": 0, "factor": 1}  
+  sampleCtx[1] = { "title": "action number",   "unit": "",      "color": "--k",  "enable": 1, "factor": 100}
+  sampleCtx[2] = { "title": "phase",           "unit": "",      "color": "m",  "enable": 1, "factor": 100}
+  sampleCtx[3] = { "title": "target speed",    "unit": "mm/ms", "color": "-b", "enable": 1, "factor": 1}
+  sampleCtx[4] = { "title": "set point speed", "unit": "mm/ms", "color": "--r",  "enable": 1, "factor": 1}
+  sampleCtx[5] = { "title": "real speed",      "unit": "mm/ms", "color": ":g",  "enable": 1, "factor": 1}
+  sampleCtx[6] = { "title": "speed error",     "unit": "mm/ms", "color": ":y",  "enable": 1, "factor": 1}
+  sampleCtx[7] = { "title": "pwm",             "unit": "",      "color": ":c",  "enable": 1, "factor": 1}
 
   # Variable
   nbSample      = 0
   nbSampleError = 0
-  firstTime     = -1
   lastTime      = -1
 
   # Create the sample container
   sample_list = []
   for i in range(NB_SAMPLE_PER_LINE):
     sample_list.append([])
-
+    sample_list[i] = [0] * WINDOW_SIZE
+    
+  # Fill the timestamp
+  for i in range(WINDOW_SIZE):
+    sample_list[0][i] = i
+	
   # Check sample context consistency
   if len(sampleCtx) != NB_SAMPLE_PER_LINE:
     print ("#ERROR# sample context inconsistant")
@@ -77,6 +92,18 @@ def main():
   for i in range(len(sampleCtx)):
     print (f"#  - sample id {i}: {sampleCtx[i]['title']} [{sampleCtx[i]['unit']}]")
 
+  # Display plot
+  fig, ax = plt.subplots()
+  #ax.set_xlim(firstTime, firstTime + nbSample)
+  ax.grid(True)
+  ax.set_facecolor('xkcd:light khaki')
+  txt_label = "%s [%s] %d sample" % (sampleCtx[0]["title"], sampleCtx[0]["unit"], nbSample)
+  plt.xlabel(txt_label)
+  txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
+  plt.title(txt_label)
+  ax.legend(fancybox=True, framealpha=0.1)
+  plt.legend()
+
   # Parse all the line and build sample array
   for line in log_file.readlines():
     res = line.rstrip('\n').rstrip(' ').split(SPLIT_PATTERN)
@@ -94,21 +121,7 @@ def main():
         print ("#ERROR# missing first pattern in line:")
         print (res)
         continue
-      else:
-        # Check empty field
-        #for i in range(len(res)):
-        # if res[i] == '':
-        #   nbSampleError += 1
-        #   print ("#ERROR# one filed is empty in line:")
-        #   print (res)
-        #   # keep in mind last time
-        #   lastTime = int(res[1])
-        #   continue
-        
-        # Timebase
-        if firstTime == -1:
-          firstTime = int(res[1])
-
+      else:        
         # Check time increment (rollover not supported)
         if lastTime != -1:
           if (lastTime + 1) != int(res[1]):
@@ -124,40 +137,32 @@ def main():
         # -=-=-=-=-=-=-=-=-=-=-=-=-=-=
         # -=-=-=- Extract data -=-=-=-
         # -=-=-=-=-=-=-=-=-=-=-=-=-=-=
-        for i in range(NB_SAMPLE_PER_LINE):
-          sample_list[i].append(int(res[1 + i]))
-        
-        # One more set of valid sample
+        for i in range(1, NB_SAMPLE_PER_LINE):
+          if sampleCtx[i]["enable"] == 1:
+            sample_list[i][nbSample] = int(res[1 + i]) * sampleCtx[i]["factor"]
+         
+		# Display every 100 points 
+        if (nbSample % 25) == 0:
+          ax.clear()		
+          for i in range(1, NB_SAMPLE_PER_LINE):
+            if sampleCtx[i]["enable"] == 1:
+              txt_label = "%s [%s]" % (sampleCtx[i]["title"], sampleCtx[i]["unit"])
+              txt_color = "%s" % (sampleCtx[i]["color"])
+              ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1, label=txt_label)
+          plt.legend()
+          plt.pause(0.01)
+
+        # Sample rollover
         nbSample += 1
+        if nbSample >= WINDOW_SIZE:
+          nbSample = 0
+		  # Clean the array 
+          for i in range(1, NB_SAMPLE_PER_LINE):
+            sample_list[i] = [0] * WINDOW_SIZE
 
-  # Sum up
-  print (f"# Nb sample: {nbSample}")           
-  print (f"# Nb sample with error: {nbSampleError}") 
-  print (f"# First timestamp: {firstTime}")  
-  print (f"# Last timestamp: {lastTime}")    
-
-  # Check nb sample
-  for i in range(NB_SAMPLE_PER_LINE):
-    if (len(sample_list[i]) != nbSample):
-      print (f"#ERROR# nb sample inconsitant: expecting {nbSample} and found {len(sample_list[i])} for sample id {i} [{sampleCtx[i]['title']}]")
-
-  # Build plot excepted the first and the last plot
-  fig, ax = plt.subplots()
-  for i in range(NB_SAMPLE_PER_LINE - 2):
-    txt_label = "%s [%s]" % (sampleCtx[i+1]["title"], sampleCtx[i+1]["unit"])
-    txt_color = "%s" % (sampleCtx[i+1]["color"])
-    ax.plot(np.array(sample_list[0]), np.array(sample_list[i+1]), txt_color, label=txt_label)
-    #ax.scatter(np.array(sample_list[0]), np.array(sample_list[i+1]), txt_color, label=txt_label)
-
-  # Display plot
-  ax.set_xlim(firstTime, firstTime + nbSample)
-  ax.grid(True)
-  txt_label = "%s [%s] %d sample" % (sampleCtx[0]["title"], sampleCtx[0]["unit"], nbSample)
-  plt.xlabel(txt_label)
-  txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
-  plt.title(txt_label)
-  plt.legend()
-  plt.show()
+  while 1:
+    plt.legend()
+    plt.pause(0.05)
 
 # Main
 if __name__ == '__main__':    
