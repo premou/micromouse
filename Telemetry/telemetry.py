@@ -9,16 +9,17 @@ import sys
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+import serial
+from serial.tools import list_ports
+from argparse import ArgumentParser
+import io
 
 # Debian installation command line
 # apt install python-matplotlib
 
 # Windows installation command line with pip
 # pip install matplotlib
-
-# Usage
-def usage():
-  print ("Usage: {sys.argv[0]} file")
+# pip install pyserial
 
 # Main procedure
 def main():
@@ -61,7 +62,7 @@ def main():
     sample_list.append([])
     sample_list[i] = [0] * WINDOW_SIZE
     
-  # Fill the timestamp
+  # Fill the timestamp array
   for i in range(WINDOW_SIZE):
     sample_list[0][i] = i
 	
@@ -71,48 +72,85 @@ def main():
     sys.exit(1)
 
   # Check parameters
-  if len(sys.argv) < 2:
-    usage()
-    sys.exit(1)
+  parser = ArgumentParser()
+  parser.add_argument("-f", "--file", dest="filename",
+                      help="file name for file mode", metavar="FILE", default=None)
+  parser.add_argument("-p", "--port", dest="serialport",
+                      help="port com for serial mode", type=str)
+  parser.add_argument("-s", "--speed", dest="serialspeed",
+                      help="serial speed for serial mode", type=int, default=115200)					  
+  args = parser.parse_args()
 
-  # Open the log file
-  try:
-    logfile  = sys.argv[1]
-    log_file = open(logfile, "r")
-  except IOError:
-    print ("File %s does not exist !")
-    sys.exit(1)
- 
+  # Check the mode: file or serial
+  if  args.filename != None:
+    print(f"# File mode with file {args.filename}")
+    try:
+      log_file = open(args.filename, "r")
+    except IOError:
+      print (f"#ERROR# unable to open file {args.filename}")
+      sys.exit(1)
+  elif args.serialport != None:
+    print(f"# Serial mode port {args.serialport} with speed {args.serialspeed}")
+    try:
+      ser = serial.Serial(port=args.serialport, baudrate=args.serialspeed)
+      sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
+    except Exception as e:
+      print (f"#ERROR unable to open serial port {args.serialport} with speed {args.serialspeed}")	
+      print(e)
+      sys.exit(0)	
+  else:
+    print("#ERROR# missing parameters")
+    parser.print_help()
+    sys.exit(0)
+  
   # Print info
-  print ("# Mode: file (for the moment, serial mode in progress)")
   print (f"# Number of expected sample: {NB_SAMPLE_PER_LINE}")
   print (f"# Split pattern: '{SPLIT_PATTERN}'")
   print (f"# Telemetrie pattern: '{TELEMETRIE_PATTERN}'")
   print ("# Sample context:")
   for i in range(len(sampleCtx)):
     print (f"#  - sample id {i}: {sampleCtx[i]['title']} [{sampleCtx[i]['unit']}]")
-
+  print ("")
+  
   # Display plot
   fig, ax = plt.subplots()
-  #ax.set_xlim(firstTime, firstTime + nbSample)
-  ax.grid(True)
-  ax.set_facecolor('xkcd:light khaki')
-  txt_label = "%s [%s] %d sample" % (sampleCtx[0]["title"], sampleCtx[0]["unit"], nbSample)
-  plt.xlabel(txt_label)
-  txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
-  plt.title(txt_label)
+  #ax.set_xlim(0, WINDOW_SIZE)
+  #ax.grid(True)
+  #ax.set_facecolor('xkcd:light khaki')
+  #txt_label = "%s [%s] %d sample" % (sampleCtx[0]["title"], sampleCtx[0]["unit"], nbSample)
+  #plt.xlabel(txt_label)
+  #txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
+  #plt.title(txt_label)
   ax.legend(fancybox=True, framealpha=0.1)
-  plt.legend()
 
-  # Parse all the line and build sample array
-  for line in log_file.readlines():
-    res = line.rstrip('\n').rstrip(' ').split(SPLIT_PATTERN)
+  # First update display
+  plt.pause(0.05)
 
+  # Infinite loop
+  while 1:
+ 
+    # Extract data from file
+    if args.filename != None:
+      line = log_file.readline()
+    else:
+	  # Extract from serial link
+      #line = ser.readline()
+      sio.flush() # it is buffering. required to get the data out *now*
+      line = sio.readline()
+	  
+	# Check line value
+    if len(line) == 0:
+      try:	  
+        ax.grid(True)
+        plt.pause(0.5)
+      except:
+        sys.exit(0)
+        print("# Exit by user")
+    else:
+      res = line.rstrip('\n').rstrip(' ').split(SPLIT_PATTERN)	
+	
     # Check the number of expected fields 
     if len(res) != (NB_SAMPLE_PER_LINE + 1):
-      nbSampleError += 1
-      print ("#ERROR# missing filed in line:")
-      print (res)
       continue
     else:
       # Check the fisrt pattern 
@@ -143,14 +181,19 @@ def main():
          
 		# Display every 100 points 
         if (nbSample % 25) == 0:
-          ax.clear()		
-          for i in range(1, NB_SAMPLE_PER_LINE):
-            if sampleCtx[i]["enable"] == 1:
-              txt_label = "%s [%s]" % (sampleCtx[i]["title"], sampleCtx[i]["unit"])
-              txt_color = "%s" % (sampleCtx[i]["color"])
-              ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1, label=txt_label)
-          plt.legend()
-          plt.pause(0.01)
+          try: 
+            ax.clear()		
+            for i in range(1, NB_SAMPLE_PER_LINE):
+              if sampleCtx[i]["enable"] == 1:
+                txt_label = "%s [%s]" % (sampleCtx[i]["title"], sampleCtx[i]["unit"])
+                txt_color = "%s" % (sampleCtx[i]["color"])
+                ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1, label=txt_label)
+                plt.legend()
+            ax.grid(True)
+            plt.pause(0.01)
+          except:
+            print("# Exit by user...")
+            sys.exit(0)
 
         # Sample rollover
         nbSample += 1
@@ -159,10 +202,6 @@ def main():
 		  # Clean the array 
           for i in range(1, NB_SAMPLE_PER_LINE):
             sample_list[i] = [0] * WINDOW_SIZE
-
-  while 1:
-    plt.legend()
-    plt.pause(0.05)
 
 # Main
 if __name__ == '__main__':    
