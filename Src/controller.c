@@ -4,6 +4,18 @@
  *  Created on: 1 mars 2019
  *      Author: Invite
  */
+
+// FIXME : speed calculation when START (full speed reverse from time to time)
+// TODO : replace Tick timer (ms) per a more accurate timebase timer (us) and tune controller period (833Hz)
+// TODO : pulse LED when changing action
+// TODO : check position error visually and adjust wheel diameter (compensation ratio)
+// TODO : rename speed to x_speed
+// TODO : filter x_speed using EWMA and high alpha (0.5)
+// TODO : use unfiltered x speed error for Ki
+// TODO : use filtered x speed error for Kp and Kd
+// TODO : adjust x speed PID (Kp and Ki)
+
+
 #include "controller.h"
 #include "serial.h"
 #include "motor.h"
@@ -79,15 +91,14 @@ void controller_init ()
 	/*revenir au début de la liste des actions*/
 	ctx.actions_nb = 0;
 	ctx.time = 0;
+	ctx.sub_action_state = 0;
 
 	// speed
 	ctx.speed_target = 0;
 	ctx.speed_current = 0;
-	ctx.speed_error = 0;
 	ctx.speed_setpoint = 0;
+	ctx.speed_error = 0;
 	ctx.speed_pwm = 0;
-	ctx.sub_action_state = 0;
-
 	pid_init(&ctx.speed_pid, SPEED_KP, SPEED_KI, SPEED_KD);
 
 	// rotation speed
@@ -96,14 +107,15 @@ void controller_init ()
 	motor_init();
 	encoder_init();
 
-	HAL_DataLogger_Init(7,
-			1,
-			1,
-			4,
-			4,
-			4,
-			4,
-			1); // TODO : to be completed with each recorded field size
+	HAL_DataLogger_Init(7, // number of fields
+			1,  // size in bytes of each field
+			1, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			1 	// size in bytes of each field
+	);
 }
 
 void controller_start(){
@@ -118,7 +130,6 @@ void controller_start(){
 	ctx.speed_error = 0;
 	ctx.speed_setpoint = 0;
 	ctx.speed_pwm = 0;
-
 	pid_reset(&ctx.speed_pid);
 
 	encoder_reset();
@@ -157,15 +168,15 @@ void controller_update(){
 		ctx.time = time_temp;
 		encoder_update();
 		controller_fsm();
-		HAL_DataLogger_Record(7,
-				(int32_t)(ctx.actions_nb),
-				(int32_t)(ctx.sub_action_state),
-				(int32_t)(ctx.speed_target * 1000.0),
-				(int32_t)(ctx.speed_setpoint * 1000.0),
-				(int32_t)(ctx.speed_current * 1000.0),
-				(int32_t)(ctx.speed_error * 1000.0),
-				(int32_t)(ctx.speed_pwm)
-				);
+		HAL_DataLogger_Record(7, 						// number of fields
+				(int32_t)(ctx.actions_nb), 				// integer value of each field
+				(int32_t)(ctx.sub_action_state),		// integer value of each field
+				(int32_t)(ctx.speed_target * 1000.0),	// integer value of each field
+				(int32_t)(ctx.speed_setpoint * 1000.0),	// integer value of each field
+				(int32_t)(ctx.speed_current * 1000.0),	// integer value of each field
+				(int32_t)(ctx.speed_error * 1000.0),	// integer value of each field
+				(int32_t)(ctx.speed_pwm)				// integer value of each field
+		);
 	}
 }
 
