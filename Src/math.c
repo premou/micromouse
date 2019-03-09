@@ -69,6 +69,7 @@ bool have_to_break(float speed_target, float speed_current, float distance_remai
 	/* decceleration with speed_current to reach speed_target in distance_remaining */
 	float decc = (speed_current-speed_target)*(speed_current-speed_target) / (2*distance_remaining);
 	return decc>=decceleration;
+	// FIXME : acceleration = (V2^2 - V1^2)/2D, then check calculated acceleration is less than -decceleration paramter
 }
 
 void filter_init(filter_ctx_t *ctx, float alpha)

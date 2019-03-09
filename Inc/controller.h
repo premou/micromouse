@@ -15,5 +15,6 @@ void controller_init();
 void controller_start();
 void controller_update();
 bool controller_is_end();
+void controller_stop();
 
 #endif /* CONTROLLER_H_ */

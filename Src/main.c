@@ -227,9 +227,36 @@ int main(void)
 			  HAL_Serial_Print(&com,"WARMUP->RUNNING\r\n");
 
 			  controller_start();
-
 		  }
 
+	  }
+	  break;
+
+	  case RUNNING :
+	  {
+		  controller_update();
+
+		  if(controller_is_end()){
+			  current_state = FINISH;
+			  HAL_Serial_Print(&com,"RUNNING->FINISH\r\n");
+		  }
+		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET)
+		  {
+			  controller_stop();
+
+			  HAL_Serial_Print(&com,"RUNNING->FINISH (emergency stop)\r\n");
+
+			  current_state = FINISH;
+		  }
+	  }
+	  break;
+
+	  case FINISH :
+	  {
+
+		  play_finishing_song(&htim9, TIM_CHANNEL_1);
+		  current_state = IDLE;
+		  HAL_Serial_Print(&com,"FINISH->IDLE\r\n");
 	  }
 	  break;
 
@@ -243,27 +270,6 @@ int main(void)
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
 
 		  HAL_Serial_Print(&com,"UPLOAD->IDLE\r\n");
-	  }
-	  break;
-
-	  case RUNNING :
-	  {
-		  controller_update();
-
-
-		  if(controller_is_end()){
-			  current_state = FINISH;
-			  HAL_Serial_Print(&com,"RUNNING->FINISH\r\n");
-		  }
-	  }
-	  break;
-
-	  case FINISH :
-	  {
-
-		  play_finishing_song(&htim9, TIM_CHANNEL_1);
-		  current_state = IDLE;
-		  HAL_Serial_Print(&com,"FINISH->IDLE\r\n");
 	  }
 	  break;
 
