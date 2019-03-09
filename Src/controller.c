@@ -126,6 +126,27 @@ void controller_start(){
 	HAL_DataLogger_Clear();
 }
 
+void controller_stop(){
+	/*revenir au début de la liste des actions*/
+	ctx.actions_nb = 0;
+	ctx.time = HAL_GetTick();
+	ctx.sub_action_state = 0;
+
+	// speed
+	ctx.speed_target = 0;
+	ctx.speed_current = 0;
+	ctx.speed_setpoint = 0;
+	ctx.speed_error = 0;
+	ctx.speed_pwm = 0;
+
+	pid_reset(&ctx.speed_pid);
+
+	encoder_reset();
+
+	motor_speed_left(0);
+	motor_speed_right(0);
+}
+
 void controller_fsm(); // forward declaration
 
 void controller_update(){
