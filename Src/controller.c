@@ -13,8 +13,12 @@
 // TODO : filter x_speed using EWMA and high alpha (0.5)
 // TODO : use unfiltered x speed error for Ki
 // TODO : use filtered x speed error for Kp and Kd
-// TODO : adjust x speed PID (Kp and Ki)
-
+// TODO : tune x speed PID (Kp and Ki)
+// TODO : add w speed and w speed PID
+// TODO : use encoder for w speed current and error
+// TODO : tune w speed filter and PID
+// TODO : log absolute distance
+// TODO : trim/set absolute distance when changing state in order to preserve position error
 
 #include "controller.h"
 #include "serial.h"
