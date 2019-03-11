@@ -36,6 +36,11 @@ void encoder_init(){
 	encoder.dist_left_relative = 0;
 	encoder.dist_right_relative = 0;
 
+	encoder.back_left = 0;
+	encoder.back_right = 0;
+	encoder.front_right = 0;
+	encoder.front_left = 0;
+
 	HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
 	HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
 	HAL_TIM_Encoder_Start(&htim4,TIM_CHANNEL_ALL);
@@ -50,6 +55,17 @@ void encoder_reset(){
 	encoder.dist_absolute = 0;
 	encoder.dist_left_relative = 0;
 	encoder.dist_right_relative = 0;
+
+	encoder.back_left = 0;
+	encoder.back_right = 0;
+	encoder.front_right = 0;
+	encoder.front_left = 0;
+
+	__HAL_TIM_SetCounter(&htim2,0U);
+	__HAL_TIM_SetCounter(&htim3,0U);
+	__HAL_TIM_SetCounter(&htim4,0U);
+	__HAL_TIM_SetCounter(&htim5,0U);
+
 }
 
 void encoder_update(){
@@ -59,10 +75,10 @@ void encoder_update(){
 	uint16_t front_right = __HAL_TIM_GetCounter(&htim4);
 	uint32_t front_left = __HAL_TIM_GetCounter(&htim5);
 
-	uint32_t relative32_back_left = back_left  - encoder.back_left;
-	uint16_t relative16_back_right = back_right   - encoder.back_right;
-	uint16_t relative16_front_right = front_right - encoder.front_right;
-	uint32_t relative32_front_left = front_left  - encoder.front_left;
+	int32_t relative32_back_left = back_left  - encoder.back_left;
+	int16_t relative16_back_right = back_right   - encoder.back_right;
+	int16_t relative16_front_right = front_right - encoder.front_right;
+	int32_t relative32_front_left = front_left  - encoder.front_left;
 
 	encoder.back_left = back_left;
 	encoder.back_right = back_right;

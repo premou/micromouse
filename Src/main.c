@@ -219,7 +219,7 @@ int main(void)
 
 	  case WARMUP :
 	  {
-		  //WAit 1sec4'
+		  // wait for 1.4s before running
 		  if (tim_start + 1400 < HAL_GetTick() ){
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
@@ -244,9 +244,8 @@ int main(void)
 		  {
 			  controller_stop();
 
-			  HAL_Serial_Print(&com,"RUNNING->FINISH (emergency stop)\r\n");
-
 			  current_state = FINISH;
+			  HAL_Serial_Print(&com,"RUNNING->FINISH (emergency stop)\r\n");
 		  }
 	  }
 	  break;
@@ -255,6 +254,9 @@ int main(void)
 	  {
 
 		  play_finishing_song(&htim9, TIM_CHANNEL_1);
+
+		  HAL_Delay(1000);
+
 		  current_state = IDLE;
 		  HAL_Serial_Print(&com,"FINISH->IDLE\r\n");
 	  }
