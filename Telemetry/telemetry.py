@@ -25,10 +25,10 @@ import io
 def main():
 
   # Global
-  NB_SAMPLE_PER_LINE = 8
-  SPLIT_PATTERN      = ' '
-  TELEMETRIE_PATTERN = 'LOG'
-  WINDOW_SIZE        = 1500
+  NB_SAMPLE_PER_LINE       = 8
+  SPLIT_PATTERN            = ' '
+  TELEMETRIE_START_PATTERN = 'LOG'
+  TELEMETRIE_STOP_PATTERN  = 'EOL'
 
   # Available color
   # b : blue.
@@ -42,29 +42,18 @@ def main():
 
   # Telemetrie context
   sampleCtx    = {}
-  sampleCtx[0] = { "title": "time",            "unit": "ms",    "color": "w",  "enable": 0, "factor": 1}  
-  sampleCtx[1] = { "title": "action number",   "unit": "",      "color": "--k",  "enable": 1, "factor": 100}
-  sampleCtx[2] = { "title": "phase",           "unit": "",      "color": "m",  "enable": 1, "factor": 100}
-  sampleCtx[3] = { "title": "target speed",    "unit": "mm/ms", "color": "-b", "enable": 1, "factor": 1}
-  sampleCtx[4] = { "title": "set point speed", "unit": "mm/ms", "color": "--r",  "enable": 1, "factor": 1}
-  sampleCtx[5] = { "title": "real speed",      "unit": "mm/ms", "color": ":g",  "enable": 1, "factor": 1}
-  sampleCtx[7] = { "title": "speed error",     "unit": "mm/ms", "color": ":y",  "enable": 1, "factor": 1}
-  sampleCtx[6] = { "title": "pwm",             "unit": "",      "color": ":c",  "enable": 1, "factor": 10}
+  sampleCtx[0] = { "title": "time",            "unit": "[ms]",    "color": "w",    "enable": 0, "factor": 1}  
+  sampleCtx[1] = { "title": "action number",   "unit": "",        "color": "--k",  "enable": 1, "factor": 100}
+  sampleCtx[2] = { "title": "phase",           "unit": "",        "color": "m",    "enable": 1, "factor": 100}
+  sampleCtx[3] = { "title": "target speed",    "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
+  sampleCtx[4] = { "title": "set point speed", "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
+  sampleCtx[5] = { "title": "real speed",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
+  sampleCtx[6] = { "title": "pwm",             "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
+  sampleCtx[7] = { "title": "speed error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
 
   # Variable
-  nbSample      = 0
+  nbSample      = 1
   nbSampleError = 0
-  lastTime      = -1
-
-  # Create the sample container
-  sample_list = []
-  for i in range(NB_SAMPLE_PER_LINE):
-    sample_list.append([])
-    sample_list[i] = [0] * WINDOW_SIZE
-    
-  # Fill the timestamp array
-  for i in range(WINDOW_SIZE):
-    sample_list[0][i] = i
 	
   # Check sample context consistency
   if len(sampleCtx) != NB_SAMPLE_PER_LINE:
@@ -79,7 +68,22 @@ def main():
                       help="port com for serial mode", type=str)
   parser.add_argument("-s", "--speed", dest="serialspeed",
                       help="serial speed for serial mode", type=int, default=115200)					  
+  parser.add_argument("-w", "--window", dest="windowsize",
+                      help="number of sample per plot", type=int, default=1500)					  
   args = parser.parse_args()
+
+  # Populate variable
+  WINDOW_SIZE = args.windowsize
+
+  # Create the sample container
+  sample_list = []
+  for i in range(NB_SAMPLE_PER_LINE):
+    sample_list.append([])
+    sample_list[i] = [0] * WINDOW_SIZE
+    
+  # Fill the timestamp array
+  for i in range(WINDOW_SIZE):
+    sample_list[0][i] = i
 
   # Check the mode: file or serial
   if  args.filename != None:
@@ -106,29 +110,24 @@ def main():
   # Print info
   print (f"# Number of expected sample: {NB_SAMPLE_PER_LINE}")
   print (f"# Split pattern: '{SPLIT_PATTERN}'")
-  print (f"# Telemetrie pattern: '{TELEMETRIE_PATTERN}'")
+  print (f"# Telemetrie START pattern: '{TELEMETRIE_START_PATTERN}'")
+  print (f"# Telemetrie STOP pattern: '{TELEMETRIE_STOP_PATTERN}'")
+  print (f"# Number max of sample per plot: {WINDOW_SIZE}")
   print ("# Sample context:")
   for i in range(len(sampleCtx)):
-    print (f"#  - sample id {i}: {sampleCtx[i]['title']} [{sampleCtx[i]['unit']}]")
+    print (f"#  - sample id {i}: enable: {sampleCtx[i]['enable']} factor: {sampleCtx[i]['factor']} => {sampleCtx[i]['title']} {sampleCtx[i]['unit']}")
   print ("")
   
   # Display plot
   fig, ax = plt.subplots()
-  #ax.set_xlim(0, WINDOW_SIZE)
-  #ax.grid(True)
-  #ax.set_facecolor('xkcd:light khaki')
-  #txt_label = "%s [%s] %d sample" % (sampleCtx[0]["title"], sampleCtx[0]["unit"], nbSample)
-  #plt.xlabel(txt_label)
-  #txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
-  #plt.title(txt_label)
-  ax.legend(fancybox=True, framealpha=0.1)
-
+  
   # First update display
   plt.pause(0.05)
 
   # Infinite loop
   while 1:
  
+    # Init res to None
     res = None
 
     # Extract data from file
@@ -136,7 +135,6 @@ def main():
       line = log_file.readline()
     else:
       # Extract from serial link
-      #line = ser.readline()
       sio.flush() # it is buffering. required to get the data out *now*
       line = sio.readline()
 	  
@@ -155,28 +153,37 @@ def main():
       continue	
 
     # Check the number of expected fields 
-    if len(res) != (NB_SAMPLE_PER_LINE + 1):
+    if (len(res) >= 1) and (res[0] == TELEMETRIE_STOP_PATTERN):
+      print ("")
+      print(f"Nb max sample received: {nbSample}")
+      print(f"Nb sample error       : {nbSampleError}")
+      print ("")	  
+      # Display all the point 
+      ax.clear()		
+      for i in range(1, NB_SAMPLE_PER_LINE):
+        if sampleCtx[i]["enable"] == 1:
+          ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), sampleCtx[i]["color"], linewidth=1, label=sampleCtx[i]["title"])
+
+        txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
+        plt.title(txt_label)
+        plt.legend()
+        ax.grid(True)
+        plt.pause(0.01)
+      
+	  # restart the counter for the next run
+      nbSample = 1
+	  
+    elif len(res) != (NB_SAMPLE_PER_LINE + 1):
+      nbSampleError += 1
+      print(res)
       continue
     else:
       # Check the fisrt pattern 
-      if res[0] != TELEMETRIE_PATTERN:
+      if res[0] != TELEMETRIE_START_PATTERN:
         nbSampleError += 1
-        print ("#ERROR# missing first pattern in line:")
-        print (res)
+        print(res)
         continue
       else:        
-        # Check time increment (rollover not supported)
-        if lastTime != -1:
-          if (lastTime + 1) != int(res[1]):
-            print (f"#ERROR# timestamp sequence number error: previous={lastTime}, current={int(res[1])}")
-            nbSampleError += 1
-            # keep in mind last time
-            lastTime = int(res[1])
-            continue
-
-        # Keep in mind last time
-        lastTime = int(res[1])
-
         # -=-=-=-=-=-=-=-=-=-=-=-=-=-=
         # -=-=-=- Extract data -=-=-=-
         # -=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -184,17 +191,14 @@ def main():
           if sampleCtx[i]["enable"] == 1:
             sample_list[i][nbSample] = int(res[1 + i]) * sampleCtx[i]["factor"]
          
-	# Display every 100 points 
-        if (nbSample % 25) == 0:
+        # Speed up the display 
+        if (nbSample % 30) == 0:
           try: 
             ax.clear()		
             for i in range(1, NB_SAMPLE_PER_LINE):
               if sampleCtx[i]["enable"] == 1:
-                txt_label = "%s [%s]" % (sampleCtx[i]["title"], sampleCtx[i]["unit"])
                 txt_color = "%s" % (sampleCtx[i]["color"])
-                ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1, label=txt_label)
-                plt.legend()
-            ax.grid(True)
+                ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1)
             plt.pause(0.01)
           except:
             print("# Exit by user...")
@@ -204,9 +208,6 @@ def main():
         nbSample += 1
         if nbSample >= WINDOW_SIZE:
           nbSample = 0
-		  # Clean the array 
-          for i in range(1, NB_SAMPLE_PER_LINE):
-            sample_list[i] = [0] * WINDOW_SIZE
 
 # Main
 if __name__ == '__main__':    
