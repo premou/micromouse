@@ -48,8 +48,8 @@ def main():
   sampleCtx[3] = { "title": "target speed",    "unit": "mm/ms", "color": "-b", "enable": 1, "factor": 1}
   sampleCtx[4] = { "title": "set point speed", "unit": "mm/ms", "color": "--r",  "enable": 1, "factor": 1}
   sampleCtx[5] = { "title": "real speed",      "unit": "mm/ms", "color": ":g",  "enable": 1, "factor": 1}
-  sampleCtx[6] = { "title": "speed error",     "unit": "mm/ms", "color": ":y",  "enable": 1, "factor": 1}
-  sampleCtx[7] = { "title": "pwm",             "unit": "",      "color": ":c",  "enable": 1, "factor": 1}
+  sampleCtx[7] = { "title": "speed error",     "unit": "mm/ms", "color": ":y",  "enable": 1, "factor": 1}
+  sampleCtx[6] = { "title": "pwm",             "unit": "",      "color": ":c",  "enable": 1, "factor": 10}
 
   # Variable
   nbSample      = 0
@@ -92,7 +92,7 @@ def main():
   elif args.serialport != None:
     print(f"# Serial mode port {args.serialport} with speed {args.serialspeed}")
     try:
-      ser = serial.Serial(port=args.serialport, baudrate=args.serialspeed)
+      ser = serial.Serial(port=args.serialport, baudrate=args.serialspeed, timeout = 0)
       sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
     except Exception as e:
       print (f"#ERROR unable to open serial port {args.serialport} with speed {args.serialspeed}")	
@@ -129,11 +129,13 @@ def main():
   # Infinite loop
   while 1:
  
+    res = None
+
     # Extract data from file
     if args.filename != None:
       line = log_file.readline()
     else:
-	  # Extract from serial link
+      # Extract from serial link
       #line = ser.readline()
       sio.flush() # it is buffering. required to get the data out *now*
       line = sio.readline()
@@ -142,13 +144,16 @@ def main():
     if len(line) == 0:
       try:	  
         ax.grid(True)
-        plt.pause(0.5)
+        plt.pause(1)
       except:
         sys.exit(0)
         print("# Exit by user")
     else:
       res = line.rstrip('\n').rstrip(' ').split(SPLIT_PATTERN)	
-	
+
+    if res == None:
+      continue	
+
     # Check the number of expected fields 
     if len(res) != (NB_SAMPLE_PER_LINE + 1):
       continue
@@ -179,7 +184,7 @@ def main():
           if sampleCtx[i]["enable"] == 1:
             sample_list[i][nbSample] = int(res[1 + i]) * sampleCtx[i]["factor"]
          
-		# Display every 100 points 
+	# Display every 100 points 
         if (nbSample % 25) == 0:
           try: 
             ax.clear()		
