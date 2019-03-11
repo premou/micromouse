@@ -33,15 +33,15 @@ extern HAL_Serial_Handler com;
 // CONSTANT
 
 /* slopes for speed (in m/s-2) */
-#define SLOPE_ACC 2.0
-#define SLOPE_DEC 2.0
-#define SPEED_TARGET 0.5 //in m/s
+#define SLOPE_ACC 5.0
+#define SLOPE_DEC 3.0
+#define SPEED_TARGET 1 //in m/s
 #define DIST_START 0.09 //in m
 #define DIST_RUN_1 0.18 //in m
 #define DIST_STOP 0.09 //in m
 
-#define SPEED_KP 800.0
-#define SPEED_KI 0.0
+#define SPEED_KP 600.0
+#define SPEED_KI 10.0
 #define SPEED_KD 0.0
 
 // ENUM
