@@ -27,6 +27,7 @@
 #include "pid.h"
 #include "datalogger.h"
 #include "math.h"
+#include "imu.h"
 
 extern HAL_Serial_Handler com;
 
@@ -110,6 +111,7 @@ void controller_init ()
 
 	motor_init();
 	encoder_init();
+	gyro_init();
 
 	HAL_DataLogger_Init(7, // number of fields
 			1,  // size in bytes of each field
