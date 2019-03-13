@@ -168,7 +168,7 @@ int main(void)
   HAL_Serial_Init(&huart1, &com);
   HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
-  controller_init();
+  uint32_t controller_init_result = controller_init();
   HAL_Battery_Init();
 
   /* USER CODE END 2 */
@@ -190,7 +190,7 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
-		  if(HAL_Battery_Is_Low(VBATT))
+		  if(controller_init_result != 0) // check controller::gyro
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
@@ -199,7 +199,16 @@ int main(void)
 
 			  current_state = FAILSAFE;
 		  }
-		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET)
+		  else if(HAL_Battery_Is_Low(VBATT)) // check battery charge
+		  {
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+
+			  HAL_Serial_Print(&com,"IDLE->FAILSAFE\r\n");
+
+			  current_state = FAILSAFE;
+		  }
+		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET) // run
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
@@ -209,7 +218,7 @@ int main(void)
 			  current_state = WARMUP;
 			  tim_start=HAL_GetTick();
 		  }
-		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET)
+		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // upload data logger
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON

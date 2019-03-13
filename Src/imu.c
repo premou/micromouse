@@ -11,30 +11,59 @@
 
 #include <math.h>
 
-//https://www.st.com/resource/en/datasheet/lsm6ds33.pdf
-#define GYRO_I2C_ADDRESS 0x6b //cf datasheet
-#define WHO_AM_I_ADDRESS 0x0f
+// DS : https://www.st.com/resource/en/datasheet/lsm6ds33.pdf
+// AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
+
+// device I2C address (LSM6DS33)
+#define GYRO_I2C_ADDRESS 	0x6b
+
+// device internal register addresses (LSM6DS33)
+#define INT1_CTRL 			0x0D
+#define INT2_CTRL 			0x0E
+#define WHO_AM_I_ADDRESS 	0x0F
+#define CTRL2_G 			0x11
+#define CTRL3_C 			0x12
+#define CTRL4_C 			0x13
+#define CTRL5_C 			0x14
+#define CTRL6_C 			0x15
+#define CTRL7_C 			0x16
+#define CTRL10_C 			0x19
+#define STATUS_REG 			0x1E
+#define OUTZ_L_G 			0x26
+#define OUTZ_H_G 			0x27
+
+// register default value (LSM6DS33)
 #define WHO_AM_I_VALUE 0x69
 
+// globals
 extern I2C_HandleTypeDef hi2c3;
 extern HAL_Serial_Handler com;
 
+// private data ///////////////////////////////////////////////////////////////
+
+// TODO : GYRO CONTEXT with measure, calibration data, etc
+
+// private functions //////////////////////////////////////////////////////////
+
 // read helper for I2C operation
+// input : device (7bit, not shifted) and register (8bit) addresses
+// output : register value (8bit)
 uint8_t gyro_read_8bit_register(
 		uint8_t device_address,
 		uint8_t register_address,
 		HAL_StatusTypeDef * res
 	)
 {
-	// send the register address to chip
+	// send the register address to I2C device
 	*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, &register_address , 1, 10);
 	if(*res==HAL_OK)
 	{
 		uint8_t data = 0;
-		// read the register value from chip
+		// read the register value from I2C device
 		*res = HAL_I2C_Master_Receive(&hi2c3, device_address << 1, &data, 1, 10);
 		if(*res==HAL_OK)
 		{
+			// return the register value
 			return data;
 		}
 		else
@@ -48,17 +77,28 @@ uint8_t gyro_read_8bit_register(
 	}
 }
 
-void gyro_write_8bit_register(uint8_t device_address,uint8_t register_address,uint8_t data)
+// write helper for I2C operation
+// input : device (7bit, not shifted) and register (8bit) addresses, register value (8bit)
+void gyro_write_8bit_register(
+		uint8_t device_address,
+		uint8_t register_address,
+		uint8_t data,
+		HAL_StatusTypeDef * res
+	)
 {
-//	 uint8_t register_address = WHO_AM_I_ADDRESS;
-//	 HAL_StatusTypeDef res_transmit = HAL_I2C_Master_Transmit(&hi2c3, GYRO_I2C_ADDRESS << 1, &register_address , 1, 10);
-//	 uint8_t data = 0;
-//	 HAL_StatusTypeDef res_read = HAL_I2C_Master_Receive(&hi2c3, GYRO_I2C_ADDRESS << 1, &data, 1, 10);
-
+	// send the register address to I2C device
+	*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, &register_address , 1, 10);
+	if(*res==HAL_OK)
+	{
+		// write the register value to I2C device
+		*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, &data, 1, 10);
+	}
 }
 
- uint32_t gyro_init()
- {
+// public functions ///////////////////////////////////////////////////////////
+
+uint32_t gyro_init()
+{
 	HAL_StatusTypeDef result;
 	uint8_t who_am_i = gyro_read_8bit_register(GYRO_I2C_ADDRESS,WHO_AM_I_ADDRESS,&result);
 	HAL_Serial_Print(&com,"GYRO: result:%d, who_am_i:%d\r\n",result,who_am_i);
@@ -72,16 +112,27 @@ void gyro_write_8bit_register(uint8_t device_address,uint8_t register_address,ui
 	}
 	// To Be Completed
 
+	// AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
 
-
-//	uint8_t register_address = WHO_AM_I_ADDRESS;
-//	HAL_StatusTypeDef res_transmit = HAL_I2C_Master_Transmit(&hi2c3, GYRO_I2C_ADDRESS << 1, &register_address , 1, 10);
-//	uint8_t data = 0;
-//	HAL_StatusTypeDef res_read = HAL_I2C_Master_Receive(&hi2c3, GYRO_I2C_ADDRESS << 1, &data, 1, 10);
-//
 
 	return GYRO_OK;
- }
+}
+
+void gyro_update()
+{
+	// TODO : read Z gyro raw value (16bits)
+	// TODO : do continious and power-on gyro calibrations (drift)
+	// TODO : apply drift and sensitivity corrections to raw measure
+	// TODO : store last corrected measure in internal state
+}
+
+float gyro_get_dps()
+{
+	// TODO : return last corrected measure from internal state
+	return 0.0;
+}
+
+
 
 ///* Private Configuration Data ----------------------------------------------------------*/
 //

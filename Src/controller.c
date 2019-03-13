@@ -92,7 +92,7 @@ static controller_t ctx;
 
 // PUBLIC FUNCTIONS
 
-void controller_init ()
+uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 {
 	/*revenir au début de la liste des actions*/
 	ctx.actions_nb = 0;
@@ -123,6 +123,8 @@ void controller_init ()
 			4, 	// size in bytes of each field
 			1 	// size in bytes of each field
 	);
+
+	return ctx.gyro_state;
 }
 
 void controller_start(){
@@ -170,10 +172,11 @@ void controller_fsm(); // forward declaration
 void controller_update(){
 	// cadence a 1ms
 	uint32_t time_temp = HAL_GetTick();
-	if(time_temp > ctx.time && ctx.gyro_state == GYRO_OK)
+	if(time_temp > ctx.time)
 	{
 		ctx.time = time_temp;
 		encoder_update();
+		gyro_update();
 		controller_fsm();
 		HAL_DataLogger_Record(7, 						// number of fields
 				(int32_t)(ctx.actions_nb), 				// integer value of each field

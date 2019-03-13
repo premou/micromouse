@@ -11,7 +11,7 @@
 #include "stm32f7xx_hal.h"
 #include <stdbool.h>
 
-void controller_init();
+uint32_t controller_init(); // return ZERO if gyro is OK, else return GYRO ERROR
 void controller_start();
 void controller_update();
 bool controller_is_end();
