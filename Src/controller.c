@@ -62,6 +62,7 @@ typedef struct  {
 	uint32_t actions_nb; // index of current action in the scenario array
 	uint32_t time;
 	uint32_t sub_action_state;
+	uint32_t gyro_state;
 
 	// speed
 	float speed_target;
@@ -111,7 +112,7 @@ void controller_init ()
 
 	motor_init();
 	encoder_init();
-	gyro_init();
+	ctx.gyro_state = gyro_init();
 
 	HAL_DataLogger_Init(7, // number of fields
 			1,  // size in bytes of each field
@@ -169,7 +170,7 @@ void controller_fsm(); // forward declaration
 void controller_update(){
 	// cadence a 1ms
 	uint32_t time_temp = HAL_GetTick();
-	if(time_temp > ctx.time)
+	if(time_temp > ctx.time && ctx.gyro_state == GYRO_OK)
 	{
 		ctx.time = time_temp;
 		encoder_update();

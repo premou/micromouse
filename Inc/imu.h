@@ -12,6 +12,7 @@
 #include <stdbool.h>
 
 
+
 ///**
 //  * @brief  IMU Handler Structure definition
 //  */
@@ -35,7 +36,11 @@
  extern "C" {
 #endif
 
- void gyro_init();
+#define GYRO_OK 0
+#define GYRO_NOT_DETECTED 1
+#define GYRO_NOT_IDENTIFIED 2
+
+ uint32_t gyro_init();
 
 //void HAL_IMU_Init();
 //

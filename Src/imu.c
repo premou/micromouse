@@ -8,8 +8,6 @@
 #include "stm32f7xx_hal.h"
 #include "serial.h"
 #include "imu.h"
-//#include "LSM6DS33.h"
-///#include "mymath.h"
 
 #include <math.h>
 
@@ -21,14 +19,68 @@
 extern I2C_HandleTypeDef hi2c3;
 extern HAL_Serial_Handler com;
 
- void gyro_init()
- {
-	 uint8_t register_address = WHO_AM_I_ADDRESS;
-	 HAL_StatusTypeDef res_transmit = HAL_I2C_Master_Transmit(&hi2c3, GYRO_I2C_ADDRESS << 1, &register_address , 1, 10);
-	 uint8_t data = 0;
-	 HAL_StatusTypeDef res_read = HAL_I2C_Master_Receive(&hi2c3, GYRO_I2C_ADDRESS << 1, &data, 1, 10);
+// read helper for I2C operation
+uint8_t gyro_read_8bit_register(
+		uint8_t device_address,
+		uint8_t register_address,
+		HAL_StatusTypeDef * res
+	)
+{
+	// send the register address to chip
+	*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, &register_address , 1, 10);
+	if(*res==HAL_OK)
+	{
+		uint8_t data = 0;
+		// read the register value from chip
+		*res = HAL_I2C_Master_Receive(&hi2c3, device_address << 1, &data, 1, 10);
+		if(*res==HAL_OK)
+		{
+			return data;
+		}
+		else
+		{
+			return 0xFF;
+		}
+	}
+	else
+	{
+		return 0xFF;
+	}
+}
 
-	 HAL_Serial_Print(&com,"GYRO: res_transmit:%d, res_read:%d, data:%d\r\n",res_transmit,res_read,data);
+void gyro_write_8bit_register(uint8_t device_address,uint8_t register_address,uint8_t data)
+{
+//	 uint8_t register_address = WHO_AM_I_ADDRESS;
+//	 HAL_StatusTypeDef res_transmit = HAL_I2C_Master_Transmit(&hi2c3, GYRO_I2C_ADDRESS << 1, &register_address , 1, 10);
+//	 uint8_t data = 0;
+//	 HAL_StatusTypeDef res_read = HAL_I2C_Master_Receive(&hi2c3, GYRO_I2C_ADDRESS << 1, &data, 1, 10);
+
+}
+
+ uint32_t gyro_init()
+ {
+	HAL_StatusTypeDef result;
+	uint8_t who_am_i = gyro_read_8bit_register(GYRO_I2C_ADDRESS,WHO_AM_I_ADDRESS,&result);
+	HAL_Serial_Print(&com,"GYRO: result:%d, who_am_i:%d\r\n",result,who_am_i);
+	if(result != HAL_OK)
+	{
+		return GYRO_NOT_DETECTED;
+	}
+	if(who_am_i != WHO_AM_I_VALUE)
+	{
+		return GYRO_NOT_IDENTIFIED;
+	}
+	// To Be Completed
+
+
+
+//	uint8_t register_address = WHO_AM_I_ADDRESS;
+//	HAL_StatusTypeDef res_transmit = HAL_I2C_Master_Transmit(&hi2c3, GYRO_I2C_ADDRESS << 1, &register_address , 1, 10);
+//	uint8_t data = 0;
+//	HAL_StatusTypeDef res_read = HAL_I2C_Master_Receive(&hi2c3, GYRO_I2C_ADDRESS << 1, &data, 1, 10);
+//
+
+	return GYRO_OK;
  }
 
 ///* Private Configuration Data ----------------------------------------------------------*/
