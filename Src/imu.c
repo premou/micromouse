@@ -9,8 +9,6 @@
 #include "serial.h"
 #include "imu.h"
 
-#include <math.h>
-
 // DS : https://www.st.com/resource/en/datasheet/lsm6ds33.pdf
 // AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
 
@@ -34,22 +32,28 @@
 
 // register default value (LSM6DS33)
 #define WHO_AM_I_VALUE 0x69
+
+// register configuration values (LSM6DS33)
 #define CTRL10_C_value_init 0x20
 #define CTRL2_G_value_init 0x74
-#define ANGULAR_RATE_SENSITIVITY_500 0.0175 //p.15 datasheet
+
+// constants
+#define ANGULAR_RATE_SENSITIVITY_500 0.0175 // factory sensititvy (p.15 datasheet)
+// TODO tune sensitivity using turn table
+
 // globals
 extern I2C_HandleTypeDef hi2c3;
 extern HAL_Serial_Handler com;
 
 // private data ///////////////////////////////////////////////////////////////
 
-// TODO : GYRO CONTEXT with measure, calibration data, etc
 typedef struct {
-	int16_t raw_value;
+	int16_t raw_value; // 12-bit measure
 	float rate; //dps
-}ctx_gyro;
+} ctx_gyro;
 
 static ctx_gyro ctx;
+
 // private functions //////////////////////////////////////////////////////////
 
 // read helper for I2C operation
@@ -93,7 +97,7 @@ void gyro_write_8bit_register(
 		HAL_StatusTypeDef * res
 	)
 {
-	// send the register address to I2C device
+	// send the register address and data to I2C device
 	uint8_t data_buf[]= {register_address, data};
 	*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, data_buf , 2, 10);
 }
@@ -126,30 +130,23 @@ uint32_t gyro_init()
 	{
 		return GYRO_SETUP_FAILURE;
 	}
-	// To Be Completed
-
-	// AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf p.23
-
-
 	return GYRO_OK;
 }
 
 void gyro_update()
 {
 	HAL_StatusTypeDef result;
-	// TODO : read Z gyro raw value (16bits)
+	// TODO : burst read (16bits)
 	uint8_t res_read_H = gyro_read_8bit_register(GYRO_I2C_ADDRESS, OUTZ_H_G, &result);
 	uint8_t res_read_L = gyro_read_8bit_register(GYRO_I2C_ADDRESS, OUTZ_L_G, &result);
 	ctx.raw_value = ((uint16_t)(res_read_H) << 8) + (uint16_t) res_read_L;
 	ctx.rate = (float)(ctx.raw_value*ANGULAR_RATE_SENSITIVITY_500);
 	// TODO : do continious and power-on gyro calibrations (drift)
-	// TODO : apply drift and sensitivity corrections to raw measure
-	// TODO : store last corrected measure in internal state
+	// TODO : apply drift correction
 }
 
 float gyro_get_dps()
 {
-	// TODO : return last corrected measure from internal state
 	return ctx.rate;
 }
 

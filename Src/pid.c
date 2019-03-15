@@ -7,12 +7,6 @@
 
 #include "pid.h"
 
-/*
- *Definir une fonction init avec le context et les kp ki kd
- *Definir une fonction remet à 0
- *Definir une fonction a qui on donne l'erreur et qui retourne un float => a injecter dans le PWM
- *Definir
- */
 void pid_init(pid_context_t *ctx, float Kp, float Ki, float Kd)
 {
 	ctx->Kp = Kp;
