@@ -36,14 +36,19 @@ extern HAL_Serial_Handler com;
 /* slopes for speed (in m/s-2) */
 #define SLOPE_ACC 5.0
 #define SLOPE_DEC 3.0
-#define SPEED_TARGET 1 //in m/s
+#define SPEED_TARGET 0.4 //in m/s
 #define DIST_START 0.09 //in m
 #define DIST_RUN_1 0.18 //in m
 #define DIST_STOP 0.09 //in m
 
-#define SPEED_KP 600.0
-#define SPEED_KI 10.0
-#define SPEED_KD 0.0
+#define X_SPEED_KP 600.0
+#define X_SPEED_KI 10.0
+#define X_SPEED_KD 0.0
+
+//rotation
+#define W_SPEED_KP 0.1
+#define W_SPEED_KI 0.0
+#define W_SPEED_KD 0.0
 
 // ENUM
 
@@ -65,16 +70,22 @@ typedef struct  {
 	uint32_t gyro_state;
 
 	// speed
-	float speed_target;
-	float speed_setpoint;
-	float speed_current;
-	float speed_error;
-	float speed_pwm;
+	float x_speed_target;
+	float x_speed_setpoint;
+	float x_speed_current;
+	float x_speed_error;
+	float x_speed_pwm;
 
-	pid_context_t speed_pid;
+	pid_context_t x_speed_pid;
 
 	// rotation speed
-	// TODO : To Be Completed
+	float w_speed_target;
+	float w_speed_setpoint;
+	float w_speed_current;
+	float w_speed_error;
+	float w_speed_pwm;
+
+	pid_context_t w_speed_pid;
 
 } controller_t;
 
@@ -82,6 +93,8 @@ typedef struct  {
 
 static action_t actions_scenario[] = {
 	ACTION_START,
+	ACTION_RUN_1,
+	ACTION_RUN_1,
 	ACTION_RUN_1,
 	ACTION_RUN_1,
 	ACTION_STOP,
@@ -100,15 +113,20 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.sub_action_state = 0;
 
 	// speed
-	ctx.speed_target = 0;
-	ctx.speed_current = 0;
-	ctx.speed_setpoint = 0;
-	ctx.speed_error = 0;
-	ctx.speed_pwm = 0;
-	pid_init(&ctx.speed_pid, SPEED_KP, SPEED_KI, SPEED_KD);
+	ctx.x_speed_target = 0;
+	ctx.x_speed_current = 0;
+	ctx.x_speed_setpoint = 0;
+	ctx.x_speed_error = 0;
+	ctx.x_speed_pwm = 0;
+	pid_init(&ctx.x_speed_pid, X_SPEED_KP, X_SPEED_KI, X_SPEED_KD);
 
 	// rotation speed
-	// TODO : To Be Completed
+	ctx.w_speed_target = 0;
+	ctx.w_speed_current = 0;
+	ctx.w_speed_setpoint = 0;
+	ctx.w_speed_error = 0;
+	ctx.w_speed_pwm = 0;
+	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD);
 
 	motor_init();
 	encoder_init();
@@ -134,12 +152,20 @@ void controller_start(){
 	ctx.sub_action_state = 0;
 
 	// speed
-	ctx.speed_target = 0;
-	ctx.speed_current = 0;
-	ctx.speed_error = 0;
-	ctx.speed_setpoint = 0;
-	ctx.speed_pwm = 0;
-	pid_reset(&ctx.speed_pid);
+	ctx.x_speed_target = 0;
+	ctx.x_speed_current = 0;
+	ctx.x_speed_error = 0;
+	ctx.x_speed_setpoint = 0;
+	ctx.x_speed_pwm = 0;
+	pid_reset(&ctx.x_speed_pid);
+
+	// rotation speed
+	ctx.w_speed_target = 0;
+	ctx.w_speed_current = 0;
+	ctx.w_speed_setpoint = 0;
+	ctx.w_speed_error = 0;
+	ctx.w_speed_pwm = 0;
+	pid_reset(&ctx.w_speed_pid);
 
 	encoder_reset();
 
@@ -153,13 +179,20 @@ void controller_stop(){
 	ctx.sub_action_state = 0;
 
 	// speed
-	ctx.speed_target = 0;
-	ctx.speed_current = 0;
-	ctx.speed_setpoint = 0;
-	ctx.speed_error = 0;
-	ctx.speed_pwm = 0;
+	ctx.x_speed_target = 0;
+	ctx.x_speed_current = 0;
+	ctx.x_speed_setpoint = 0;
+	ctx.x_speed_error = 0;
+	ctx.x_speed_pwm = 0;
+	pid_reset(&ctx.x_speed_pid);
 
-	pid_reset(&ctx.speed_pid);
+	// rotation speed
+	ctx.w_speed_target = 0;
+	ctx.w_speed_current = 0;
+	ctx.w_speed_setpoint = 0;
+	ctx.w_speed_error = 0;
+	ctx.w_speed_pwm = 0;
+	pid_reset(&ctx.w_speed_pid);
 
 	encoder_reset();
 
@@ -181,12 +214,19 @@ void controller_update(){
 		HAL_DataLogger_Record(7, 						// number of fields
 				(int32_t)(ctx.actions_nb), 				// integer value of each field
 				(int32_t)(ctx.sub_action_state),		// integer value of each field
-				(int32_t)(ctx.speed_target * 1000.0),	// integer value of each field
-				(int32_t)(ctx.speed_setpoint * 1000.0),	// integer value of each field
-				(int32_t)(ctx.speed_current * 1000.0),	// integer value of each field
-				(int32_t)(ctx.speed_error * 1000.0),	// integer value of each field
-				(int32_t)(ctx.speed_pwm)				// integer value of each field
+				(int32_t)(ctx.w_speed_target * 1000.0),	// integer value of each field
+				(int32_t)(ctx.w_speed_setpoint * 1000.0),	// integer value of each field
+				(int32_t)(ctx.w_speed_current * 10.0),	// integer value of each field
+				(int32_t)(ctx.w_speed_error * 10.0),	// integer value of each field
+				(int32_t)(ctx.w_speed_pwm)				// integer value of each field
 		);
+		/*
+		static uint32_t counter=0;
+		if(counter++%10==0)
+		{
+			HAL_Serial_Print(&com,"GYRO %d\r\n",(int32_t)(gyro_get_dps()*1000));
+		}
+		*/
 	}
 }
 
@@ -209,14 +249,21 @@ void controller_fsm()
 
 	case ACTION_START :
 	{
-		ctx.speed_target = SPEED_TARGET;
-		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
-		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-		ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
-		ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
-		motor_speed_left(ctx.speed_pwm);
-		motor_speed_right(ctx.speed_pwm);
+		ctx.x_speed_target = SPEED_TARGET;
+		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.x_speed_setpoint);
+		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
+		// rotation speed
+		ctx.w_speed_target = 0;
+		ctx.w_speed_setpoint = 0;
+		ctx.w_speed_current = gyro_get_dps();
+		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
 		float dist = encoder_get_absolute();
 		if(dist > DIST_START)
@@ -235,13 +282,21 @@ void controller_fsm()
 	case ACTION_RUN_1 :
 	{
 
-		ctx.speed_target = SPEED_TARGET;
-		ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
-		ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-		ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
-		ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
-		motor_speed_left(ctx.speed_pwm);
-		motor_speed_right(ctx.speed_pwm);
+		ctx.x_speed_target = SPEED_TARGET;
+		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.x_speed_setpoint);
+		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+		// rotation speed
+		ctx.w_speed_target = 0;
+		ctx.w_speed_setpoint = 0;
+		ctx.w_speed_current = gyro_get_dps();
+		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
 		float dist = encoder_get_absolute();
 		if(dist > DIST_RUN_1)
@@ -259,15 +314,23 @@ void controller_fsm()
 		switch (ctx.sub_action_state) {
 			case 0 :
 			{
-				ctx.speed_target = SPEED_TARGET;
-				ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
-				ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-				ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
-				ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
-				motor_speed_left(ctx.speed_pwm);
-				motor_speed_right(ctx.speed_pwm);
+				ctx.x_speed_target = SPEED_TARGET;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
-				if(have_to_break(0, ctx.speed_setpoint, DIST_STOP-encoder_get_absolute(), SLOPE_DEC))
+				// rotation speed
+				ctx.w_speed_target = 0;
+				ctx.w_speed_setpoint = 0;
+				ctx.w_speed_current = gyro_get_dps();
+				ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+				ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), SLOPE_DEC))
 				{
 					++ctx.sub_action_state;
 				}
@@ -275,15 +338,23 @@ void controller_fsm()
 				break;
 			case 1 :
 			{
-				ctx.speed_target = 0;
-				ctx.speed_setpoint = next_speed(ctx.speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.speed_setpoint);
-				ctx.speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-				ctx.speed_error = ctx.speed_setpoint - ctx.speed_current;
-				ctx.speed_pwm = pid_output(&ctx.speed_pid, ctx.speed_error);
-				motor_speed_left(ctx.speed_pwm);
-				motor_speed_right(ctx.speed_pwm);
+				ctx.x_speed_target = 0;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, SLOPE_ACC, SLOPE_DEC, 0.001, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
-				if(ctx.speed_setpoint==ctx.speed_target)
+				// rotation speed
+				ctx.w_speed_target = 0;
+				ctx.w_speed_setpoint = 0;
+				ctx.w_speed_current = gyro_get_dps();
+				ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+				ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+				if(ctx.x_speed_setpoint==ctx.x_speed_target)
 				{
 					++ctx.sub_action_state;
 				}
@@ -292,13 +363,13 @@ void controller_fsm()
 				break;
 			case 2 :
 			{
-				ctx.speed_target = 0;
-				ctx.speed_setpoint = 0;
-				ctx.speed_current = 0;
-				ctx.speed_error = 0;
-				ctx.speed_pwm = 0;
-				motor_speed_left(ctx.speed_pwm);
-				motor_speed_right(ctx.speed_pwm);
+				ctx.x_speed_target = 0;
+				ctx.x_speed_setpoint = 0;
+				ctx.x_speed_current = 0;
+				ctx.x_speed_error = 0;
+				ctx.x_speed_pwm = 0;
+				motor_speed_left(ctx.x_speed_pwm);
+				motor_speed_right(ctx.x_speed_pwm);
 
 				++ctx.actions_nb;
 				ctx.sub_action_state = 0;

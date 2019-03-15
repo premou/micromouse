@@ -34,7 +34,9 @@
 
 // register default value (LSM6DS33)
 #define WHO_AM_I_VALUE 0x69
-
+#define CTRL10_C_value_init 0x20
+#define CTRL2_G_value_init 0x74
+#define ANGULAR_RATE_SENSITIVITY_500 0.0175 //p.15 datasheet
 // globals
 extern I2C_HandleTypeDef hi2c3;
 extern HAL_Serial_Handler com;
@@ -42,7 +44,12 @@ extern HAL_Serial_Handler com;
 // private data ///////////////////////////////////////////////////////////////
 
 // TODO : GYRO CONTEXT with measure, calibration data, etc
+typedef struct {
+	int16_t raw_value;
+	float rate; //dps
+}ctx_gyro;
 
+static ctx_gyro ctx;
 // private functions //////////////////////////////////////////////////////////
 
 // read helper for I2C operation
@@ -87,21 +94,18 @@ void gyro_write_8bit_register(
 	)
 {
 	// send the register address to I2C device
-	*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, &register_address , 1, 10);
-	if(*res==HAL_OK)
-	{
-		// write the register value to I2C device
-		*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, &data, 1, 10);
-	}
+	uint8_t data_buf[]= {register_address, data};
+	*res = HAL_I2C_Master_Transmit(&hi2c3, device_address << 1, data_buf , 2, 10);
 }
 
 // public functions ///////////////////////////////////////////////////////////
 
 uint32_t gyro_init()
 {
+	ctx.raw_value = 0;
+	ctx.rate = 0.0;
 	HAL_StatusTypeDef result;
 	uint8_t who_am_i = gyro_read_8bit_register(GYRO_I2C_ADDRESS,WHO_AM_I_ADDRESS,&result);
-	HAL_Serial_Print(&com,"GYRO: result:%d, who_am_i:%d\r\n",result,who_am_i);
 	if(result != HAL_OK)
 	{
 		return GYRO_NOT_DETECTED;
@@ -110,9 +114,21 @@ uint32_t gyro_init()
 	{
 		return GYRO_NOT_IDENTIFIED;
 	}
+	gyro_write_8bit_register(GYRO_I2C_ADDRESS, CTRL10_C, CTRL10_C_value_init, &result);
+	uint8_t res_read = gyro_read_8bit_register(GYRO_I2C_ADDRESS, CTRL10_C, &result);
+	if(res_read!=CTRL10_C_value_init)
+	{
+		return GYRO_SETUP_FAILURE;
+	}
+	gyro_write_8bit_register(GYRO_I2C_ADDRESS, CTRL2_G, CTRL2_G_value_init, &result);
+	res_read = gyro_read_8bit_register(GYRO_I2C_ADDRESS, CTRL2_G, &result);
+	if(res_read!=CTRL2_G_value_init)
+	{
+		return GYRO_SETUP_FAILURE;
+	}
 	// To Be Completed
 
-	// AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
+	// AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf p.23
 
 
 	return GYRO_OK;
@@ -120,7 +136,12 @@ uint32_t gyro_init()
 
 void gyro_update()
 {
+	HAL_StatusTypeDef result;
 	// TODO : read Z gyro raw value (16bits)
+	uint8_t res_read_H = gyro_read_8bit_register(GYRO_I2C_ADDRESS, OUTZ_H_G, &result);
+	uint8_t res_read_L = gyro_read_8bit_register(GYRO_I2C_ADDRESS, OUTZ_L_G, &result);
+	ctx.raw_value = ((uint16_t)(res_read_H) << 8) + (uint16_t) res_read_L;
+	ctx.rate = (float)(ctx.raw_value*ANGULAR_RATE_SENSITIVITY_500);
 	// TODO : do continious and power-on gyro calibrations (drift)
 	// TODO : apply drift and sensitivity corrections to raw measure
 	// TODO : store last corrected measure in internal state
@@ -129,7 +150,7 @@ void gyro_update()
 float gyro_get_dps()
 {
 	// TODO : return last corrected measure from internal state
-	return 0.0;
+	return ctx.rate;
 }
 
 

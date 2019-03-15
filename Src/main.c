@@ -195,7 +195,7 @@ int main(void)
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
 
-			  HAL_Serial_Print(&com,"IDLE->FAILSAFE\r\n");
+			  HAL_Serial_Print(&com,"IDLE->FAILSAFE, gyro error\r\n");
 
 			  current_state = FAILSAFE;
 		  }
@@ -204,7 +204,7 @@ int main(void)
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
 
-			  HAL_Serial_Print(&com,"IDLE->FAILSAFE\r\n");
+			  HAL_Serial_Print(&com,"IDLE->FAILSAFE, low battery\r\n");
 
 			  current_state = FAILSAFE;
 		  }
