@@ -112,10 +112,11 @@ int HAL_Serial_Write(HAL_Serial_Handler * hserial, uint8_t const * ptr, int len 
         hserial->tx_dma=1;
 
         // transmit serial internal tx buffer using DMA if no DMA running
-        HAL_StatusTypeDef result = 0;
+        //HAL_StatusTypeDef result = 0;
         //do
         //{
-        	result = HAL_UART_Transmit_DMA(
+        	//result =
+        	HAL_UART_Transmit_DMA(
         			hserial->huart,
 					hserial->tx_buffer_pool[hserial->tx_tail_position].data,
 					hserial->tx_buffer_pool[hserial->tx_tail_position].length
@@ -149,10 +150,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 			if(hserial_table[id]->tx_head_position!=hserial_table[id]->tx_tail_position)
 			{
 		        // transmit serial internal tx buffer using DMA if no DMA running
-		        HAL_StatusTypeDef result = 0;
+		        //HAL_StatusTypeDef result = 0;
 		        //do
 		        //{
-		        	result = HAL_UART_Transmit_DMA(
+		        	//result =
+				 HAL_UART_Transmit_DMA(
 		        			hserial_table[id]->huart,
 							hserial_table[id]->tx_buffer_pool[hserial_table[id]->tx_tail_position].data,
 							hserial_table[id]->tx_buffer_pool[hserial_table[id]->tx_tail_position].length
