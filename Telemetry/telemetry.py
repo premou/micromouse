@@ -13,6 +13,7 @@ import serial
 from serial.tools import list_ports
 from argparse import ArgumentParser
 import io
+import traceback
 
 # Debian installation command line
 # apt install python-matplotlib
@@ -25,7 +26,7 @@ import io
 def main():
 
   # Global
-  NB_SAMPLE_PER_LINE       = 8
+  NB_SAMPLE_PER_LINE       = 13
   SPLIT_PATTERN            = ' '
   TELEMETRIE_START_PATTERN = 'LOG'
   TELEMETRIE_STOP_PATTERN  = 'EOL'
@@ -41,15 +42,24 @@ def main():
   # w : white.
 
   # Telemetrie context
-  sampleCtx    = {}
-  sampleCtx[0] = { "title": "time",            "unit": "[ms]",    "color": "w",    "enable": 0, "factor": 1}  
-  sampleCtx[1] = { "title": "action number",   "unit": "",        "color": "--k",  "enable": 1, "factor": 100}
-  sampleCtx[2] = { "title": "phase",           "unit": "",        "color": "m",    "enable": 1, "factor": 100}
-  sampleCtx[3] = { "title": "target speed",    "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
-  sampleCtx[4] = { "title": "set point speed", "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
-  sampleCtx[5] = { "title": "real speed",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
-  sampleCtx[6] = { "title": "pwm",             "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
-  sampleCtx[7] = { "title": "speed error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
+  sampleCtx     = {}
+  sampleCtx[0]  = { "title": "time",            "unit": "[ms]",    "color": "w",    "enable": 0, "factor": 1}  
+  sampleCtx[1]  = { "title": "action number",   "unit": "",        "color": "--k",  "enable": 1, "factor": 100}
+  sampleCtx[2]  = { "title": "phase",           "unit": "",        "color": "m",    "enable": 1, "factor": 100}
+  sampleCtx[3]  = { "title": "target speed",    "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
+  sampleCtx[4]  = { "title": "set point speed", "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
+  sampleCtx[5]  = { "title": "real speed",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
+  sampleCtx[6]  = { "title": "pwm speed",       "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
+  sampleCtx[7]  = { "title": "speed error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
+  sampleCtx[8]  = { "title": "target giro",    "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
+  sampleCtx[9]  = { "title": "set point giro", "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
+  sampleCtx[10] = { "title": "real giro",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
+  sampleCtx[11] = { "title": "pwm giro",       "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
+  sampleCtx[12] = { "title": "giro error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
+
+  # Specify plot range
+  range_plot1 = range(1, 7)
+  range_plot2 = range(8, 12)
 
   # Variable
   nbSample      = 1
@@ -119,8 +129,9 @@ def main():
   print ("")
   
   # Display plot
-  fig, ax = plt.subplots()
-  
+  f1, ax1 = plt.subplots()
+  f2, ax2 = plt.subplots()
+	
   # First update display
   plt.pause(0.05)
 
@@ -141,7 +152,8 @@ def main():
 	# Check line value
     if len(line) == 0:
       try:	  
-        ax.grid(True)
+        ax1.grid(True)
+        ax2.grid(True)		
         plt.pause(1)
       except:
         sys.exit(0)
@@ -159,17 +171,30 @@ def main():
       print(f"Nb sample error       : {nbSampleError}")
       print ("")	  
       # Display all the point 
-      ax.clear()		
-      for i in range(1, NB_SAMPLE_PER_LINE):
+      ax1.clear()
+      ax2.clear()	  
+      # Plot 1
+      for i in range_plot1:
         if sampleCtx[i]["enable"] == 1:
-          ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), sampleCtx[i]["color"], linewidth=1, label=sampleCtx[i]["title"])
+          ax1.plot(np.array(sample_list[0]), np.array(sample_list[i]), sampleCtx[i]["color"], linewidth=1, label=sampleCtx[i]["title"])
+        handles, labels = ax1.get_legend_handles_labels()
+        ax1.legend(handles, labels)
+        ax1.grid(True)
+        txt_label = "Speed telemetry [%s]" % (datetime.datetime.now())
+        ax1.set_title(txt_label)
 
-        txt_label = "microMouse telemetry [%s]" % (datetime.datetime.now())
-        plt.title(txt_label)
-        plt.legend()
-        ax.grid(True)
-        plt.pause(0.01)
-      
+      # Plot 2
+      for i in range_plot2:
+        if sampleCtx[i]["enable"] == 1:
+          ax2.plot(np.array(sample_list[0]), np.array(sample_list[i]), sampleCtx[i]["color"], linewidth=1, label=sampleCtx[i]["title"])
+        handles, labels = ax2.get_legend_handles_labels()
+        ax2.legend(handles, labels)
+        ax2.grid(True)
+        txt_label = "Giro telemetry [%s]" % (datetime.datetime.now())
+        ax2.set_title(txt_label)
+		
+      plt.pause(0.01)
+
 	  # restart the counter for the next run
       nbSample = 1
 	  
@@ -193,17 +218,24 @@ def main():
          
         # Speed up the display 
         if (nbSample % 30) == 0:
+		  # Plot 1 & 2
           try: 
-            ax.clear()		
-            for i in range(1, NB_SAMPLE_PER_LINE):
+            ax1.clear()
+            for i in range_plot1:
               if sampleCtx[i]["enable"] == 1:
                 txt_color = "%s" % (sampleCtx[i]["color"])
-                ax.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1)
+                ax1.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1)
+            ax2.clear()
+            for i in range_plot2:
+              if sampleCtx[i]["enable"] == 1:
+                txt_color = "%s" % (sampleCtx[i]["color"])
+                ax2.plot(np.array(sample_list[0]), np.array(sample_list[i]), txt_color, linewidth=1)
             plt.pause(0.01)
-          except:
-            print("# Exit by user...")
+          except Exception as e:
+            print(f"# Error: {e}")
+            traceback.print_exc(file=sys.stdout)
             sys.exit(0)
-
+			
         # Sample rollover
         nbSample += 1
         if nbSample >= WINDOW_SIZE:
