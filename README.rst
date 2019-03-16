@@ -109,3 +109,15 @@ Battery
 
 #Software: ADC3 is started at Power On Reset in DMA mode (HAL_ADC_Start_DMA(&hadc3..)) using HAL API. User RAM is then periodically updated (overwrited) with last ADC3 channel 3 measure. A simple user function applies the ratio (once calibrated), in order to provide battery voltage in Volts (float) from ADC3 channel 3 measures (uint16). When battery voltage is lower than about 3.2V per element (6.4V), robot shall stops (FAILSAFE mode). Main robot FSM checks the battery voltage at the begining of each run. While running (learning run or fast run), the robot does'nt stop until end of run.
 
+Build with Atollic
+------------------
+1. generate the code thanks to STM32CubeMX, drivers files and loader file _FLASH.ld are generated
+2. before building the Atollic project, open the project->build settings, and add the following
+   compiler options to the assembler and C compiler command : -mcpu=cortex-m3 -mthumb 
+	- resulting assembler compiler command: arm-atollic-eabi-gcc -c -mcpu=cortex-m3 -mthumb
+	- resulting C complier command:			arm-atollic-eabi-gcc -c -mcpu=cortex-m3 -mthumb 
+3. make sure the floating point is set to software implementation in assembler->target->floating point and
+c compiler->target->floating point
+4. select C linker->general to set the linker script in the linker script (example: GitHub\micromouse\_FLASH.ld)
+5. in the file Drivers/ST/STM32F7xx/Include/stm32f7xx.h, uncomment the define STM32F767xx.
+6. you may build without errors 
