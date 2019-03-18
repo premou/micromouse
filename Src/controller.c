@@ -152,14 +152,20 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	encoder_init();
 	ctx.gyro_state = gyro_init();
 
-	HAL_DataLogger_Init(7, // number of fields
+	HAL_DataLogger_Init(12, // number of fields
 			1,  // size in bytes of each field
 			1, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
+			1, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
 			1 	// size in bytes of each field
+
 	);
 
 	return ctx.gyro_state;
@@ -238,14 +244,19 @@ void controller_update(){
 		controller_fsm();
 
 		// data logger
-		HAL_DataLogger_Record(7, 						// number of fields
-				(int32_t)(ctx.actions_nb), 				// integer value of each field
-				(int32_t)(ctx.sub_action_state),		// integer value of each field
-				(int32_t)(ctx.w_speed_target * 1000.0),	// integer value of each field
-				(int32_t)(ctx.w_speed_setpoint * 1000.0),	// integer value of each field
-				(int32_t)(ctx.w_speed_current * 10.0),	// integer value of each field
-				(int32_t)(ctx.w_speed_error * 10.0),	// integer value of each field
-				(int32_t)(ctx.w_speed_pwm)				// integer value of each field
+		HAL_DataLogger_Record(12, 						 // number of fields
+				(int32_t)(ctx.actions_nb), 				 // integer value of each field
+				(int32_t)(ctx.sub_action_state),		 // integer value of each field
+				(int32_t)(ctx.x_speed_target * 1000.0),	 // integer value of each field
+				(int32_t)(ctx.x_speed_setpoint * 1000.0),// integer value of each field
+				(int32_t)(ctx.x_speed_current * 10.0),	 // integer value of each field
+				(int32_t)(ctx.x_speed_error * 10.0),	 // integer value of each field
+				(int32_t)(ctx.x_speed_pwm),				 // integer value of each field
+				(int32_t)(ctx.w_speed_target * 1000.0),	 // integer value of each field
+				(int32_t)(ctx.w_speed_setpoint * 1000.0),// integer value of each field
+				(int32_t)(ctx.w_speed_current * 10.0),	 // integer value of each field
+				(int32_t)(ctx.w_speed_error * 10.0),	 // integer value of each field
+				(int32_t)(ctx.w_speed_pwm)				 // integer value of each field
 		);
 		/*
 		static uint32_t counter=0;
