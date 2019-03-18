@@ -29,6 +29,7 @@
 #include "datalogger.h"
 #include "math.h"
 #include "imu.h"
+#include "main.h"
 
 // globals
 extern HAL_Serial_Handler com;
@@ -53,8 +54,8 @@ extern HAL_Serial_Handler com;
 #define X_SPEED_KD 0.0
 
 // rotation
-#define W_SPEED_KP 0.5
-#define W_SPEED_KI 0.0
+#define W_SPEED_KP 0.1
+#define W_SPEED_KI 0.004
 #define W_SPEED_KD 0.0
 
 // ENUM
@@ -115,11 +116,40 @@ static action_t actions_scenario[] = {
 	ACTION_RUN_1,
 	ACTION_TURN_RIGHT,
 	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
+	ACTION_RUN_1,
+	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
+	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
 	ACTION_STOP,
 	ACTION_IDLE
   };
 
 static controller_t ctx;
+
+
+static void led_turn_on_left(){
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+}
+static void led_turn_on_right(){
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+}
+static void led_turn_on(){
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+}
+static void led_turn_off(){
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+}
+
+static void led_toggle(){
+	HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+	HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
+}
 
 // PUBLIC FUNCTIONS
 
@@ -158,13 +188,13 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
-			4, 	// size in bytes of each field
 			1, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
-			1 	// size in bytes of each field
+			1, 	// size in bytes of each field
+			4 	// size in bytes of each field
 
 	);
 
@@ -249,14 +279,14 @@ void controller_update(){
 				(int32_t)(ctx.sub_action_state),		 // integer value of each field
 				(int32_t)(ctx.x_speed_target * 1000.0),	 // integer value of each field
 				(int32_t)(ctx.x_speed_setpoint * 1000.0),// integer value of each field
-				(int32_t)(ctx.x_speed_current * 10.0),	 // integer value of each field
-				(int32_t)(ctx.x_speed_error * 10.0),	 // integer value of each field
+				(int32_t)(ctx.x_speed_current * 1000.0),	 // integer value of each field
 				(int32_t)(ctx.x_speed_pwm),				 // integer value of each field
-				(int32_t)(ctx.w_speed_target * 1000.0),	 // integer value of each field
-				(int32_t)(ctx.w_speed_setpoint * 1000.0),// integer value of each field
-				(int32_t)(ctx.w_speed_current * 10.0),	 // integer value of each field
-				(int32_t)(ctx.w_speed_error * 10.0),	 // integer value of each field
-				(int32_t)(ctx.w_speed_pwm)				 // integer value of each field
+				(int32_t)(ctx.x_speed_error * 10.0),	 // integer value of each field
+				(int32_t)(ctx.w_speed_target),	 // integer value of each field
+				(int32_t)(ctx.w_speed_setpoint),// integer value of each field
+				(int32_t)(ctx.w_speed_current),	 // integer value of each field
+				(int32_t)(ctx.w_speed_pwm),				 // integer value of each field
+				(int32_t)(ctx.w_speed_error)	 // integer value of each field
 		);
 		/*
 		static uint32_t counter=0;
@@ -329,6 +359,7 @@ void controller_fsm()
 			ctx.action_time = HAL_GetTick();
 			// TODO : positionner distance au début du mouvement (remaining distance)
 			// TODO : remplacer reset par incrémentation de la distance pour conserver l'éventuelle erreur de position
+			led_toggle();
 		}
 
 	}
@@ -361,13 +392,13 @@ void controller_fsm()
 
 			encoder_reset();
 			ctx.action_time = HAL_GetTick();
+			led_toggle();
 		}
 	}
 	break;
 
 	case ACTION_TURN_RIGHT :
 	{
-
 		switch (ctx.sub_action_state) {
 		//ACCELARATION
 		case 0 :
@@ -421,6 +452,7 @@ void controller_fsm()
 
 				encoder_reset();
 				ctx.action_time = HAL_GetTick();
+				led_toggle();
 			}
 			break;
 		default:
@@ -520,6 +552,7 @@ void controller_fsm()
 
 				encoder_reset();
 				ctx.action_time = HAL_GetTick();
+				led_toggle();
 			}
 			break;
 		}
