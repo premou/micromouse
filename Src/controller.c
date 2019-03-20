@@ -39,7 +39,8 @@ extern HAL_Serial_Handler com;
 #define X_MAX_DECELERATION 3.0		// m/s-2
 #define W_MAX_ACCELERATION 5000		// °/s-2
 #define W_MAX_DECELERATION 5000		// °/s-2
-#define X_SPEED_LEARNING_RUN 0.4 	// m/s
+#define X_SPEED_LEARNING_RUN 0.09 	// m/s
+//#define X_SPEED_LEARNING_RUN 0.4 	// m/s
 #define W_SPEED_LEARNING_RUN 300 	// °/s
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
@@ -103,6 +104,9 @@ typedef struct  {
 	float w_speed_error;
 	float w_speed_pwm;
 
+	// Filters
+	filter_ctx_t w_filter_error;
+
 	uint32_t action_time;
 
 	pid_context_t w_speed_pid;
@@ -114,14 +118,8 @@ typedef struct  {
 static action_t actions_scenario[] = {
 	ACTION_START,
 	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
-	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
 	ACTION_RUN_1,
 	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
-	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
 	ACTION_STOP,
 	ACTION_IDLE
   };
@@ -176,6 +174,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.w_speed_pwm = 0;
 	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD);
 
+	filter_init (&(ctx.w_filter_error), 0.01);
 	ctx.action_time = 0;
 
 	motor_init();
@@ -273,6 +272,9 @@ void controller_update(){
 		// motor control update
 		controller_fsm();
 
+		// Averages
+		filter_output(&ctx.w_filter_error, gyro_get_dps());
+
 		// data logger
 		HAL_DataLogger_Record(12, 						 // number of fields
 				(int32_t)(ctx.actions_nb), 				 // integer value of each field
@@ -286,7 +288,7 @@ void controller_update(){
 				(int32_t)(ctx.w_speed_setpoint),// integer value of each field
 				(int32_t)(ctx.w_speed_current),	 // integer value of each field
 				(int32_t)(ctx.w_speed_pwm),				 // integer value of each field
-				(int32_t)(ctx.w_speed_error)	 // integer value of each field
+				(int32_t)(ctx.w_filter_error.mean * 1000.0)	 // integer value of each field
 		);
 		/*
 		static uint32_t counter=0;
@@ -350,12 +352,13 @@ void controller_fsm()
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
 		float dist = encoder_get_absolute();
-		if(dist > DIST_START)
+		if(dist >= DIST_START)
 		{
+			encoder_set_absolute(dist - DIST_START);
+
 			++ctx.actions_nb;
 			ctx.sub_action_state = 0;
 
-			encoder_reset();
 			ctx.action_time = HAL_GetTick();
 			// TODO : positionner distance au début du mouvement (remaining distance)
 			// TODO : remplacer reset par incrémentation de la distance pour conserver l'éventuelle erreur de position
@@ -385,12 +388,13 @@ void controller_fsm()
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
 		float dist = encoder_get_absolute();
-		if(dist > DIST_RUN_1)
+		if(dist >= DIST_RUN_1)
 		{
+			encoder_set_absolute(dist - DIST_RUN_1);
+
 			++ctx.actions_nb;
 			ctx.sub_action_state = 0;
 
-			encoder_reset();
 			ctx.action_time = HAL_GetTick();
 			led_toggle();
 		}

@@ -100,6 +100,15 @@ float encoder_get_absolute(){
 }
 
 /*
+ * Set the absolute distance of the 4 encoders in ticks
+ * dist : in m
+ */
+//dist = distance parcourue en plus que la distance cible
+void encoder_set_absolute(float dist){
+	encoder.dist_absolute = (int32_t) (dist * 4.0 / FACTOR_TICK_2_METER);
+}
+
+/*
  * return last call distance left wheels
  * in meters
  */

@@ -30,7 +30,7 @@
 
 #define PI_FLOAT     3.14159265f
 
-#define FACTOR_TICK_2_METER_GEN (PI_FLOAT * 0.026 / 12.0)
+#define FACTOR_TICK_2_METER_GEN (PI_FLOAT * 0.026 * 0.98 / 12.0)
 #define FACTOR_TICK_2_METER_30 (FACTOR_TICK_2_METER_GEN / 30.0)
 #define FACTOR_TICK_2_METER_50 (FACTOR_TICK_2_METER_GEN / 50.0)
 #define FACTOR_TICK_2_METER FACTOR_TICK_2_METER_50
@@ -46,6 +46,7 @@ void encoder_reset();
 void encoder_update();
 
 float encoder_get_absolute();
+void encoder_set_absolute(float dist);
 float encoder_get_delta_left();
 float encoder_get_delta_right();
 

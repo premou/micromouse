@@ -12,6 +12,8 @@
 // DS : https://www.st.com/resource/en/datasheet/lsm6ds33.pdf
 // AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
 
+#define GYRO_BIAS -2.92
+
 // device I2C address (LSM6DS33)
 #define GYRO_I2C_ADDRESS 	0x6b
 
@@ -147,7 +149,7 @@ void gyro_update()
 
 float gyro_get_dps()
 {
-	return ctx.rate;
+	return ctx.rate - GYRO_BIAS;
 }
 
 

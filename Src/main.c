@@ -190,6 +190,9 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
+		  //controller_update();
+		  //HAL_Delay(2);
+
 		  if(controller_init_result != 0) // check controller::gyro
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
