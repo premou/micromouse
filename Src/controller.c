@@ -7,15 +7,10 @@
 
 // TODO : do LEFT and RIGHT turn
 
-// TODO : replace Tick timer (ms) with a an accurate timebase timer (us) and tune controller period (833Hz), or use HW external interupt from gyro
-// TODO : pulse LED when changing action
-// TODO : check position error visually and adjust wheel diameter (compensation ratio)
-
 // TODO : tune x speed PID (Kp and Ki)
 // TODO : tune w speed filter and PID (Kp and Ki)
 
 // TODO : log absolute distance
-// TODO : trim/set absolute distance when changing state in order to preserve position error
 
 // TODO : filter x_speed using EWMA and high alpha (0.5)
 // TODO : use unfiltered x speed error for Ki
@@ -30,17 +25,18 @@
 #include "math.h"
 #include "imu.h"
 #include "main.h"
+#include "timer_us.h"
 
 // globals
 extern HAL_Serial_Handler com;
 
 // constants
+#define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
 #define X_MAX_ACCELERATION 5.0 		// m/s-2
 #define X_MAX_DECELERATION 3.0		// m/s-2
 #define W_MAX_ACCELERATION 5000		// °/s-2
 #define W_MAX_DECELERATION 5000		// °/s-2
 #define X_SPEED_LEARNING_RUN 0.09 	// m/s
-//#define X_SPEED_LEARNING_RUN 0.4 	// m/s
 #define W_SPEED_LEARNING_RUN 300 	// °/s
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
@@ -71,21 +67,14 @@ typedef enum {
 	ACTION_CTR
 } action_t;
 
-typedef enum {
-	SUB_ACTION_RUN,
-	SUB_ACTION_BREAK,
-	SUB_ACTION_STOP,
-	SUB_ACTION_CTR
-} sub_action_t;
-
-
 // STRUCTURES DEFINITIONS
 
 typedef struct  {
 	// controller fsm
-	uint32_t actions_nb; // index of current action in the scenario array
-	uint32_t time;
-	uint32_t sub_action_state;
+	uint16_t time_us;
+	uint32_t actions_index; // index of current action in the scenario array
+	uint32_t action_time;
+	uint32_t sub_action_index;
 	uint32_t gyro_state;
 
 	// forward speed
@@ -94,7 +83,6 @@ typedef struct  {
 	float x_speed_current;
 	float x_speed_error;
 	float x_speed_pwm;
-
 	pid_context_t x_speed_pid;
 
 	// rotation speed
@@ -103,13 +91,10 @@ typedef struct  {
 	float w_speed_current;
 	float w_speed_error;
 	float w_speed_pwm;
+	pid_context_t w_speed_pid;
 
 	// Filters
 	filter_ctx_t w_filter_error;
-
-	uint32_t action_time;
-
-	pid_context_t w_speed_pid;
 
 } controller_t;
 
@@ -154,9 +139,10 @@ static void led_toggle(){
 uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 {
 	// reset controller fsm
-	ctx.actions_nb = 0;
-	ctx.time = 0;
-	ctx.sub_action_state = 0;
+	ctx.time_us = 0;
+	ctx.actions_index = 0;
+	ctx.action_time = 0;
+	ctx.sub_action_index = 0;
 
 	// forward speed
 	ctx.x_speed_target = 0;
@@ -175,7 +161,6 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD);
 
 	filter_init (&(ctx.w_filter_error), 0.01);
-	ctx.action_time = 0;
 
 	motor_init();
 	encoder_init();
@@ -200,11 +185,13 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	return ctx.gyro_state;
 }
 
-void controller_start(){
+void controller_start()
+{
 	// reset controller fsm
-	ctx.actions_nb = 0;
-	ctx.time = HAL_GetTick();
-	ctx.sub_action_state = 0;
+	ctx.time_us = 0;
+	ctx.actions_index = 0;
+	ctx.action_time = HAL_GetTick();
+	ctx.sub_action_index = 0;
 
 	// forward speed
 	ctx.x_speed_target = 0;
@@ -222,17 +209,20 @@ void controller_start(){
 	ctx.w_speed_pwm = 0;
 	pid_reset(&ctx.w_speed_pid);
 
-	ctx.action_time = HAL_GetTick();
+
 	encoder_reset();
 
 	HAL_DataLogger_Clear();
 }
 
-void controller_stop(){
+void controller_stop()
+{
 	// reset controller fsm
-	ctx.actions_nb = 0;
-	ctx.time = HAL_GetTick();
-	ctx.sub_action_state = 0;
+	ctx.time_us = 0;
+	ctx.actions_index = 0;
+	ctx.action_time = 0;
+	ctx.sub_action_index = 0;
+
 
 	// forward speed
 	ctx.x_speed_target = 0;
@@ -259,11 +249,12 @@ void controller_stop(){
 void controller_fsm(); // forward declaration
 
 void controller_update(){
-	// cadence a 1ms
-	uint32_t time_temp = HAL_GetTick();
-	if(time_temp > ctx.time)
+	// controller period
+	uint16_t time_us_current = timer_us_get();
+	if( (time_us_current-ctx.time_us) >= CONTROLLER_PERIOD ) // wait for PERIOD, then update sensors and call controller fsm
 	{
-		ctx.time = time_temp;
+		ctx.time_us = time_us_current;
+		//HAL_Serial_Print(&com,"|");
 
 		// sensor update
 		encoder_update();
@@ -277,8 +268,8 @@ void controller_update(){
 
 		// data logger
 		HAL_DataLogger_Record(12, 						 // number of fields
-				(int32_t)(ctx.actions_nb), 				 // integer value of each field
-				(int32_t)(ctx.sub_action_state),		 // integer value of each field
+				(int32_t)(ctx.actions_index), 				 // integer value of each field
+				(int32_t)(ctx.sub_action_index),		 // integer value of each field
 				(int32_t)(ctx.x_speed_target * 1000.0),	 // integer value of each field
 				(int32_t)(ctx.x_speed_setpoint * 1000.0),// integer value of each field
 				(int32_t)(ctx.x_speed_current * 1000.0),	 // integer value of each field
@@ -301,14 +292,14 @@ void controller_update(){
 }
 
 bool controller_is_end(){
-	return actions_scenario[ctx.actions_nb] == ACTION_IDLE;
+	return actions_scenario[ctx.actions_index] == ACTION_IDLE;
 }
 
 // PRIVATE FUNCTIONS
 
 void controller_fsm()
 {
-	switch(actions_scenario[ctx.actions_nb])
+	switch(actions_scenario[ctx.actions_index])
 	{
 	case ACTION_IDLE :
 	{
@@ -356,13 +347,12 @@ void controller_fsm()
 		{
 			encoder_set_absolute(dist - DIST_START);
 
-			++ctx.actions_nb;
-			ctx.sub_action_state = 0;
-
+			++ctx.actions_index;
+			ctx.sub_action_index = 0;
 			ctx.action_time = HAL_GetTick();
-			// TODO : positionner distance au début du mouvement (remaining distance)
-			// TODO : remplacer reset par incrémentation de la distance pour conserver l'éventuelle erreur de position
+
 			led_toggle();
+			HAL_Serial_Print(&com,".");
 		}
 
 	}
@@ -392,18 +382,19 @@ void controller_fsm()
 		{
 			encoder_set_absolute(dist - DIST_RUN_1);
 
-			++ctx.actions_nb;
-			ctx.sub_action_state = 0;
-
+			++ctx.actions_index;
+			ctx.sub_action_index = 0;
 			ctx.action_time = HAL_GetTick();
+
 			led_toggle();
+			HAL_Serial_Print(&com,".");
 		}
 	}
 	break;
 
 	case ACTION_TURN_RIGHT :
 	{
-		switch (ctx.sub_action_state) {
+		switch (ctx.sub_action_index) {
 		//ACCELARATION
 		case 0 :
 			// forward speed
@@ -426,7 +417,7 @@ void controller_fsm()
 
 			if(HAL_GetTick() > ctx.action_time + W_T1)
 			{
-				ctx.sub_action_state++;
+				ctx.sub_action_index++;
 			}
 			break;
 		//DECELERATION
@@ -451,12 +442,14 @@ void controller_fsm()
 
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
-				++ctx.actions_nb;
-				ctx.sub_action_state = 0;
+				++ctx.actions_index;
+				ctx.sub_action_index = 0;
+				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
-				ctx.action_time = HAL_GetTick();
+
 				led_toggle();
+				HAL_Serial_Print(&com,".");
 			}
 			break;
 		default:
@@ -477,7 +470,7 @@ void controller_fsm()
 
 	case ACTION_STOP :
 	{
-		switch (ctx.sub_action_state) {
+		switch (ctx.sub_action_index) {
 			//SUB_ACTION_RUN
 			case 0 :
 			{
@@ -500,7 +493,7 @@ void controller_fsm()
 
 				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
 				{
-					ctx.sub_action_state++;
+					ctx.sub_action_index++;
 				}
 			}
 				break;
@@ -526,7 +519,7 @@ void controller_fsm()
 
 				if(ctx.x_speed_setpoint==ctx.x_speed_target)
 				{
-					ctx.sub_action_state++;
+					ctx.sub_action_index++;
 				}
 
 			}
@@ -551,12 +544,14 @@ void controller_fsm()
 				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-				++ctx.actions_nb;
-				ctx.sub_action_state = 0;
+				++ctx.actions_index;
+				ctx.sub_action_index = 0;
+				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
-				ctx.action_time = HAL_GetTick();
+
 				led_toggle();
+				HAL_Serial_Print(&com,".");
 			}
 			break;
 		}
