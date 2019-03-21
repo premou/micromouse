@@ -36,14 +36,14 @@ extern HAL_Serial_Handler com;
 #define X_MAX_DECELERATION 3.0		// m/s-2
 #define W_MAX_ACCELERATION 5000		// °/s-2
 #define W_MAX_DECELERATION 5000		// °/s-2
-#define X_SPEED_LEARNING_RUN 0.09 	// m/s
-#define W_SPEED_LEARNING_RUN 300 	// °/s
+#define X_SPEED_LEARNING_RUN 0.3 	// m/s
+#define W_SPEED_LEARNING_RUN 205 	// °/s
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
 #define DIST_STOP 0.09 				// m
 
-#define W_T1 300 					//in ms
-#define W_T2 360					//in ms
+#define W_T1 439 					//in ms
+#define W_T2 480					//in ms
 
 // speed
 #define X_SPEED_KP 600.0
@@ -102,8 +102,15 @@ typedef struct  {
 
 static action_t actions_scenario[] = {
 	ACTION_START,
+	ACTION_TURN_RIGHT,
 	ACTION_RUN_1,
 	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
+	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
+	ACTION_RUN_1,
+	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
 	ACTION_STOP,
 	ACTION_IDLE
   };
