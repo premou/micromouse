@@ -104,7 +104,6 @@ static action_t actions_scenario[] = {
 	ACTION_START,
 	ACTION_RUN_1,
 	ACTION_RUN_1,
-	ACTION_RUN_1,
 	ACTION_STOP,
 	ACTION_IDLE
   };

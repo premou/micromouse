@@ -37,8 +37,8 @@
 
 // register configuration values (LSM6DS33)
 #define CTRL10_C_value_init 0x20
-#define CTRL2_G_value_init 0x74
-
+#define CTRL2_G_value_init  0x74
+#define CTRL3_C_value_init  0x40 // BDU=1
 // constants
 #define ANGULAR_RATE_SENSITIVITY_500 0.0175 // factory sensititvy (p.15 datasheet)
 // TODO tune sensitivity using turn table
@@ -129,6 +129,12 @@ uint32_t gyro_init()
 	gyro_write_8bit_register(GYRO_I2C_ADDRESS, CTRL2_G, CTRL2_G_value_init, &result);
 	res_read = gyro_read_8bit_register(GYRO_I2C_ADDRESS, CTRL2_G, &result);
 	if(res_read!=CTRL2_G_value_init)
+	{
+		return GYRO_SETUP_FAILURE;
+	}
+	gyro_write_8bit_register(GYRO_I2C_ADDRESS, CTRL3_C, CTRL3_C_value_init, &result); // enforce BDU
+	res_read = gyro_read_8bit_register(GYRO_I2C_ADDRESS, CTRL3_C, &result);
+	if(res_read!=CTRL3_C_value_init)
 	{
 		return GYRO_SETUP_FAILURE;
 	}
