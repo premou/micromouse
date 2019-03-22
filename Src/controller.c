@@ -97,9 +97,6 @@ typedef struct  {
 	float w_speed_pwm;
 	pid_context_t w_speed_pid;
 
-	// Filters
-	filter_ctx_t w_filter_error;
-
 } controller_t;
 
 // GLOBAL VARIABLES
@@ -170,8 +167,6 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.w_speed_error = 0;
 	ctx.w_speed_pwm = 0;
 	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD);
-
-	filter_init (&(ctx.w_filter_error), 0.01);
 
 	motor_init();
 	encoder_init();
@@ -274,9 +269,6 @@ void controller_update(){
 		// motor control update
 		controller_fsm();
 
-		// Averages
-		filter_output(&ctx.w_filter_error, gyro_get_dps());
-
 		// data logger
 		HAL_DataLogger_Record(12, 						 // number of fields
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
@@ -290,7 +282,7 @@ void controller_update(){
 				(int32_t)(ctx.w_speed_setpoint),// integer value of each field
 				(int32_t)(ctx.w_speed_current),	 // integer value of each field
 				(int32_t)(ctx.w_speed_pwm),				 // integer value of each field
-				(int32_t)(ctx.w_filter_error.mean * 1000.0)	 // integer value of each field
+				(int32_t)(ctx.w_speed_error)	 // integer value of each field
 		);
 		/*
 		static uint32_t counter=0;

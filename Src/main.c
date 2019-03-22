@@ -49,6 +49,8 @@
 #include "datalogger.h"
 #include "battery.h"
 #include "timer_us.h"
+#include "math.h"
+#include "imu.h"
 
 /* USER CODE END Includes */
 
@@ -180,7 +182,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  enum state {IDLE, WARMUP, RUNNING, FINISH, UPLOAD, FAILSAFE};
+  enum state {IDLE, WARMUP, RUNNING, FINISH, UPLOAD, FAILSAFE, CALIBRATION};
   enum state current_state = IDLE;
   uint32_t tim_start = 0;
 
@@ -224,6 +226,16 @@ int main(void)
 			  HAL_Serial_Print(&com,"IDLE->WARMUP\r\n");
 
 			  current_state = WARMUP;
+			  tim_start=HAL_GetTick();
+		  }
+		  else if(HAL_GPIO_ReadPin(BUTTON2_GPIO_Port,BUTTON2_Pin)==GPIO_PIN_RESET) // calibration
+		  {
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+
+			  HAL_Serial_Print(&com,"IDLE->CALIBRATION\r\n");
+
+			  current_state = CALIBRATION;
 			  tim_start=HAL_GetTick();
 		  }
 		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // upload data logger
@@ -293,6 +305,42 @@ int main(void)
 		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
 
 		  HAL_Serial_Print(&com,"UPLOAD->IDLE\r\n");
+	  }
+	  break;
+
+	  case CALIBRATION :
+	  {
+		HAL_Delay(2000); // wait for button release
+
+		// 1) reset gyro bias
+		reset_bias();
+
+		// 2) init mean
+		filter_ctx_t filter;
+		filter_init(&filter,0.002);
+
+		// 3) read gyro for 10 seconds
+		for(uint32_t it=0; it<10000; ++it)
+		{
+			HAL_Delay(1); // wait for 1ms between each acquisition
+			gyro_update(); // read gyro
+			filter_output(&filter, gyro_get_dps()); // update mean
+			if(it%1000==0)
+			{
+				HAL_Serial_Print(&com,"%d mdps\r bias:%d\n",(int32_t)(gyro_get_dps()*1000.0), (int32_t)(filter.mean*1000.0));
+			}
+		}
+
+		// 4) store mean as bias
+		set_bias(filter.mean); 	// set bias
+		HAL_Serial_Print(&com,"bias: %d mdps\r\n",(int32_t)(filter.mean*1000.0));
+
+		  current_state = IDLE;
+
+		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
+		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche Off
+
+		  HAL_Serial_Print(&com,"CALIBRATION->IDLE\r\n");
 	  }
 	  break;
 
