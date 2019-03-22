@@ -36,7 +36,7 @@ extern HAL_Serial_Handler com;
 #define X_MAX_DECELERATION 3.0		// m/s-2
 #define W_MAX_ACCELERATION 5000		// °/s-2
 #define W_MAX_DECELERATION 5000		// °/s-2
-#define X_SPEED_LEARNING_RUN 0.3 	// m/s
+#define X_SPEED_LEARNING_RUN 0.34 	// m/s
 #define W_SPEED_LEARNING_RUN 205 	// °/s
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
@@ -44,6 +44,9 @@ extern HAL_Serial_Handler com;
 
 #define W_T1 439 					//in ms
 #define W_T2 480					//in ms
+
+#define W_U_T1 890 					//in ms
+#define W_U_T2 930					//in ms
 
 // speed
 #define X_SPEED_KP 600.0
@@ -63,6 +66,7 @@ typedef enum {
 	ACTION_RUN_1,
 	ACTION_TURN_RIGHT,
 	ACTION_TURN_LEFT,
+	ACTION_U_TURN_RIGHT,
 	ACTION_STOP,
 	ACTION_CTR
 } action_t;
@@ -102,15 +106,11 @@ typedef struct  {
 
 static action_t actions_scenario[] = {
 	ACTION_START,
-	ACTION_TURN_RIGHT,
 	ACTION_RUN_1,
+	ACTION_STOP,
+	ACTION_U_TURN_RIGHT,
+	ACTION_START,
 	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
-	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
-	ACTION_RUN_1,
-	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
 	ACTION_STOP,
 	ACTION_IDLE
   };
@@ -461,16 +461,138 @@ void controller_fsm()
 		default:
 			break;
 		}
-
-
-
 	}
 	break;
 
 	case ACTION_TURN_LEFT :
 	{
-		// TODO :
+		switch (ctx.sub_action_index) {
+		//ACCELARATION
+		case 0 :
+			// forward speed
+			ctx.x_speed_target = X_SPEED_LEARNING_RUN;
+			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+			ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+			ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
+
+			// rotation speed
+			ctx.w_speed_target = W_SPEED_LEARNING_RUN;
+			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+			ctx.w_speed_current = gyro_get_dps();
+			ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+			ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+			if(HAL_GetTick() > ctx.action_time + W_T1)
+			{
+				ctx.sub_action_index++;
+			}
+			break;
+		//DECELERATION
+		case 1 :
+			// forward speed
+			ctx.x_speed_target = X_SPEED_LEARNING_RUN;
+			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+			ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+			ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+
+			// rotation speed
+			ctx.w_speed_target = 0;
+			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+			ctx.w_speed_current = gyro_get_dps();
+			ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+			ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+			if(HAL_GetTick() > ctx.action_time + W_T2)
+			{
+				++ctx.actions_index;
+				ctx.sub_action_index = 0;
+				ctx.action_time = HAL_GetTick();
+
+				encoder_reset();
+
+				led_toggle();
+				HAL_Serial_Print(&com,".");
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	break;
+
+	case ACTION_U_TURN_RIGHT :
+	{
+		switch (ctx.sub_action_index) {
+				//ACCELARATION
+				case 0 :
+					// forward speed
+					ctx.x_speed_target = 0;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+
+					// rotation speed
+					ctx.w_speed_target = -W_SPEED_LEARNING_RUN;
+					ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+					ctx.w_speed_current = gyro_get_dps();
+					ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+					ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+					if(HAL_GetTick() > ctx.action_time + W_U_T1)
+					{
+						ctx.sub_action_index++;
+					}
+					break;
+				//DECELERATION
+				case 1 :
+					// forward speed
+					ctx.x_speed_target = 0;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+
+					// rotation speed
+					ctx.w_speed_target = 0;
+					ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+					ctx.w_speed_current = gyro_get_dps();
+					ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+					ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+					if(HAL_GetTick() > ctx.action_time + W_U_T2)
+					{
+						++ctx.actions_index;
+						ctx.sub_action_index = 0;
+						ctx.action_time = HAL_GetTick();
+
+						encoder_reset();
+
+						led_toggle();
+						HAL_Serial_Print(&com,".");
+					}
+					break;
+				default:
+					break;
+				}
 	}
 	break;
 
