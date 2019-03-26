@@ -58,10 +58,10 @@ def SET():
   global sio
   
   cmd  = "set "
-  cmd += "xKp="    + xKp.get()    + " xKi="    + xKi.get()    + " xKd=" + xKd.get() + " "
-  cmd += "wKp="    + wKp.get()    + " wKi="    + wKi.get()    + " wKd=" + wKd.get() + " "
-  cmd += "xSpeed=" + xSpeed.get() + " wSpeed=" + wSpeed.get()                       + " "
-  cmd += "wt1="    + wt1.get()    + " wt2="    + wt2.get()                          +'\n'
+  cmd += xKp.get()    + " "    + xKi.get()    + " " + xKd.get() + " "
+  cmd += wKp.get()    + " "    + wKi.get()    + " " + wKd.get() + " "
+  cmd += xSpeed.get() + " " + wSpeed.get()                      + " "
+  cmd += wt1.get()    + " "    + wt2.get()                      +'\n'
   sio.write(str(cmd))
   sio.flush()
 	
@@ -283,18 +283,17 @@ def main():
       print("Receive get response:")
       print(res)
 
-      pattern_list = {'xKp': xKp, 'xKi': xKi, 'xKd': xKd,\
-                      'wKp': wKp, 'wKi': wKi, 'wKd': wKd,\
-    		          'xSpeed': xSpeed, 'wSpeed': wSpeed,\
-                      'wt1': wt1, 'wt2': wt2}
+      pattern_list = {'0': xKp, '1': xKi, '2': xKd,\
+                      '3': wKp, '4': wKi, '5': wKd,\
+    		          '6': xSpeed, '7': wSpeed,\
+                      '8': wt1, '9': wt2}
   
       # For test purpose, write the following line to the serial port
-      # "get xKp=0.0 xKi=9.4 xKd=7.3 wKp=1.0 wKi=2.1 wKd=100.0 xSpeed=1 wSpeed=9000 wt1=4 wt2=7"
+      # "get 0.0 9.4 7.3 1.0 2.1 100.0 1 9000 4 7"
       for g in range(1, len(res)):
-        tmp = res[g].split('=')
-        ctx = pattern_list[tmp[0]]
+        ctx = pattern_list[str(g-1)]
         ctx.delete(0,END)
-        ctx.insert(0,tmp[1])
+        ctx.insert(0,res[g])
 	
     elif (len(res) >= 1) and (res[0] == TELEMETRIE_STOP_PATTERN):
       print ("")
