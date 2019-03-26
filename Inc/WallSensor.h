@@ -19,20 +19,14 @@ enum WALL_SENSOR_ID
 
 /* HAL Functions ------------------------------------------------------------------*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// init wall sensors
+void wall_sensor_init();
 
-void HAL_WallSensor_Init(void);
+// update all 4 wall sensors
+void wall_sensor_update();
 
-void HAL_WallSensor_Process(void);
-
-int32_t HAL_WallSensor_Get(int id);
-int32_t HAL_WallSensor_Get_Raw(int id);
-
-#ifdef __cplusplus
-}
-#endif
+// get one wall sensor raw value (12-bit ADC measure)
+int32_t wall_sensor_get(uint32_t sensor_id);
 
 #endif /* __APP_WALLSENSOR_H */
 

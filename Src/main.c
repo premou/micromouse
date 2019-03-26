@@ -51,6 +51,7 @@
 #include "timer_us.h"
 #include "math.h"
 #include "imu.h"
+#include "timer_us.h"
 
 /* USER CODE END Includes */
 
@@ -178,6 +179,7 @@ int main(void)
   uint32_t controller_init_result = controller_init();
   HAL_Battery_Init();
 
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -185,14 +187,12 @@ int main(void)
   enum state {IDLE, WARMUP, RUNNING, FINISH, UPLOAD, FAILSAFE, CALIBRATION};
   enum state current_state = IDLE;
   uint32_t tim_start = 0;
-
   HAL_Delay(1000);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 	  switch(current_state)
 	  {
 	  case IDLE :
@@ -452,7 +452,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
