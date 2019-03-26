@@ -14,6 +14,8 @@ from serial.tools import list_ports
 from argparse import ArgumentParser
 import io
 import traceback
+from tkinter import *
+import time
 
 # Debian installation command line
 # apt install python-matplotlib
@@ -22,13 +24,72 @@ import traceback
 # pip install matplotlib
 # pip install pyserial
 
+# Global
+global xKp
+global xKi
+global xKd
+global wKp
+global wKi
+global wKd
+global xSpeed
+global wSpeed
+global wt1
+global wt2
+global sio
+
+def GET():
+  # Global
+  global sio
+  sio.write(str('get\n'))
+  sio.flush()
+
+def SET():
+  # Global
+  global xKp
+  global xKi
+  global xKd
+  global wKp
+  global wKi
+  global wKd
+  global xSpeed
+  global wSpeed
+  global wt1
+  global wt2
+  global sio
+  
+  cmd  = "set "
+  cmd += xKp.get()    + " "    + xKi.get()    + " " + xKd.get() + " "
+  cmd += wKp.get()    + " "    + wKi.get()    + " " + wKd.get() + " "
+  cmd += xSpeed.get() + " " + wSpeed.get()                      + " "
+  cmd += wt1.get()    + " "    + wt2.get()                      +'\n'
+  sio.write(str(cmd))
+  sio.flush()
+	
+def SAVE():
+  global sio
+  sio.write(str('save\n'))
+  sio.flush()
+
 # Main procedure
 def main():
+  # Global
+  global xKp
+  global xKi
+  global xKd
+  global wKp
+  global wKi
+  global wKd
+  global xSpeed
+  global wSpeed
+  global wt1
+  global wt2
+  global sio
 
   # Global
   NB_SAMPLE_PER_LINE       = 13
   SPLIT_PATTERN            = ' '
   TELEMETRIE_START_PATTERN = 'LOG'
+  TELEMETRIE_GET_PATTERN   = 'get'  
   TELEMETRIE_STOP_PATTERN  = 'EOL'
 
   # Available color
@@ -51,11 +112,11 @@ def main():
   sampleCtx[5]  = { "title": "real speed",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
   sampleCtx[6]  = { "title": "pwm speed",       "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
   sampleCtx[7]  = { "title": "speed error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
-  sampleCtx[8]  = { "title": "target giro",    "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
-  sampleCtx[9]  = { "title": "set point giro", "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
-  sampleCtx[10] = { "title": "real giro",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
-  sampleCtx[11] = { "title": "pwm giro",       "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
-  sampleCtx[12] = { "title": "giro error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
+  sampleCtx[8]  = { "title": "target giro",     "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
+  sampleCtx[9]  = { "title": "set point giro",  "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
+  sampleCtx[10] = { "title": "real giro",       "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
+  sampleCtx[11] = { "title": "pwm giro",        "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
+  sampleCtx[12] = { "title": "giro error",      "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
 
   # Specify plot range
   range_plot1 = range(1, 7)
@@ -96,6 +157,9 @@ def main():
     sample_list[0][i] = i
 
   # Check the mode: file or serial
+  log_file = None
+  ser      = None
+  sio      = None
   if  args.filename != None:
     print(f"# File mode with file {args.filename}")
     try:
@@ -132,8 +196,58 @@ def main():
   f1, ax1 = plt.subplots()
   f2, ax2 = plt.subplots()
 	
+  # Main frame for get/set and save action
+  frame = Tk()
+  frame.title('GET/SET PID')
+
+  Button(frame, text="Get", command=GET).grid(row=0, column=0)
+  Label(frame, text="xKp").grid(row=1, column=1)
+  xKp = Entry(frame)
+  xKp.grid(row=1, column=2)
+
+  Label(frame, text="xKi").grid(row=2, column=1)
+  xKi = Entry(frame)
+  xKi.grid(row=2, column=2)
+
+  Label(frame, text="xKd").grid(row=3, column=1)
+  xKd = Entry(frame)
+  xKd.grid(row=3, column=2)
+
+  Label(frame, text="wKp").grid(row=4, column=1)
+  wKp = Entry(frame)
+  wKp.grid(row=4, column=2)
+
+  Label(frame, text="wKi").grid(row=5, column=1)
+  wKi = Entry(frame)
+  wKi.grid(row=5, column=2)
+
+  Label(frame, text="wKd").grid(row=6, column=1)
+  wKd = Entry(frame)
+  wKd.grid(row=6, column=2)
+
+  Label(frame, text="xSpeed").grid(row=7, column=1)
+  xSpeed = Entry(frame)
+  xSpeed.grid(row=7, column=2)
+
+  Label(frame, text="wSpeed").grid(row=8, column=1)
+  wSpeed = Entry(frame)
+  wSpeed.grid(row=8, column=2)
+  
+  Label(frame, text="wt1").grid(row=9, column=1)
+  wt1 = Entry(frame)
+  wt1.grid(row=9, column=2)
+
+  Label(frame, text="wt2").grid(row=10, column=1)
+  wt2 = Entry(frame)
+  wt2.grid(row=10, column=2)  
+  
+  Button(frame, text="Set", command=SET).grid(row=11, column=0)
+  Button(frame, text="Save", command=SAVE).grid(row=12, column=0)	
+	
   # First update display
   plt.pause(0.05)
+  frame.update_idletasks()
+  frame.update()
 
   # Infinite loop
   while 1:
@@ -165,7 +279,23 @@ def main():
       continue	
 
     # Check the number of expected fields 
-    if (len(res) >= 1) and (res[0] == TELEMETRIE_STOP_PATTERN):
+    if (len(res) >= 1) and (res[0] == TELEMETRIE_GET_PATTERN):
+      print("Receive get response:")
+      print(res)
+
+      pattern_list = {'0': xKp, '1': xKi, '2': xKd,\
+                      '3': wKp, '4': wKi, '5': wKd,\
+    		          '6': xSpeed, '7': wSpeed,\
+                      '8': wt1, '9': wt2}
+  
+      # For test purpose, write the following line to the serial port
+      # "get 0.0 9.4 7.3 1.0 2.1 100.0 1 9000 4 7"
+      for g in range(1, len(res)):
+        ctx = pattern_list[str(g-1)]
+        ctx.delete(0,END)
+        ctx.insert(0,res[g])
+	
+    elif (len(res) >= 1) and (res[0] == TELEMETRIE_STOP_PATTERN):
       print ("")
       print(f"Nb max sample received: {nbSample}")
       print(f"Nb sample error       : {nbSampleError}")
@@ -194,6 +324,8 @@ def main():
         ax2.set_title(txt_label)
 		
       plt.pause(0.01)
+      frame.update_idletasks()
+      frame.update()
 
 	  # restart the counter for the next run
       nbSample = 1
