@@ -35,6 +35,9 @@ global xSpeed
 global wSpeed
 global wt1
 global wt2
+global ut1
+global ut2
+global wheel_diameter
 global sio
 
 def GET():
@@ -55,13 +58,18 @@ def SET():
   global wSpeed
   global wt1
   global wt2
+  global ut1
+  global ut2
+  global wheel_diameter
   global sio
   
   cmd  = "set "
   cmd += xKp.get()    + " "    + xKi.get()    + " " + xKd.get() + " "
   cmd += wKp.get()    + " "    + wKi.get()    + " " + wKd.get() + " "
   cmd += xSpeed.get() + " " + wSpeed.get()                      + " "
-  cmd += wt1.get()    + " "    + wt2.get()                      +'\n'
+  cmd += wt1.get()    + " "    + wt2.get()                      + " "       
+  cmd += ut1.get()    + " "    + ut2.get()                      + " "
+  cmd += wheel_diameter.get()                                   + '\n'
   sio.write(str(cmd))
   sio.flush()
 	
@@ -83,6 +91,9 @@ def main():
   global wSpeed
   global wt1
   global wt2
+  global ut1
+  global ut2
+  global wheel_diameter
   global sio
 
   # Global
@@ -240,9 +251,21 @@ def main():
   Label(frame, text="wt2").grid(row=10, column=1)
   wt2 = Entry(frame)
   wt2.grid(row=10, column=2)  
+
+  Label(frame, text="ut1").grid(row=11, column=1)
+  ut1 = Entry(frame)
+  ut1.grid(row=11, column=2)
+
+  Label(frame, text="ut2").grid(row=12, column=1)
+  ut2 = Entry(frame)
+  ut2.grid(row=12, column=2)  
+
+  Label(frame, text="wheel_diameter").grid(row=13, column=1)
+  wheel_diameter = Entry(frame)
+  wheel_diameter.grid(row=13, column=2)  
   
-  Button(frame, text="Set", command=SET).grid(row=11, column=0)
-  Button(frame, text="Save", command=SAVE).grid(row=12, column=0)	
+  Button(frame, text="Set", command=SET).grid(row=14, column=0)
+  Button(frame, text="Save", command=SAVE).grid(row=15, column=0)	
 	
   # First update display
   plt.pause(0.05)
@@ -283,13 +306,14 @@ def main():
       print("Receive get response:")
       print(res)
 
-      pattern_list = {'0': xKp, '1': xKi, '2': xKd,\
-                      '3': wKp, '4': wKi, '5': wKd,\
-    		          '6': xSpeed, '7': wSpeed,\
-                      '8': wt1, '9': wt2}
+      pattern_list = {'0' : xKp,    '1': xKi,  '2': xKd,\
+                      '3' : wKp,    '4': wKi,  '5': wKd,\
+    		          '6' : xSpeed, '7': wSpeed,\
+                      '8' : wt1,    '9': wt2,\
+                      '10': ut1,    '11': ut2, '12': wheel_diameter}
   
       # For test purpose, write the following line to the serial port
-      # "get 0.0 9.4 7.3 1.0 2.1 100.0 1 9000 4 7"
+      # "get 0.0 9.4 7.3 1.0 2.1 100.0 1 9000 4 7 10 12 88"
       for g in range(1, len(res)):
         ctx = pattern_list[str(g-1)]
         ctx.delete(0,END)
