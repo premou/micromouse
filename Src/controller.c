@@ -19,17 +19,18 @@
 // TODO : use filtered x speed error for Kp and Kd
 
 
+#include <robot_math.h>
 #include "controller.h"
 #include "serial.h"
 #include "motor.h"
 #include "encoder.h"
 #include "pid.h"
 #include "datalogger.h"
-#include "math.h"
 #include "imu.h"
 #include "main.h"
 #include "timer_us.h"
 #include "WallSensor.h"
+#include <math.h>
 
 // globals
 extern HAL_Serial_Handler com;
@@ -42,9 +43,11 @@ extern HAL_Serial_Handler com;
 #define W_MAX_DECELERATION 5000		// °/s-2
 #define X_SPEED_LEARNING_RUN 0.34 	// m/s
 #define W_SPEED_LEARNING_RUN 205 	// °/s
+#define X_SPEED_CALIBRATION -0.08 	// m/s
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
 #define DIST_STOP 0.09 				// m
+#define DIST_CALIBRATION -0.20 			// m
 
 #define W_T1 439 					//in ms
 #define W_T2 480					//in ms
@@ -72,6 +75,7 @@ typedef enum {
 	ACTION_TURN_LEFT,
 	ACTION_U_TURN_RIGHT,
 	ACTION_STOP,
+	ACTION_CALIBRATION,
 	ACTION_CTR
 } action_t;
 
@@ -104,7 +108,7 @@ typedef struct  {
 } controller_t;
 
 // GLOBAL VARIABLES
-
+/*
 static action_t actions_scenario[] = {
 	ACTION_START,
 	ACTION_TURN_RIGHT,
@@ -118,6 +122,12 @@ static action_t actions_scenario[] = {
 	ACTION_TURN_LEFT,
 	ACTION_TURN_RIGHT,
 	ACTION_STOP,
+	ACTION_IDLE
+  };
+*/
+
+static action_t actions_scenario[] = {
+	ACTION_CALIBRATION,
 	ACTION_IDLE
   };
 
@@ -697,6 +707,78 @@ void controller_fsm()
 				HAL_Serial_Print(&com,".");
 			}
 			break;
+		}
+
+	}
+	break;
+
+	case ACTION_CALIBRATION :
+	{
+		// forward speed
+		ctx.x_speed_target = X_SPEED_CALIBRATION;
+		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+		// rotation speed
+		ctx.w_speed_target = 0;
+		ctx.w_speed_setpoint = 0;
+		ctx.w_speed_current = gyro_get_dps();
+		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+		float dist = encoder_get_absolute();
+
+		static int32_t calibration_led_left_straight[200];
+		static int32_t calibration_led_left_diag[200];
+		static int32_t calibration_led_right_straight[200];
+		static int32_t calibration_led_right_diag[200];
+
+		if((dist < 0) && (dist > (-200)))
+		{
+			calibration_led_left_straight[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT);
+			calibration_led_left_diag[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
+			calibration_led_right_straight[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT);
+			calibration_led_right_diag[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
+		}
+
+		if(dist <= DIST_CALIBRATION)
+		{
+			// forward speed
+			ctx.x_speed_target = 0;
+			ctx.x_speed_setpoint = 0;
+			ctx.x_speed_current = 0;
+			ctx.x_speed_error = 0;
+			ctx.x_speed_pwm = 0;
+
+			// rotation speed
+			ctx.w_speed_target = 0;
+			ctx.w_speed_setpoint = 0;
+			ctx.w_speed_current = 0;
+			ctx.w_speed_error = 0;
+			ctx.w_speed_pwm = 0;
+
+			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+			++ctx.actions_index;
+			ctx.sub_action_index = 0;
+			ctx.action_time = HAL_GetTick();
+
+			led_toggle();
+			HAL_Serial_Print(&com,".");
+			for(uint32_t i=0;i<200;i++)
+			{
+				HAL_Delay(1);
+				HAL_Serial_Print(&com,"%d, %d, %d, %d, %d, %d\n", i, calibration_led_left_straight[i],
+															 calibration_led_right_straight[i],
+															 calibration_led_left_diag[i],
+															 calibration_led_right_diag[i], (int32_t)(log(calibration_led_left_straight[i])*1000));
+			}
 		}
 
 	}

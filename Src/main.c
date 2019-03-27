@@ -39,6 +39,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include <robot_math.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -49,7 +50,6 @@
 #include "datalogger.h"
 #include "battery.h"
 #include "timer_us.h"
-#include "math.h"
 #include "imu.h"
 #include "timer_us.h"
 

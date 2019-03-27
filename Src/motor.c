@@ -5,9 +5,9 @@
  *      Author: Invite
  */
 
+#include <robot_math.h>
 #include "main.h"
 #include "motor.h"
-#include "math.h"
 
 extern TIM_HandleTypeDef htim1;
 
