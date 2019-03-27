@@ -64,12 +64,12 @@ def SET():
   global sio
   
   cmd  = "set "
-  cmd += xKp.get()    + " "    + xKi.get()    + " " + xKd.get() + " "
-  cmd += wKp.get()    + " "    + wKi.get()    + " " + wKd.get() + " "
-  cmd += xSpeed.get() + " " + wSpeed.get()                      + " "
-  cmd += wt1.get()    + " "    + wt2.get()                      + " "       
-  cmd += ut1.get()    + " "    + ut2.get()                      + " "
-  cmd += wheel_diameter.get()                                   + '\n'
+  cmd += xKp.get()    + ".0 "  + xKi.get()    + ".0 " + xKd.get() + ".0 "
+  cmd += wKp.get()    + ".0 "  + wKi.get()    + ".0 " + wKd.get() + ".0 "
+  cmd += xSpeed.get() + ".0 "  + wSpeed.get()                     + ".0 "
+  cmd += wt1.get()    + ".0 "  + wt2.get()                        + ".0 "       
+  cmd += ut1.get()    + ".0 "  + ut2.get()                        + ".0 "
+  cmd += wheel_diameter.get()                                     + '.0\n'
   sio.write(str(cmd))
   sio.flush()
 	
@@ -313,7 +313,7 @@ def main():
                       '10': ut1,    '11': ut2, '12': wheel_diameter}
   
       # For test purpose, write the following line to the serial port
-      # "get 0.0 9.4 7.3 1.0 2.1 100.0 1 9000 4 7 10 12 88"
+      # "get 0 9 7 1 2 100 1 9000 4 7 10 12 88"
       for g in range(1, len(res)):
         ctx = pattern_list[str(g-1)]
         ctx.delete(0,END)
