@@ -5,7 +5,9 @@
  *      Author: Invite
  */
 
-// TODO : do LEFT and RIGHT turn
+// TODO : finalise U Turn packing STOP/U/START in one move
+// TODO : build command interpreter
+// TODO : wall following PID
 
 // TODO : tune x speed PID (Kp and Ki)
 // TODO : tune w speed filter and PID (Kp and Ki)
@@ -15,6 +17,7 @@
 // TODO : filter x_speed using EWMA and high alpha (0.5)
 // TODO : use unfiltered x speed error for Ki
 // TODO : use filtered x speed error for Kp and Kd
+
 
 #include "controller.h"
 #include "serial.h"
@@ -26,6 +29,7 @@
 #include "imu.h"
 #include "main.h"
 #include "timer_us.h"
+#include "WallSensor.h"
 
 // globals
 extern HAL_Serial_Handler com;
@@ -171,6 +175,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	motor_init();
 	encoder_init();
 	ctx.gyro_state = gyro_init();
+	wall_sensor_init();
 
 	HAL_DataLogger_Init(12, // number of fields
 			1,  // size in bytes of each field
@@ -265,6 +270,7 @@ void controller_update(){
 		// sensor update
 		encoder_update();
 		gyro_update();
+		wall_sensor_update();
 
 		// motor control update
 		controller_fsm();
@@ -291,6 +297,18 @@ void controller_update(){
 			HAL_Serial_Print(&com,"GYRO %d\r\n",(int32_t)(gyro_get_dps()*1000));
 		}
 		*/
+
+		static uint32_t counter=0;
+		if(counter++%100==0)
+		{
+			HAL_Serial_Print(&com,"WALL %d %d %d %d\r\n",
+					wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT),
+					wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT),
+					wall_sensor_get(WALL_SENSOR_LEFT_DIAG),
+					wall_sensor_get(WALL_SENSOR_RIGHT_DIAG)
+					);
+		}
+
 	}
 }
 

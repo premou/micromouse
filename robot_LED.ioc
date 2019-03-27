@@ -1,10 +1,11 @@
 #MicroXplorer Configuration settings - do not modify
 ADC1.Channel-0\#ChannelRegularConversion=ADC_CHANNEL_4
-ADC1.IPParameters=Rank-0\#ChannelRegularConversion,Channel-0\#ChannelRegularConversion,SamplingTime-0\#ChannelRegularConversion,NbrOfConversionFlag,master,NbrOfConversion
+ADC1.IPParameters=Rank-0\#ChannelRegularConversion,Channel-0\#ChannelRegularConversion,SamplingTime-0\#ChannelRegularConversion,NbrOfConversionFlag,master,NbrOfConversion,ScanConvMode
 ADC1.NbrOfConversion=1
 ADC1.NbrOfConversionFlag=1
 ADC1.Rank-0\#ChannelRegularConversion=1
-ADC1.SamplingTime-0\#ChannelRegularConversion=ADC_SAMPLETIME_3CYCLES
+ADC1.SamplingTime-0\#ChannelRegularConversion=ADC_SAMPLETIME_480CYCLES
+ADC1.ScanConvMode=DISABLE
 ADC1.master=1
 ADC3.Channel-0\#ChannelRegularConversion=ADC_CHANNEL_3
 ADC3.Channel-1\#ChannelRegularConversion=ADC_CHANNEL_3
@@ -124,6 +125,7 @@ Mcu.UserConstants=
 Mcu.UserName=STM32F767VITx
 MxCube.Version=5.1.0
 MxDb.Version=DB.5.0.10
+NVIC.ADC_IRQn=true\:0\:0\:false\:false\:true\:true\:true
 NVIC.BusFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false
 NVIC.DMA2_Stream0_IRQn=true\:0\:0\:false\:false\:true\:false\:true
 NVIC.DMA2_Stream2_IRQn=true\:0\:0\:false\:false\:true\:false\:true
