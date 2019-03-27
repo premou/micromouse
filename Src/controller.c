@@ -308,16 +308,16 @@ void controller_update(){
 		}
 		*/
 
-		static uint32_t counter=0;
-		if(counter++%100==0)
-		{
-			HAL_Serial_Print(&com,"WALL %d %d %d %d\r\n",
-					wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT),
-					wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT),
-					wall_sensor_get(WALL_SENSOR_LEFT_DIAG),
-					wall_sensor_get(WALL_SENSOR_RIGHT_DIAG)
-					);
-		}
+//		static uint32_t counter=0;
+//		if(counter++%100==0)
+//		{
+//			HAL_Serial_Print(&com,"WALL %d %d %d %d\r\n",
+//					wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT),
+//					wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT),
+//					wall_sensor_get(WALL_SENSOR_LEFT_DIAG),
+//					wall_sensor_get(WALL_SENSOR_RIGHT_DIAG)
+//					);
+//		}
 
 	}
 }

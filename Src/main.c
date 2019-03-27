@@ -39,7 +39,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <robot_math.h>
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -52,6 +52,8 @@
 #include "timer_us.h"
 #include "imu.h"
 #include "timer_us.h"
+#include "configuration.h"
+#include "robot_math.h"
 
 /* USER CODE END Includes */
 
@@ -162,23 +164,27 @@ int main(void)
   MX_I2C3_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  timer_us_init();
 
-  // TODO : à completer avec les 2 nouvelles LED IR
-  HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // Eteint le LED IR
-  HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // Eteint le LED IR
+	// turn OFF LEDs
+	HAL_GPIO_WritePin(IR_LED_FL_GPIO_Port,IR_LED_FL_Pin,GPIO_PIN_RESET); // LED IR FRONT LEFT OFF
+	HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // LED IR FRONT RIGHT OFF
+	HAL_GPIO_WritePin(IR_LED_DL_GPIO_Port,IR_LED_DL_Pin,GPIO_PIN_RESET); // LED IR DIAGONAL LEFT OFF
+	HAL_GPIO_WritePin(IR_LED_DR_GPIO_Port,IR_LED_DR_Pin,GPIO_PIN_RESET); // LED IR DIAGONAL RIGHT OFF
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // LED RIGHT OFF
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // LED LEFT OFF
 
-  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
-  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+	HAL_Battery_Init();
+	HAL_Serial_Init(&huart1, &com);
+	HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
-  play_startup_song(&htim9, TIM_CHANNEL_1);
+	// init
+	configuration_init();
+	configuration_load();
+	timer_us_init();
+	uint32_t controller_init_result = controller_init();
 
-  HAL_Serial_Init(&huart1, &com);
-  HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
-
-  uint32_t controller_init_result = controller_init();
-  HAL_Battery_Init();
-
+	// play startup song
+	play_startup_song(&htim9, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -197,8 +203,11 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
-		  //controller_update();
-		  //HAL_Delay(2);
+		  // decode CLI
+		  while(HAL_Serial_Available(&com)>0)
+		  {
+			  configuration_parse_cli(HAL_Serial_GetChar(&com));
+		  }
 
 		  if(controller_init_result != 0) // check controller::gyro
 		  {
