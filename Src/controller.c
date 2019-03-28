@@ -30,7 +30,10 @@
 #include "main.h"
 #include "timer_us.h"
 #include "WallSensor.h"
+
 #include <math.h>
+#include <stdlib.h>     /* qsort */
+
 
 // globals
 extern HAL_Serial_Handler com;
@@ -733,17 +736,19 @@ void controller_fsm()
 
 		float dist = encoder_get_absolute();
 
-		static int32_t calibration_led_left_straight[200];
-		static int32_t calibration_led_left_diag[200];
-		static int32_t calibration_led_right_straight[200];
-		static int32_t calibration_led_right_diag[200];
-
-		if((dist < 0) && (dist > (-200)))
+		// build raw array on-the-move
+		#define CALIBRATION_SIZE 200 // ((size_t)(-DIST_CALIBRATION*1000))
+		static int32_t calibration_raw_left_straight[CALIBRATION_SIZE];
+		static int32_t calibration_raw_left_diag[CALIBRATION_SIZE];
+		static int32_t calibration_raw_right_straight[CALIBRATION_SIZE];
+		static int32_t calibration_raw_right_diag[CALIBRATION_SIZE];
+		size_t position = (size_t)(-dist*1000);
+		if( (position >= 0) && (position < CALIBRATION_SIZE) )
 		{
-			calibration_led_left_straight[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT);
-			calibration_led_left_diag[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
-			calibration_led_right_straight[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT);
-			calibration_led_right_diag[(int32_t)(-dist*1000)] = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
+			calibration_raw_left_straight[position] = wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT);
+			calibration_raw_left_diag[position] = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
+			calibration_raw_right_straight[position] = wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT);
+			calibration_raw_right_diag[position] = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
 		}
 
 		if(dist <= DIST_CALIBRATION)
@@ -770,15 +775,144 @@ void controller_fsm()
 			ctx.action_time = HAL_GetTick();
 
 			led_toggle();
+
+			// display raw arrays
 			HAL_Serial_Print(&com,".");
-			for(uint32_t i=0;i<200;i++)
+			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
 			{
 				HAL_Delay(1);
-				HAL_Serial_Print(&com,"%d, %d, %d, %d, %d, %d\n", i, calibration_led_left_straight[i],
-															 calibration_led_right_straight[i],
-															 calibration_led_left_diag[i],
-															 calibration_led_right_diag[i], (int32_t)(log(calibration_led_left_straight[i])*1000));
+				HAL_Serial_Print(&com,"%d, %d, %d, %d, %d\n",
+						i,
+						calibration_raw_left_straight[i],
+						calibration_raw_right_straight[i],
+						calibration_raw_left_diag[i],
+						calibration_raw_right_diag[i]);
 			}
+
+			int compare (const void * a, const void * b)
+			{
+			  return ( *(int*)a - *(int*)b );
+			}
+
+			// calibrate 0) median filter
+			static int32_t calibration_median_left_straight[CALIBRATION_SIZE];
+			static int32_t calibration_median_left_diag[CALIBRATION_SIZE];
+			static int32_t calibration_median_right_straight[CALIBRATION_SIZE];
+			static int32_t calibration_median_right_diag[CALIBRATION_SIZE];
+			#define MEDIAN_SIZE 3
+			static int32_t median_buf_left_straight[MEDIAN_SIZE];
+			static int32_t median_buf_left_diag[MEDIAN_SIZE];
+			static int32_t median_buf_right_straight[MEDIAN_SIZE];
+			static int32_t median_buf_right_diag[MEDIAN_SIZE];
+			for(uint32_t index=1;index<CALIBRATION_SIZE-1;index++)
+			{
+				for(int32_t index_sort=0;index_sort<MEDIAN_SIZE;index_sort++)
+				{
+					median_buf_left_straight[index_sort]=calibration_raw_left_straight[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
+					median_buf_left_diag[index_sort]=calibration_raw_left_diag[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
+					median_buf_right_straight[index_sort]=calibration_raw_right_straight[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
+					median_buf_right_diag[index_sort]=calibration_raw_right_diag[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
+				}
+				qsort(median_buf_left_straight,MEDIAN_SIZE,sizeof(int32_t),compare);
+				qsort(median_buf_left_diag,MEDIAN_SIZE,sizeof(int32_t),compare);
+				qsort(median_buf_right_straight,MEDIAN_SIZE,sizeof(int32_t),compare);
+				qsort(median_buf_right_diag,MEDIAN_SIZE,sizeof(int32_t),compare);
+
+				calibration_median_left_straight[index]=median_buf_left_straight[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
+				calibration_median_left_diag[index]=median_buf_left_diag[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
+				calibration_median_right_straight[index]=median_buf_right_straight[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
+				calibration_median_right_diag[index]=median_buf_right_diag[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
+			}
+
+			float calibration_a[CALIBRATION_SIZE];
+			float calibration_b[CALIBRATION_SIZE];
+			float a_moy=0;
+			uint32_t a_count=0;
+			float a_sum=0;
+
+			//ADC=a/ln(dist)
+			for(uint32_t index=0;index<CALIBRATION_SIZE-5;index++){
+
+				float y1 = (float)(index);
+				float y2 = (float)(index+5);
+
+				float x1 = 1.0/log((float)calibration_median_left_straight[index]);
+				float x2 = 1.0/log((float)calibration_median_left_straight[index+5]);
+
+				if((x2-x1) != 0)
+				{
+					calibration_a[index] = (y2 - y1)/(x2 - x1);
+					if((index>=30) && (index<=100))
+					{
+						a_sum += calibration_a[index];
+						++a_count;
+					}
+				}
+				else
+				{
+					calibration_a[index]=0.0;
+				}
+
+			}
+			a_moy = a_sum/(float)a_count;
+			HAL_Serial_Print(&com,"a_moy is :%d, a_count is %d\n", (int)a_moy, a_count);
+
+			float b_moy=0;
+			uint32_t b_count=0;
+			float b_sum=0;
+
+			for(uint32_t index=0;index<CALIBRATION_SIZE-1;index++){
+
+				float y1 = (float)(index);
+				float x1 = 1.0/log((float)calibration_median_left_straight[index]);
+
+					calibration_b[index] = a_moy*x1 - y1;
+					if((index>=30) && (index<=100))
+					{
+						b_sum += calibration_b[index];
+						++b_count;
+					}
+
+			}
+			b_moy = b_sum/(float)b_count;
+			HAL_Serial_Print(&com,"b_moy is :%d, b_count is %d\n", (int)b_moy, b_count);
+
+			float distance_error[CALIBRATION_SIZE];
+			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
+			{
+				distance_error[i]=(float)i - a_moy/log(calibration_raw_left_straight[i]) + b_moy;
+			}
+			HAL_Serial_Print(&com,".");
+			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
+			{
+				HAL_Delay(1);
+				HAL_Serial_Print(&com,"%d,%d\n",
+						i,
+						(int)distance_error[i]);
+			}
+
+			// display raw arrays
+//			HAL_Serial_Print(&com,".");
+//			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
+//			{
+//				HAL_Delay(1);
+//				HAL_Serial_Print(&com,"%d, %d, %d, %d, %d\n",
+//						i,
+//						calibration_median_left_straight[i],
+//						calibration_median_right_straight[i],
+//						calibration_median_left_diag[i],
+//						calibration_median_right_diag[i]);
+//			}
+
+//			HAL_Serial_Print(&com,".");
+//			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
+//			{
+//				HAL_Delay(1);
+//				HAL_Serial_Print(&com,"%d,%d\n",
+//						i,
+//						(int)calibration_a[i]);
+//			}
+
 		}
 
 	}
