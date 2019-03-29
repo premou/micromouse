@@ -17,4 +17,7 @@ void controller_update();
 bool controller_is_end();
 void controller_stop();
 
+void controller_led_calibrate();
+float controller_get_distance_led(int32_t adc);
+
 #endif /* CONTROLLER_H_ */

@@ -319,31 +319,10 @@ int main(void)
 
 	  case CALIBRATION :
 	  {
-		HAL_Delay(2000); // wait for button release
+		  HAL_Delay(2000); // wait for button release
 
-		// 1) reset gyro bias
-		reset_bias();
-
-		// 2) init mean
-		filter_ctx_t filter;
-		filter_init(&filter,0.002);
-
-		// 3) read gyro for 10 seconds
-		for(uint32_t it=0; it<10000; ++it)
-		{
-			HAL_Delay(1); // wait for 1ms between each acquisition
-			gyro_update(); // read gyro
-			filter_output(&filter, gyro_get_dps()); // update mean
-			if(it%1000==0)
-			{
-				HAL_Serial_Print(&com,"%d mdps\r bias:%d\n",(int32_t)(gyro_get_dps()*1000.0), (int32_t)(filter.mean*1000.0));
-			}
-		}
-
-		// 4) store mean as bias
-		set_bias(filter.mean); 	// set bias
-		HAL_Serial_Print(&com,"bias: %d mdps\r\n",(int32_t)(filter.mean*1000.0));
-
+		  gyro_calibrate();
+		  controller_led_calibrate();
 		  current_state = IDLE;
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off

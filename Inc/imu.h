@@ -27,6 +27,7 @@ float gyro_get_dps(); 	// get the current rotation speed in degrees per second, 
 
 void reset_bias(); 	// reset bias
 void set_bias(float bias_dps); 	// set bias
+void gyro_calibrate();
 
 #ifdef __cplusplus
 }
