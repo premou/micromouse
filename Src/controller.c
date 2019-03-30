@@ -965,6 +965,8 @@ void controller_led_calibrate(){
 
 	while (dist > DIST_CALIBRATION)
 	{
+		// FIX : Period 1200us
+
 		// sensor update
 		encoder_update();
 		gyro_update();
