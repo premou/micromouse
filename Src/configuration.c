@@ -126,3 +126,49 @@ void configuration_parse_cli(char in)
 	}
 
 }
+
+
+//#define CONFIGURATION_FLASH_ADDR ((uint32_t*)(0x080E0000))
+//void configuration_save_to_flash()
+//{
+
+//	HAL_FLASH_Unlock();
+//
+//	// erasing
+//	FLASH_EraseInitTypeDef erase = {
+//			FLASH_TYPEERASE_SECTORS,
+//			FLASH_BANK_1,
+//			FLASH_SECTOR_7,
+//			1,
+//			FLASH_VOLTAGE_RANGE_3
+//	};
+//	uint32_t error = 0;
+//	HAL_FLASHEx_Erase(&erase,&error);
+//
+//	// programming 256-bit word into flash
+//	{
+//		uint32_t size_256bits = sizeof(configuration_data)/32;
+//		uint32_t flash_address = (uint32_t)(CONFIGURATION_FLASH_ADDR);
+//		uint64_t data_address = (uint64_t)( (uint64_t const *)(&config) );
+//		for(uint64_t index=0; index<size_256bits; ++index)
+//		{
+//			HAL_FLASH_Program( FLASH_TYPEPROGRAM_FLASHWORD, flash_address, data_address );
+//			flash_address += 32;
+//			data_address += 32;
+//		}
+//	}
+//
+//	HAL_FLASH_Lock();
+//}
+//void configuration_load_from_flash()
+//{
+//	// read back
+//	{
+//		uint32_t size_64bits = sizeof(configuration_data)/8;
+//		uint64_t * ptr = (uint64_t *)(&config);
+//		for(uint32_t index=0; index<size_64bits; ++index)
+//		{
+//			*(ptr+index) = *((uint64_t *)CONFIGURATION_FLASH_ADDR+index);
+//		}
+//	}
+//}
