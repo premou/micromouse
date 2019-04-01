@@ -62,9 +62,9 @@ void wall_sensor_update()
 	// 1) FR sensor
 	wall_sensor_update_one(WALL_SENSOR_RIGHT_STRAIGHT);
 	// 1) DL sensor
-	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
+	//wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
 	// 1) DR sensor
-	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
+	//wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
 }
 
 int32_t wall_sensor_get(uint32_t sensor_id)

@@ -82,7 +82,6 @@ typedef enum {
 	ACTION_TURN_LEFT,
 	ACTION_U_TURN_RIGHT,
 	ACTION_STOP,
-//	ACTION_CALIBRATION_LED,
 	ACTION_CTR
 } action_t;
 
@@ -142,13 +141,6 @@ static action_t actions_scenario[] = {
 	ACTION_STOP,
 	ACTION_IDLE
   };
-
-
-//Calibration actions
-//static action_t actions_scenario[] = {
-//	ACTION_CALIBRATION_LED,
-//	ACTION_IDLE
-//  };
 
 static controller_t ctx;
 
@@ -294,7 +286,7 @@ void controller_update(){
 	if( (time_us_current-ctx.time_us) >= CONTROLLER_PERIOD ) // wait for PERIOD, then update sensors and call controller fsm
 	{
 		ctx.time_us = time_us_current;
-		//HAL_Serial_Print(&com,"|");
+		HAL_Serial_Print(&com,"|");
 
 		// sensor update
 		encoder_update();
@@ -353,6 +345,7 @@ void controller_fsm()
 	{
 	case ACTION_IDLE :
 	{
+		HAL_Serial_Print(&com,"CONTROLLER ACTION_IDLE\n");
 		// forward speed
 		ctx.x_speed_target = 0;
 		ctx.x_speed_setpoint = 0;
@@ -393,8 +386,11 @@ void controller_fsm()
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
 		float dist = encoder_get_absolute();
+		//HAL_Serial_Print(&com,"CONTROLLER ACTION_START %d\n",(int32_t)dist);
+
 		if(dist >= DIST_START)
 		{
+
 			encoder_set_absolute(dist - DIST_START);
 
 			++ctx.actions_index;
@@ -410,6 +406,7 @@ void controller_fsm()
 
 	case ACTION_RUN_1 :
 	{
+		//HAL_Serial_Print(&com,"CONTROLLER ACTION_RUN_1\n");
 		// forward speed
 		ctx.x_speed_target = X_SPEED_LEARNING_RUN;
 		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
