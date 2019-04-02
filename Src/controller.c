@@ -71,6 +71,12 @@ extern HAL_Serial_Handler com;
 // led
 #define MEDIAN_SIZE 3
 #define CALIBRATION_SIZE 200 // ((size_t)(-DIST_CALIBRATION*1000))
+#define A_LEFT_STRAIGHT_SLOPE_DEFAULT 2584
+#define B_LEFT_STRAIGHT_SLOPE_DEFAULT 293
+
+#define A_RIGHT_STRAIGHT_SLOPE_DEFAULT 3471
+#define B_RIGHT_STRAIGHT_SLOPE_DEFAULT 402
+
 
 // ENUM
 
@@ -112,8 +118,11 @@ typedef struct  {
 	pid_context_t w_speed_pid;
 
 	//led IR
-	float a_slope;
-	float b_slope;
+	float a_left_straight_slope;
+	float a_right_straight_slope;
+
+	float b_left_straight_slope;
+	float b_right_straight_slope;
 
 } controller_t;
 
@@ -137,6 +146,7 @@ typedef struct  {
 
 static action_t actions_scenario[] = {
 	ACTION_START,
+	ACTION_RUN_1,
 	ACTION_RUN_1,
 	ACTION_STOP,
 	ACTION_IDLE
@@ -165,6 +175,80 @@ static void led_turn_off(){
 static void led_toggle(){
 	HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
 	HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
+}
+
+static void controller_calibrate_one_led(int32_t* calibration_raw_values, float* a_slope, float* b_slope){
+	int compare (const void * a, const void * b)
+	{
+		return ( *(int*)a - *(int*)b );
+	}
+
+	// calibrate 0) median filter
+	int32_t calibration_median[CALIBRATION_SIZE];
+
+	int32_t median_buf[MEDIAN_SIZE];
+	for(uint32_t index=1;index<CALIBRATION_SIZE-1;index++)
+	{
+		for(int32_t index_sort=0;index_sort<MEDIAN_SIZE;index_sort++)
+		{
+			median_buf[index_sort]=calibration_raw_values[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
+		}
+		qsort(median_buf,MEDIAN_SIZE,sizeof(int32_t),compare);
+
+		calibration_median[index]=median_buf[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
+	}
+
+		float calibration_a[CALIBRATION_SIZE];
+		float calibration_b[CALIBRATION_SIZE];
+
+		uint32_t a_count=0;
+		float a_sum=0;
+
+		//ADC=a/ln(dist)
+		for(uint32_t index=0;index<CALIBRATION_SIZE-5;index++){
+
+			float y1 = (float)(index);
+			float y2 = (float)(index+5);
+
+			float x1 = 1.0/log((float)calibration_median[index]);
+			float x2 = 1.0/log((float)calibration_median[index+5]);
+
+			if((x2-x1) != 0)
+			{
+				//significatives values between 30 and 100
+				calibration_a[index] = (y2 - y1)/(x2 - x1);
+				if((index>=30) && (index<=100))
+				{
+					a_sum += calibration_a[index];
+					++a_count;
+
+				}
+			}
+			else
+			{
+				calibration_a[index]=0.0;
+			}
+
+		}
+		*a_slope = a_sum/(float)a_count;
+
+		uint32_t b_count=0;
+		float b_sum=0;
+
+		for(uint32_t index=0;index<CALIBRATION_SIZE-1;index++){
+
+			float y1 = (float)(index);
+			float x1 = 1.0/log((float)calibration_median[index]);
+
+			calibration_b[index] = *a_slope*x1 - y1;
+			if((index>=30) && (index<=100))
+			{
+				b_sum += calibration_b[index];
+				++b_count;
+			}
+
+		}
+		*b_slope = b_sum/(float)b_count;
 }
 
 // PUBLIC FUNCTIONS
@@ -213,6 +297,13 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 			4 	// size in bytes of each field
 
 	);
+
+	ctx.a_left_straight_slope = A_LEFT_STRAIGHT_SLOPE_DEFAULT;
+	ctx.b_left_straight_slope = B_LEFT_STRAIGHT_SLOPE_DEFAULT;
+
+	ctx.a_right_straight_slope = A_RIGHT_STRAIGHT_SLOPE_DEFAULT;
+	ctx.b_right_straight_slope = B_RIGHT_STRAIGHT_SLOPE_DEFAULT;
+
 
 	return ctx.gyro_state;
 }
@@ -428,19 +519,25 @@ void controller_fsm()
 		if(dist >= DIST_RUN_1)
 		{
 			encoder_set_absolute(dist - DIST_RUN_1);
+			wall_sensor_update();
 
-			++ctx.actions_index;
+			float dist_led = controller_get_distance_led(wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT));
+			HAL_Serial_Print(&com,"sensor:%d ,dist:%d, dist_led:%d\n",(int)wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT), (int)dist*1000, (int)dist_led);
+
+			if(dist_led < 160){
+				ctx.actions_index=3;
+			}
+			else{
+				++ctx.actions_index;
+			}
 			ctx.sub_action_index = 0;
 			ctx.action_time = HAL_GetTick();
 
 			led_toggle();
 			HAL_Serial_Print(&com,".");
-		}
 
-		wall_sensor_update();
-		float dist_led = controller_get_distance_led(wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT));
-		if(dist_led < 20){
-			HAL_Serial_Print(&com,"sensor:%d ,dist:%d, dist_led:%d\n",(int)wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT), (int)dist, (int)dist_led);
+
+
 		}
 	}
 	break;
@@ -649,6 +746,8 @@ void controller_fsm()
 			//SUB_ACTION_RUN
 			case 0 :
 			{
+
+				HAL_Serial_Print(&com,"YOUHOU!!");
 				// forward speed
 				ctx.x_speed_target = X_SPEED_LEARNING_RUN;
 				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
@@ -668,6 +767,7 @@ void controller_fsm()
 
 				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
 				{
+					HAL_Serial_Print(&com,"Have to break!!");
 					ctx.sub_action_index++;
 				}
 			}
@@ -733,212 +833,6 @@ void controller_fsm()
 
 	}
 	break;
-
-//	case ACTION_CALIBRATION_LED :
-//	{
-//		// forward speed
-//		ctx.x_speed_target = X_SPEED_CALIBRATION;
-//		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-//		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-//		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
-//		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
-//
-//		// rotation speed
-//		ctx.w_speed_target = 0;
-//		ctx.w_speed_setpoint = 0;
-//		ctx.w_speed_current = gyro_get_dps();
-//		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
-//		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
-//
-//		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-//		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
-//
-//		float dist = encoder_get_absolute();
-//
-//		// build raw array on-the-move
-//		#define CALIBRATION_SIZE 200 // ((size_t)(-DIST_CALIBRATION*1000))
-//		static int32_t calibration_raw_left_straight[CALIBRATION_SIZE];
-//		static int32_t calibration_raw_left_diag[CALIBRATION_SIZE];
-//		static int32_t calibration_raw_right_straight[CALIBRATION_SIZE];
-//		static int32_t calibration_raw_right_diag[CALIBRATION_SIZE];
-//		size_t position = (size_t)(-dist*1000);
-//		if( (position >= 0) && (position < CALIBRATION_SIZE) )
-//		{
-//			calibration_raw_left_straight[position] = wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT);
-//			calibration_raw_left_diag[position] = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
-//			calibration_raw_right_straight[position] = wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT);
-//			calibration_raw_right_diag[position] = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
-//		}
-//
-//		HAL_Serial_Print(&com,"TOTO %d dist\n", (int)dist);
-//
-//		if(dist <= DIST_CALIBRATION)
-//		{
-//			// forward speed
-//			ctx.x_speed_target = 0;
-//			ctx.x_speed_setpoint = 0;
-//			ctx.x_speed_current = 0;
-//			ctx.x_speed_error = 0;
-//			ctx.x_speed_pwm = 0;
-//
-//			// rotation speed
-//			ctx.w_speed_target = 0;
-//			ctx.w_speed_setpoint = 0;
-//			ctx.w_speed_current = 0;
-//			ctx.w_speed_error = 0;
-//			ctx.w_speed_pwm = 0;
-//
-//			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-//			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
-//
-//			++ctx.actions_index;
-//			ctx.sub_action_index = 0;
-//			ctx.action_time = HAL_GetTick();
-//
-//			led_toggle();
-//
-//			// display raw arrays
-//			HAL_Serial_Print(&com,".");
-//			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-//			{
-//				HAL_Delay(1);
-//				HAL_Serial_Print(&com,"%d, %d, %d, %d, %d\n",
-//						i,
-//						calibration_raw_left_straight[i],
-//						calibration_raw_right_straight[i],
-//						calibration_raw_left_diag[i],
-//						calibration_raw_right_diag[i]);
-//			}
-//
-//			int compare (const void * a, const void * b)
-//			{
-//			  return ( *(int*)a - *(int*)b );
-//			}
-//
-//			// calibrate 0) median filter
-//			static int32_t calibration_median_left_straight[CALIBRATION_SIZE];
-//			static int32_t calibration_median_left_diag[CALIBRATION_SIZE];
-//			static int32_t calibration_median_right_straight[CALIBRATION_SIZE];
-//			static int32_t calibration_median_right_diag[CALIBRATION_SIZE];
-//			#define MEDIAN_SIZE 3
-//			static int32_t median_buf_left_straight[MEDIAN_SIZE];
-//			static int32_t median_buf_left_diag[MEDIAN_SIZE];
-//			static int32_t median_buf_right_straight[MEDIAN_SIZE];
-//			static int32_t median_buf_right_diag[MEDIAN_SIZE];
-//			for(uint32_t index=1;index<CALIBRATION_SIZE-1;index++)
-//			{
-//				for(int32_t index_sort=0;index_sort<MEDIAN_SIZE;index_sort++)
-//				{
-//					median_buf_left_straight[index_sort]=calibration_raw_left_straight[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-//					median_buf_left_diag[index_sort]=calibration_raw_left_diag[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-//					median_buf_right_straight[index_sort]=calibration_raw_right_straight[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-//					median_buf_right_diag[index_sort]=calibration_raw_right_diag[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-//				}
-//				qsort(median_buf_left_straight,MEDIAN_SIZE,sizeof(int32_t),compare);
-//				qsort(median_buf_left_diag,MEDIAN_SIZE,sizeof(int32_t),compare);
-//				qsort(median_buf_right_straight,MEDIAN_SIZE,sizeof(int32_t),compare);
-//				qsort(median_buf_right_diag,MEDIAN_SIZE,sizeof(int32_t),compare);
-//
-//				calibration_median_left_straight[index]=median_buf_left_straight[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-//				calibration_median_left_diag[index]=median_buf_left_diag[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-//				calibration_median_right_straight[index]=median_buf_right_straight[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-//				calibration_median_right_diag[index]=median_buf_right_diag[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-//			}
-//
-//			float calibration_a[CALIBRATION_SIZE];
-//			float calibration_b[CALIBRATION_SIZE];
-//			float a_moy=0;
-//			uint32_t a_count=0;
-//			float a_sum=0;
-//
-//			//ADC=a/ln(dist)
-//			for(uint32_t index=0;index<CALIBRATION_SIZE-5;index++){
-//
-//				float y1 = (float)(index);
-//				float y2 = (float)(index+5);
-//
-//				float x1 = 1.0/log((float)calibration_median_left_straight[index]);
-//				float x2 = 1.0/log((float)calibration_median_left_straight[index+5]);
-//
-//				if((x2-x1) != 0)
-//				{
-//					//significatives values between 30 and 100
-//					calibration_a[index] = (y2 - y1)/(x2 - x1);
-//					if((index>=30) && (index<=100))
-//					{
-//						a_sum += calibration_a[index];
-//						++a_count;
-//					}
-//				}
-//				else
-//				{
-//					calibration_a[index]=0.0;
-//				}
-//
-//			}
-//			a_moy = a_sum/(float)a_count;
-//			HAL_Serial_Print(&com,"a_moy is :%d, a_count is %d\n", (int)a_moy, a_count);
-//
-//			float b_moy=0;
-//			uint32_t b_count=0;
-//			float b_sum=0;
-//
-//			for(uint32_t index=0;index<CALIBRATION_SIZE-1;index++){
-//
-//				float y1 = (float)(index);
-//				float x1 = 1.0/log((float)calibration_median_left_straight[index]);
-//
-//					calibration_b[index] = a_moy*x1 - y1;
-//					if((index>=30) && (index<=100))
-//					{
-//						b_sum += calibration_b[index];
-//						++b_count;
-//					}
-//
-//			}
-//			b_moy = b_sum/(float)b_count;
-//			HAL_Serial_Print(&com,"b_moy is :%d, b_count is %d\n", (int)b_moy, b_count);
-//
-//			float distance_error[CALIBRATION_SIZE];
-//			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-//			{
-//				distance_error[i]=(float)i - a_moy/log(calibration_raw_left_straight[i]) + b_moy;
-//			}
-//			HAL_Serial_Print(&com,".");
-//			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-//			{
-//				HAL_Delay(1);
-//				HAL_Serial_Print(&com,"%d,%d\n",
-//						i,
-//						(int)distance_error[i]);
-//			}
-//
-//			// display raw arrays
-////			HAL_Serial_Print(&com,".");
-////			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-////			{
-////				HAL_Delay(1);
-////				HAL_Serial_Print(&com,"%d, %d, %d, %d, %d\n",
-////						i,
-////						calibration_median_left_straight[i],
-////						calibration_median_right_straight[i],
-////						calibration_median_left_diag[i],
-////						calibration_median_right_diag[i]);
-////			}
-//
-////			HAL_Serial_Print(&com,".");
-////			for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-////			{
-////				HAL_Delay(1);
-////				HAL_Serial_Print(&com,"%d,%d\n",
-////						i,
-////						(int)calibration_a[i]);
-////			}
-//
-//		}
-//
-//	}
-//	break;
 
 	case ACTION_CTR :
 	{
@@ -1033,110 +927,34 @@ void controller_led_calibrate(){
 				calibration_raw_right_diag[i]);
 	}
 
-	int compare (const void * a, const void * b)
-	{
-		return ( *(int*)a - *(int*)b );
-	}
+	controller_calibrate_one_led(calibration_raw_left_straight, &ctx.a_left_straight_slope, &ctx.b_left_straight_slope);
 
-	// calibrate 0) median filter
-	static int32_t calibration_median_left_straight[CALIBRATION_SIZE];
-	static int32_t calibration_median_left_diag[CALIBRATION_SIZE];
-	static int32_t calibration_median_right_straight[CALIBRATION_SIZE];
-	static int32_t calibration_median_right_diag[CALIBRATION_SIZE];
+	HAL_Serial_Print(&com,"a_left_straight is :%d\n", (int)ctx.a_left_straight_slope);
+	HAL_Serial_Print(&com,"b_left_straight is :%d\n", (int)ctx.b_left_straight_slope);
 
-	static int32_t median_buf_left_straight[MEDIAN_SIZE];
-	static int32_t median_buf_left_diag[MEDIAN_SIZE];
-	static int32_t median_buf_right_straight[MEDIAN_SIZE];
-	static int32_t median_buf_right_diag[MEDIAN_SIZE];
-	for(uint32_t index=1;index<CALIBRATION_SIZE-1;index++)
-	{
-		for(int32_t index_sort=0;index_sort<MEDIAN_SIZE;index_sort++)
-		{
-			median_buf_left_straight[index_sort]=calibration_raw_left_straight[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-			median_buf_left_diag[index_sort]=calibration_raw_left_diag[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-			median_buf_right_straight[index_sort]=calibration_raw_right_straight[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-			median_buf_right_diag[index_sort]=calibration_raw_right_diag[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-		}
-		qsort(median_buf_left_straight,MEDIAN_SIZE,sizeof(int32_t),compare);
-		qsort(median_buf_left_diag,MEDIAN_SIZE,sizeof(int32_t),compare);
-		qsort(median_buf_right_straight,MEDIAN_SIZE,sizeof(int32_t),compare);
-		qsort(median_buf_right_diag,MEDIAN_SIZE,sizeof(int32_t),compare);
+	controller_calibrate_one_led(calibration_raw_right_straight, &ctx.a_right_straight_slope, &ctx.b_right_straight_slope);
 
-		calibration_median_left_straight[index]=median_buf_left_straight[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-		calibration_median_left_diag[index]=median_buf_left_diag[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-		calibration_median_right_straight[index]=median_buf_right_straight[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-		calibration_median_right_diag[index]=median_buf_right_diag[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-	}
+	HAL_Serial_Print(&com,"a_right_straight is :%d\n", (int)ctx.a_right_straight_slope);
+	HAL_Serial_Print(&com,"b_right_straight is :%d\n", (int)ctx.b_right_straight_slope);
 
-	float calibration_a[CALIBRATION_SIZE];
-	float calibration_b[CALIBRATION_SIZE];
-
-	uint32_t a_count=0;
-	float a_sum=0;
-
-	//ADC=a/ln(dist)
-	for(uint32_t index=0;index<CALIBRATION_SIZE-5;index++){
-
-		float y1 = (float)(index);
-		float y2 = (float)(index+5);
-
-		float x1 = 1.0/log((float)calibration_median_left_straight[index]);
-		float x2 = 1.0/log((float)calibration_median_left_straight[index+5]);
-
-		if((x2-x1) != 0)
-		{
-			//significatives values between 30 and 100
-			calibration_a[index] = (y2 - y1)/(x2 - x1);
-			if((index>=30) && (index<=100))
-			{
-				a_sum += calibration_a[index];
-				++a_count;
-			}
-		}
-		else
-		{
-			calibration_a[index]=0.0;
-		}
-
-	}
-	ctx.a_slope = a_sum/(float)a_count;
-	HAL_Serial_Print(&com,"a_moy is :%d, a_count is %d\n", (int)ctx.a_slope, a_count);
-
-	uint32_t b_count=0;
-	float b_sum=0;
-
-	for(uint32_t index=0;index<CALIBRATION_SIZE-1;index++){
-
-		float y1 = (float)(index);
-		float x1 = 1.0/log((float)calibration_median_left_straight[index]);
-
-		calibration_b[index] = ctx.a_slope*x1 - y1;
-		if((index>=30) && (index<=100))
-		{
-			b_sum += calibration_b[index];
-			++b_count;
-		}
-
-	}
-	ctx.b_slope = b_sum/(float)b_count;
-	HAL_Serial_Print(&com,"b_moy is :%d, b_count is %d\n", (int)ctx.b_slope, b_count);
-
-	float distance_error[CALIBRATION_SIZE];
-	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-	{
-		distance_error[i]=(float)i - ctx.a_slope/log(calibration_raw_left_straight[i]) + ctx.b_slope;
-	}
-	HAL_Serial_Print(&com,".");
-	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-	{
-		HAL_Delay(1);
-		HAL_Serial_Print(&com,"%d,%d\n",
-				i,
-				(int)distance_error[i]);
-	}
+//	float distance_error[CALIBRATION_SIZE];
+//	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
+//	{
+//		distance_error[i]=(float)i - ctx.a_left_straight_slope/log(calibration_raw_left_straight[i]) + ctx.b_left_straight_slope;
+//	}
+//	HAL_Serial_Print(&com,".");
+//	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
+//	{
+//		HAL_Delay(1);
+//		HAL_Serial_Print(&com,"%d,%d\n",
+//				i,
+//				(int)distance_error[i]);
+//	}
 
 }
 
 float controller_get_distance_led(int32_t adc){
-	return ctx.a_slope/adc + ctx.b_slope;
+	return ctx.a_left_straight_slope/log(adc) - ctx.b_left_straight_slope;
 }
+
+

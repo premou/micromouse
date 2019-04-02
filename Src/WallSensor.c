@@ -52,7 +52,7 @@ void wall_sensor_update_one(uint32_t sensor_id)
 	timer_us_delay(100); // Wait for 100us (IR LED warm-up)
 	ctx.raw[sensor_id]= read_adc(&hadc1, sensor_id);
 	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_RESET); // Turn OFF IR LED
-	timer_us_delay(100); // Wait for 50us (IR LED cooling)
+	timer_us_delay(30); // Wait for 50us (IR LED cooling)
 }
 
 void wall_sensor_update()
@@ -62,9 +62,9 @@ void wall_sensor_update()
 	// 1) FR sensor
 	wall_sensor_update_one(WALL_SENSOR_RIGHT_STRAIGHT);
 	// 1) DL sensor
-	//wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
+	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
 	// 1) DR sensor
-	//wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
+	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
 }
 
 int32_t wall_sensor_get(uint32_t sensor_id)

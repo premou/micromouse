@@ -23,13 +23,13 @@ static const uint32_t NOTE_A7 = 3520;
 
 void tone(TIM_HandleTypeDef* htim,uint32_t frequence, uint32_t delay, uint32_t channel){
 
-	  HAL_TIM_PWM_Start(htim, channel);
-	  //Frequence
-	  htim->Instance->PSC = frequence / 7;
-	  //Volume
-	  htim->Instance->CCR1 = 400;
-	  HAL_Delay(delay);
-	  HAL_TIM_PWM_Stop(htim, channel);
+//	  HAL_TIM_PWM_Start(htim, channel);
+//	  //Frequence
+//	  htim->Instance->PSC = frequence / 7;
+//	  //Volume
+//	  htim->Instance->CCR1 = 400;
+//	  HAL_Delay(delay);
+//	  HAL_TIM_PWM_Stop(htim, channel);
 }
 
 

@@ -321,7 +321,7 @@ int main(void)
 	  {
 		  HAL_Delay(2000); // wait for button release
 
-		  gyro_calibrate();
+//		  gyro_calibrate();
 		  controller_led_calibrate();
 		  current_state = IDLE;
 
