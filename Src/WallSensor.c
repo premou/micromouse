@@ -7,6 +7,8 @@
 #include <string.h>
 
 /* APP settings ------------------------------------------------------------------*/
+#define WALL_POSITION_MIN 500
+#define WALL_POSITION_MAX 2000
 
 static uint16_t const id_to_pin[WALL_SENSOR_COUNT] = {
 	IR_LED_DL_Pin, // DL
@@ -89,3 +91,27 @@ int32_t read_adc(ADC_HandleTypeDef * phadc, uint32_t sensor_id)
     return value;
 }
 
+int32_t wall_sensor_get_side_error(){
+	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
+	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
+
+	return ctx.raw[WALL_SENSOR_LEFT_DIAG] - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
+}
+
+bool wall_sensor_wall_presence()
+{
+	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
+	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
+
+	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX)) ||
+	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))	   )
+	{
+		//there is at least one wall
+		return true;
+	}
+	else
+	{
+		//there is no wall
+		return false;
+	}
+}

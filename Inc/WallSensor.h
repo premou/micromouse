@@ -5,6 +5,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "stm32f7xx_hal.h"
+#include <stdbool.h>
 
 /* HAL Public Data ------------------------------------------------------------------*/
 
@@ -27,6 +28,8 @@ void wall_sensor_update();
 
 // get one wall sensor raw value (12-bit ADC measure)
 int32_t wall_sensor_get(uint32_t sensor_id);
+int32_t wall_sensor_get_side_error();
+bool wall_sensor_wall_presence();
 
 #endif /* __APP_WALLSENSOR_H */
 

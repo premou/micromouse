@@ -47,6 +47,7 @@ extern HAL_Serial_Handler com;
 #define X_SPEED_LEARNING_RUN 0.34 	// m/s
 #define W_SPEED_LEARNING_RUN 205 	// °/s
 #define X_SPEED_CALIBRATION -0.08 	// m/s
+#define WALL_POSITION_OFFSET 0
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
 #define DIST_STOP 0.09 				// m
@@ -67,6 +68,11 @@ extern HAL_Serial_Handler com;
 #define W_SPEED_KP 0.1
 #define W_SPEED_KI 0.004
 #define W_SPEED_KD 0.0
+
+// wall position
+#define WALL_POSITION_KP 0.001
+#define WALL_POSITION_KI 0.0
+#define WALL_POSITION_KD 0.0
 
 // led
 #define MEDIAN_SIZE 3
@@ -116,6 +122,14 @@ typedef struct  {
 	float w_speed_error;
 	float w_speed_pwm;
 	pid_context_t w_speed_pid;
+
+	// wall position
+	float wall_position_target;
+	float wall_position_setpoint;
+	float wall_position_current;
+	float wall_position_error;
+	float wall_position_pwm;
+	pid_context_t wall_position_pid;
 
 	//led IR
 	float a_left_straight_slope;
@@ -277,6 +291,14 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.w_speed_pwm = 0;
 	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD);
 
+	// wall position
+	ctx.wall_position_target = 0;
+	ctx.wall_position_setpoint = 0;
+	ctx.wall_position_current = 0;
+	ctx.wall_position_error = 0;
+	ctx.wall_position_pwm = 0;
+	pid_init(&ctx.wall_position_pid, WALL_POSITION_KP, WALL_POSITION_KI, WALL_POSITION_KD);
+
 	motor_init();
 	encoder_init();
 	ctx.gyro_state = gyro_init();
@@ -332,6 +354,13 @@ void controller_start()
 	ctx.w_speed_pwm = 0;
 	pid_reset(&ctx.w_speed_pid);
 
+	// wall position
+	ctx.wall_position_target = 0;
+	ctx.wall_position_setpoint = 0;
+	ctx.wall_position_current = 0;
+	ctx.wall_position_error = 0;
+	ctx.wall_position_pwm = 0;
+	pid_reset(&ctx.wall_position_pid);
 
 	encoder_reset();
 
@@ -362,6 +391,14 @@ void controller_stop()
 	ctx.w_speed_error = 0;
 	ctx.w_speed_pwm = 0;
 	pid_reset(&ctx.w_speed_pid);
+
+	// wall position
+	ctx.wall_position_target = 0;
+	ctx.wall_position_setpoint = 0;
+	ctx.wall_position_current = 0;
+	ctx.wall_position_error = 0;
+	ctx.wall_position_pwm = 0;
+	pid_reset(&ctx.wall_position_pid);
 
 	encoder_reset();
 
@@ -451,6 +488,13 @@ void controller_fsm()
 		ctx.w_speed_error = 0;
 		ctx.w_speed_pwm = 0;
 
+		// wall position
+		ctx.wall_position_target = 0;
+		ctx.wall_position_setpoint = 0;
+		ctx.wall_position_current = 0;
+		ctx.wall_position_error = 0;
+		ctx.wall_position_pwm = 0;
+
 		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
@@ -473,8 +517,23 @@ void controller_fsm()
 		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
 
-		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+		// wall position
+		ctx.wall_position_target = WALL_POSITION_OFFSET;
+		ctx.wall_position_setpoint = WALL_POSITION_OFFSET;
+		ctx.wall_position_current = (float) wall_sensor_get_side_error();
+		ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
+		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
+
+		if(wall_sensor_wall_presence())
+		{
+			motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
+		}
+		else
+		{
+			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+		}
 
 		float dist = encoder_get_absolute();
 		//HAL_Serial_Print(&com,"CONTROLLER ACTION_START %d\n",(int32_t)dist);
@@ -512,8 +571,24 @@ void controller_fsm()
 		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
 
-		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+		// wall position
+		ctx.wall_position_target = WALL_POSITION_OFFSET;
+		ctx.wall_position_setpoint = WALL_POSITION_OFFSET;
+		ctx.wall_position_current = (float) wall_sensor_get_side_error();
+		ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
+		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
+
+		if(wall_sensor_wall_presence())
+		{
+			HAL_Serial_Print(&com,"YOUHOUUU\n");
+			motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
+		}
+		else
+		{
+			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+		}
 
 		float dist = encoder_get_absolute();
 		if(dist >= DIST_RUN_1)
