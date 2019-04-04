@@ -38,7 +38,10 @@
 // globals
 extern HAL_Serial_Handler com;
 
+////////////
 // constants
+////////////
+
 #define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
 #define X_MAX_ACCELERATION 5.0 		// m/s-2
 #define X_MAX_DECELERATION 3.0		// m/s-2
@@ -83,8 +86,12 @@ extern HAL_Serial_Handler com;
 #define A_RIGHT_STRAIGHT_SLOPE_DEFAULT 3471
 #define B_RIGHT_STRAIGHT_SLOPE_DEFAULT 402
 
+// maze roadtrip
+#define MAX_MAZE_DEPTH (32)
 
-// ENUM
+///////
+// Enum
+///////
 
 typedef enum {
 	ACTION_IDLE,
@@ -97,7 +104,22 @@ typedef enum {
 	ACTION_CTR
 } action_t;
 
-// STRUCTURES DEFINITIONS
+// All the maze case type
+typedef enum {
+	CASE_UNKNOWN = 0, 	// unknown case : ?
+} maze_case_t ;
+
+// All the robot direction
+typedef enum {
+	RIGHT = 0,
+	TOP,
+	LEFT,
+	BOTTOM
+} robot_direction_t;
+
+/////////
+// Struct
+/////////
 
 typedef struct  {
 	// controller fsm
@@ -141,7 +163,31 @@ typedef struct  {
 
 } controller_t;
 
-//// GLOBAL VARIABLES
+typedef struct {
+	// The maze array:               x              y
+	maze_case_t the_maze_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH];
+
+	// current direction: 0:right, 1:down, 2:left, 3:top
+	robot_direction_t current_direction;
+
+    // current position
+	int32_t current_x;
+	int32_t current_y;
+
+	// start position
+	int32_t start_x;
+	int32_t start_y;
+
+	// end position
+	int32_t end_x;
+	int32_t end_y;
+
+} maze_ctx_t;
+
+//////////
+// Globals
+//////////
+
 //static action_t actions_scenario[] = {
 //	ACTION_START,
 //	ACTION_TURN_RIGHT,
@@ -159,7 +205,6 @@ typedef struct  {
 //  };
 // GLOBAL VARIABLES
 
-
 static action_t actions_scenario[] = {
 //
 //	ACTION_START,
@@ -170,10 +215,14 @@ static action_t actions_scenario[] = {
 	ACTION_IDLE
   };
 
-
-
 static controller_t ctx;
 
+// The maze context
+static maze_ctx_t the_maze_ctx ;
+
+////////////
+// Functions
+////////////
 
 static void led_turn_on_left(){
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
@@ -271,7 +320,162 @@ static void controller_calibrate_one_led(int32_t* calibration_raw_values, float*
 		*b_slope = b_sum/(float)b_count;
 }
 
+///////////////////
 // PUBLIC FUNCTIONS
+///////////////////
+
+// Fill the array maze with case unknown pattern
+void maze_ctx_init(maze_ctx_t *pCtx)
+{
+	uint32_t i, j;
+	for(i=0; i<MAX_MAZE_DEPTH; i++)
+	{
+		for(j=0; j<MAX_MAZE_DEPTH; j++)
+		{
+			pCtx->the_maze_array[i][j] = CASE_UNKNOWN ;
+		}
+	}
+
+	pCtx->current_direction = RIGHT;
+
+	pCtx->current_x = 0;
+	pCtx->current_y = (MAX_MAZE_DEPTH / 2) - 1;
+
+	pCtx->start_x = 0;
+	pCtx->start_y = pCtx->current_y;
+
+	pCtx->end_x = 0;
+	pCtx->end_y = 0;
+
+}// end of maze_ctx_init
+
+void update_maze_ctx(maze_ctx_t *pCtx, action_t action)
+{
+	int32_t step_x = 0;
+	int32_t step_y = 0;
+	robot_direction_t new_direction = (robot_direction_t) -1 ;
+
+	switch(action)
+	{
+	default:
+	case ACTION_START:
+	case ACTION_IDLE:
+	case ACTION_STOP:
+		// do nothing
+		break;
+	case ACTION_RUN_1:
+		switch(pCtx->current_direction)
+		{
+		case RIGHT:
+			step_x = 1;
+			step_y = 0;
+			// direction is not impacted
+			break;
+		case TOP:
+			step_x = 0;
+			step_y = 1;
+			// direction is not impacted
+			break;
+		case LEFT:
+			step_x = -1;
+			step_y = 0;
+			// direction is not impacted
+			break;
+		case BOTTOM:
+			step_x = 0;
+			step_y = -1;
+			// direction is not impacted
+			break;
+		}
+		break;
+	case ACTION_TURN_RIGHT:
+		switch(pCtx->current_direction)
+		{
+		case RIGHT:
+			step_x = 0;
+			step_y = -1;
+			new_direction = BOTTOM;
+			break;
+		case TOP:
+			step_x = 1;
+			step_y = 0;
+			new_direction = RIGHT;
+			break;
+		case LEFT:
+			step_x = 0;
+			step_y = 1;
+			new_direction = TOP;
+			break;
+		case BOTTOM:
+			step_x = -1;
+			step_y = 0;
+			new_direction = LEFT;
+			break;
+		}
+		break;
+	case ACTION_TURN_LEFT:
+		switch(pCtx->current_direction)
+		{
+		case RIGHT:
+			step_x = 1;
+			step_y = 0;
+			new_direction = TOP;
+			break;
+		case TOP:
+			step_x = -1;
+			step_y = 0;
+			new_direction = LEFT;
+			break;
+		case LEFT:
+			step_x = 0;
+			step_y = -1;
+			new_direction = BOTTOM;
+			break;
+		case BOTTOM:
+			step_x = 0;
+			step_y = -1;
+			new_direction = RIGHT;
+			break;
+		}
+		break;
+	case ACTION_U_TURN_RIGHT:
+		switch(pCtx->current_direction)
+		{
+		case RIGHT:
+			// x/y position is not impacted
+			new_direction = LEFT;
+			break;
+		case TOP:
+			// x/y position is not impacted
+			new_direction = BOTTOM;
+			break;
+		case LEFT:
+			// x/y position is not impacted
+			new_direction = RIGHT;
+			break;
+		case BOTTOM:
+			// x/y position is not impacted
+			new_direction = TOP;
+			break;
+		}
+		break;
+	}
+
+	// Align GPS
+	if(new_direction != (robot_direction_t) -1)
+	{
+		pCtx->current_direction = new_direction;
+	}
+	if((pCtx->current_x + step_x) < MAX_MAZE_DEPTH)
+	{
+		pCtx->current_x += step_x;
+	}
+	if((pCtx->current_y + step_y) < MAX_MAZE_DEPTH)
+	{
+		pCtx->current_y += step_y;
+	}
+
+}// end of update_maze_ctx
 
 uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 {
@@ -893,8 +1097,9 @@ void controller_fsm()
 					ctx.sub_action_index++;
 				}
 			}
-				break;
-				//SUB_ACTION_BREAK
+			break;
+
+			//SUB_ACTION_BREAK
 			case 1 :
 			{
 				// forward speed
@@ -920,8 +1125,9 @@ void controller_fsm()
 				}
 
 			}
-				break;
-				//SUB_ACTION_STOP
+			break;
+
+			//SUB_ACTION_STOP
 			case 2 :
 			{
 				// forward speed
