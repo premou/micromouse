@@ -3,12 +3,13 @@
 //#include "WallSensorCalibration.h"
 #include "timer_us.h"
 #include "main.h"
-
+#include "controller.h"
 #include <string.h>
 
 /* APP settings ------------------------------------------------------------------*/
 #define WALL_POSITION_MIN 500
 #define WALL_POSITION_MAX 2000
+#define WALL_FRONT_DISTANCE 160
 
 static uint16_t const id_to_pin[WALL_SENSOR_COUNT] = {
 	IR_LED_DL_Pin, // DL
@@ -98,11 +99,36 @@ int32_t wall_sensor_get_side_error(){
 	return ctx.raw[WALL_SENSOR_LEFT_DIAG] - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
 }
 
+bool wall_sensor_wall_left_presence()
+{
+	if((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX))
+	{
+		//there is a wall on the left
+ 		return true;
+	}
+	else
+	{
+		//there is no wall on the left
+		return false;
+	}
+}
+
+bool wall_sensor_wall_right_presence()
+{
+	if((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))
+	{
+		//there is a wall on the right
+ 		return true;
+	}
+	else
+	{
+		//there is no wall on the right
+		return false;
+	}
+}
+
 bool wall_sensor_wall_presence()
 {
-	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
-	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
-
 	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX)) ||
 	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))	   )
 	{
@@ -112,6 +138,18 @@ bool wall_sensor_wall_presence()
 	else
 	{
 		//there is no wall
+		return false;
+	}
+}
+
+bool wall_sensor_left_front_presence()
+{
+	if(controller_get_distance_led(wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT)) < WALL_FRONT_DISTANCE)
+	{
+		return true;
+	}
+	else
+	{
 		return false;
 	}
 }

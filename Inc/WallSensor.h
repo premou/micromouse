@@ -11,10 +11,10 @@
 
 enum WALL_SENSOR_ID
 {
-    WALL_SENSOR_LEFT_DIAG = 0,
+	WALL_SENSOR_LEFT_DIAG= 0,
 	WALL_SENSOR_LEFT_STRAIGHT = 1,
     WALL_SENSOR_RIGHT_STRAIGHT = 2,
-    WALL_SENSOR_RIGHT_DIAG = 3,
+	WALL_SENSOR_RIGHT_DIAG = 3,
     WALL_SENSOR_COUNT
 };
 
@@ -30,6 +30,9 @@ void wall_sensor_update();
 int32_t wall_sensor_get(uint32_t sensor_id);
 int32_t wall_sensor_get_side_error();
 bool wall_sensor_wall_presence();
+bool wall_sensor_wall_right_presence();
+bool wall_sensor_wall_left_presence();
+bool wall_sensor_left_front_presence();
 
 #endif /* __APP_WALLSENSOR_H */
 

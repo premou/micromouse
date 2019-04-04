@@ -51,7 +51,7 @@ extern HAL_Serial_Handler com;
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
 #define DIST_STOP 0.09 				// m
-#define DIST_CALIBRATION -0.20 			// m
+#define DIST_CALIBRATION -0.20 		// m
 
 #define W_T1 439 					//in ms
 #define W_T2 480					//in ms
@@ -102,6 +102,7 @@ typedef enum {
 typedef struct  {
 	// controller fsm
 	uint16_t time_us;
+	action_t current_state;
 	uint32_t actions_index; // index of current action in the scenario array
 	uint32_t action_time;
 	uint32_t sub_action_index;
@@ -158,13 +159,18 @@ typedef struct  {
 //  };
 // GLOBAL VARIABLES
 
+
 static action_t actions_scenario[] = {
-	ACTION_START,
-	ACTION_RUN_1,
-	ACTION_RUN_1,
-	ACTION_STOP,
+//
+//	ACTION_START,
+//	ACTION_RUN_1,
+//	ACTION_RUN_1,
+//	ACTION_STOP
+//
 	ACTION_IDLE
   };
+
+
 
 static controller_t ctx;
 
@@ -270,6 +276,7 @@ static void controller_calibrate_one_led(int32_t* calibration_raw_values, float*
 uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 {
 	// reset controller fsm
+	ctx.current_state = ACTION_START;
 	ctx.time_us = 0;
 	ctx.actions_index = 0;
 	ctx.action_time = 0;
@@ -333,6 +340,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 void controller_start()
 {
 	// reset controller fsm
+	ctx.current_state = ACTION_START;
 	ctx.time_us = 0;
 	ctx.actions_index = 0;
 	ctx.action_time = HAL_GetTick();
@@ -370,6 +378,7 @@ void controller_start()
 void controller_stop()
 {
 	// reset controller fsm
+	ctx.current_state = ACTION_START;
 	ctx.time_us = 0;
 	ctx.actions_index = 0;
 	ctx.action_time = 0;
@@ -414,7 +423,7 @@ void controller_update(){
 	if( (time_us_current-ctx.time_us) >= CONTROLLER_PERIOD ) // wait for PERIOD, then update sensors and call controller fsm
 	{
 		ctx.time_us = time_us_current;
-		HAL_Serial_Print(&com,"|");
+		//HAL_Serial_Print(&com,"|");
 
 		// sensor update
 		encoder_update();
@@ -462,14 +471,59 @@ void controller_update(){
 }
 
 bool controller_is_end(){
-	return actions_scenario[ctx.actions_index] == ACTION_IDLE;
+	return ctx.current_state == ACTION_IDLE;
 }
 
+action_t get_next_move()
+{
+	HAL_Serial_Print(&com,"\n%d %d %d %d\n",(int)wall_sensor_get(WALL_SENSOR_LEFT_DIAG), (int)wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT), (int)wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT), (int)wall_sensor_get(WALL_SENSOR_RIGHT_DIAG));
+
+	if(actions_scenario[0] == ACTION_IDLE)
+	{
+		if(ctx.current_state == ACTION_STOP)
+		{
+			return ACTION_IDLE;
+		}
+		else
+		{
+			if(!wall_sensor_wall_left_presence())
+			{
+				HAL_Serial_Print(&com,"turn left");
+				return ACTION_TURN_LEFT;
+			}
+			else
+			{
+				if(!wall_sensor_left_front_presence())
+				{
+					HAL_Serial_Print(&com,"run 1");
+					return ACTION_RUN_1;
+				}
+				else
+				{
+					if(!wall_sensor_wall_right_presence())
+					{
+						HAL_Serial_Print(&com,"turn right");
+						return ACTION_TURN_RIGHT;
+					}
+					else
+					{
+						HAL_Serial_Print(&com,"stop");
+						return ACTION_STOP;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		return actions_scenario[ctx.actions_index++];
+	}
+}
 // PRIVATE FUNCTIONS
 
 void controller_fsm()
 {
-	switch(actions_scenario[ctx.actions_index])
+	switch(ctx.current_state)
 	{
 	case ACTION_IDLE :
 	{
@@ -540,11 +594,12 @@ void controller_fsm()
 
 		if(dist >= DIST_START)
 		{
-
 			encoder_set_absolute(dist - DIST_START);
 
-			++ctx.actions_index;
+
+			//++ctx.actions_index;
 			ctx.sub_action_index = 0;
+			ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 
 			led_toggle();
@@ -580,7 +635,6 @@ void controller_fsm()
 
 		if(wall_sensor_wall_presence())
 		{
-			HAL_Serial_Print(&com,"YOUHOUUU\n");
 			motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
 			motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
 		}
@@ -594,25 +648,16 @@ void controller_fsm()
 		if(dist >= DIST_RUN_1)
 		{
 			encoder_set_absolute(dist - DIST_RUN_1);
-			wall_sensor_update();
 
 			float dist_led = controller_get_distance_led(wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT));
-			HAL_Serial_Print(&com,"sensor:%d ,dist:%d, dist_led:%d\n",(int)wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT), (int)dist*1000, (int)dist_led);
 
-			if(dist_led < 160){
-				ctx.actions_index=3;
-			}
-			else{
-				++ctx.actions_index;
-			}
+			//++ctx.actions_index;
 			ctx.sub_action_index = 0;
+			ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 
 			led_toggle();
 			HAL_Serial_Print(&com,".");
-
-
-
 		}
 	}
 	break;
@@ -667,8 +712,9 @@ void controller_fsm()
 
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
-				++ctx.actions_index;
+				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
+				ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
@@ -733,8 +779,9 @@ void controller_fsm()
 
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
-				++ctx.actions_index;
+				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
+				ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
@@ -799,8 +846,9 @@ void controller_fsm()
 
 					if(HAL_GetTick() > ctx.action_time + W_U_T2)
 					{
-						++ctx.actions_index;
+						//++ctx.actions_index;
 						ctx.sub_action_index = 0;
+						ctx.current_state = get_next_move();
 						ctx.action_time = HAL_GetTick();
 
 						encoder_reset();
@@ -822,7 +870,6 @@ void controller_fsm()
 			case 0 :
 			{
 
-				HAL_Serial_Print(&com,"YOUHOU!!");
 				// forward speed
 				ctx.x_speed_target = X_SPEED_LEARNING_RUN;
 				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
@@ -894,8 +941,9 @@ void controller_fsm()
 				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-				++ctx.actions_index;
+				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
+				ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
