@@ -59,6 +59,8 @@ extern HAL_Serial_Handler com;
 #define W_U_T1 890 					//in ms
 #define W_U_T2 930					//in ms
 
+#define X_BREAK 500					//in ms
+
 // speed
 #define X_SPEED_KP 600.0
 #define X_SPEED_KI 10.0
@@ -97,6 +99,12 @@ typedef enum {
 	ACTION_CTR
 } action_t;
 
+typedef enum {
+	PID_TYPE_GYRO,
+	PID_TYPE_WALL,
+	PID_TYPE_CTR
+} pid_type_t;
+
 // STRUCTURES DEFINITIONS
 
 typedef struct  {
@@ -107,6 +115,7 @@ typedef struct  {
 	uint32_t action_time;
 	uint32_t sub_action_index;
 	uint32_t gyro_state;
+	pid_type_t current_pid_type;
 
 	// forward speed
 	float x_speed_target;
@@ -161,12 +170,8 @@ typedef struct  {
 
 
 static action_t actions_scenario[] = {
-//
-//	ACTION_START,
-//	ACTION_RUN_1,
-//	ACTION_RUN_1,
-//	ACTION_STOP
-//
+	ACTION_U_TURN_RIGHT,
+	ACTION_STOP,
 	ACTION_IDLE
   };
 
@@ -306,10 +311,13 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.wall_position_pwm = 0;
 	pid_init(&ctx.wall_position_pid, WALL_POSITION_KP, WALL_POSITION_KI, WALL_POSITION_KD);
 
+
 	motor_init();
 	encoder_init();
 	ctx.gyro_state = gyro_init();
 	wall_sensor_init();
+
+	ctx.current_pid_type = PID_TYPE_WALL;
 
 	HAL_DataLogger_Init(12, // number of fields
 			1,  // size in bytes of each field
@@ -408,6 +416,9 @@ void controller_stop()
 	ctx.wall_position_error = 0;
 	ctx.wall_position_pwm = 0;
 	pid_reset(&ctx.wall_position_pid);
+
+
+	ctx.current_pid_type = PID_TYPE_GYRO;
 
 	encoder_reset();
 
@@ -578,19 +589,11 @@ void controller_fsm()
 		ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
 		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
 
-		if(wall_sensor_wall_presence())
-		{
-			motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
-			motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
-		}
-		else
-		{
-			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
-		}
+
+		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
 		float dist = encoder_get_absolute();
-		//HAL_Serial_Print(&com,"CONTROLLER ACTION_START %d\n",(int32_t)dist);
 
 		if(dist >= DIST_START)
 		{
@@ -601,6 +604,7 @@ void controller_fsm()
 			ctx.sub_action_index = 0;
 			ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
+			ctx.current_pid_type = PID_TYPE_GYRO;
 
 			led_toggle();
 			HAL_Serial_Print(&com,".");
@@ -633,31 +637,61 @@ void controller_fsm()
 		ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
 		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
 
-		if(wall_sensor_wall_presence())
+		float dist = encoder_get_absolute();
+		if(dist < DIST_RUN_1/2.0 )
 		{
-			motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
-			motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
+			if(wall_sensor_wall_presence())
+			{
+				HAL_Serial_Print(&com,".");
+				pid_reset(&ctx.w_speed_pid);
+				ctx.current_pid_type = PID_TYPE_WALL;
+				//HAL_Serial_Print(&com,"wall: PID_TYPE_GYRO->PID_TYPE_WALL, dist:%d\n",(int) (dist*1000.0));
+				motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
+				motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
+				if(ctx.wall_position_pwm > 3.0)
+				{
+					HAL_Serial_Print(&com,".");
+				}
+				else
+				{
+					HAL_Serial_Print(&com,"+");
+				}
+			}
+			else
+			{
+				HAL_Serial_Print(&com,",");
+				//HAL_Serial_Print(&com,"wall presence : PID_TYPE_WALL->PID_TYPE_GYRO\n");
+				pid_reset(&ctx.wall_position_pid);
+				ctx.current_pid_type = PID_TYPE_GYRO;
+				//HAL_Serial_Print(&com,"wall: PID_TYPE_WALL->PID_TYPE_GYRO, dist:%d\n", (int) (dist*1000.0));
+
+				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+			}
+
 		}
 		else
 		{
+			HAL_Serial_Print(&com,",");
+			pid_reset(&ctx.wall_position_pid);
+			ctx.current_pid_type = PID_TYPE_GYRO;
+			//HAL_Serial_Print(&com,"no wall : PID_TYPE_WALL->PID_TYPE_GYRO\n");
 			motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 			motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 		}
 
-		float dist = encoder_get_absolute();
+		dist = encoder_get_absolute();
 		if(dist >= DIST_RUN_1)
 		{
 			encoder_set_absolute(dist - DIST_RUN_1);
 
-			float dist_led = controller_get_distance_led(wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT));
-
-			//++ctx.actions_index;
 			ctx.sub_action_index = 0;
 			ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
+			ctx.current_pid_type = PID_TYPE_GYRO;
 
 			led_toggle();
-			HAL_Serial_Print(&com,".");
+			HAL_Serial_Print(&com,"\n");
 		}
 	}
 	break;
@@ -665,7 +699,7 @@ void controller_fsm()
 	case ACTION_TURN_RIGHT :
 	{
 		switch (ctx.sub_action_index) {
-		//ACCELARATION
+		//ACCELERATION
 		case 0 :
 			// forward speed
 			ctx.x_speed_target = X_SPEED_LEARNING_RUN;
@@ -712,10 +746,10 @@ void controller_fsm()
 
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
-				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
 				ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
+				ctx.current_pid_type = PID_TYPE_GYRO;
 
 				encoder_reset();
 
@@ -779,10 +813,10 @@ void controller_fsm()
 
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
-				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
 				ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
+				ctx.current_pid_type = PID_TYPE_GYRO;
 
 				encoder_reset();
 
@@ -795,12 +829,48 @@ void controller_fsm()
 		}
 	}
 	break;
-
+	//action new u_turn is concatenation of action stop and action break and action old u_turn and action break and action start
 	case ACTION_U_TURN_RIGHT :
 	{
 		switch (ctx.sub_action_index) {
-				//ACCELARATION
+				//STOP
 				case 0 :
+				{
+					// forward speed
+					ctx.x_speed_target = X_SPEED_LEARNING_RUN;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+					// rotation speed
+					ctx.w_speed_target = 0;
+					ctx.w_speed_setpoint = 0;
+					ctx.w_speed_current = gyro_get_dps();
+					ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+					ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+					if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
+					{
+						ctx.action_time = 0;
+						ctx.sub_action_index++;
+					}
+				}
+				//BREAK
+				case 1 :
+				{
+					if(HAL_GetTick() > ctx.action_time + X_BREAK)
+					{
+						ctx.sub_action_index++;
+					}
+				}
+					break;
+					//SUB_ACTION_BREAK
+				case 2 :
+				{
 					// forward speed
 					ctx.x_speed_target = 0;
 					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
@@ -808,6 +878,60 @@ void controller_fsm()
 					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
+					// rotation speed
+					ctx.w_speed_target = 0;
+					ctx.w_speed_setpoint = 0;
+					ctx.w_speed_current = gyro_get_dps();
+					ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+					ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+					if(ctx.x_speed_setpoint==ctx.x_speed_target)
+					{
+						ctx.sub_action_index++;
+					}
+				}
+					break;
+					//SUB_ACTION_STOP
+				case 3 :
+				{
+					// forward speed
+					ctx.x_speed_target = 0;
+					ctx.x_speed_setpoint = 0;
+					ctx.x_speed_current = 0;
+					ctx.x_speed_error = 0;
+					ctx.x_speed_pwm = 0;
+
+					// rotation speed
+					ctx.w_speed_target = 0;
+					ctx.w_speed_setpoint = 0;
+					ctx.w_speed_current = 0;
+					ctx.w_speed_error = 0;
+					ctx.w_speed_pwm = 0;
+
+					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+					ctx.sub_action_index++;
+					ctx.action_time = HAL_GetTick();
+
+					encoder_reset();
+
+					led_toggle();
+				}
+				break;
+
+				//ACCELERATION
+				case 4 :
+				{
+					// forward speed
+					ctx.x_speed_target = 0;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 					// rotation speed
 					ctx.w_speed_target = -W_SPEED_LEARNING_RUN;
@@ -823,9 +947,12 @@ void controller_fsm()
 					{
 						ctx.sub_action_index++;
 					}
+				}
 					break;
 				//DECELERATION
-				case 1 :
+
+				case 5 :
+				{
 					// forward speed
 					ctx.x_speed_target = 0;
 					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
@@ -846,15 +973,67 @@ void controller_fsm()
 
 					if(HAL_GetTick() > ctx.action_time + W_U_T2)
 					{
-						//++ctx.actions_index;
-						ctx.sub_action_index = 0;
-						ctx.current_state = get_next_move();
-						ctx.action_time = HAL_GetTick();
-
+						//ctx.sub_action_index = 0;
+						//ctx.current_state = get_next_move();
+						ctx.sub_action_index++;
+						//ctx.action_time = HAL_GetTick();
+						ctx.action_time = 0;
 						encoder_reset();
 
 						led_toggle();
 						HAL_Serial_Print(&com,".");
+					}
+				}
+					break;
+				//BREAK
+				case 6 :
+						{
+							if(HAL_GetTick() > ctx.action_time + X_BREAK)
+							{
+								ctx.sub_action_index++;
+							}
+						}
+				//START
+				case 7 :
+					{
+						// forward speed
+						ctx.x_speed_target = X_SPEED_LEARNING_RUN;
+						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
+						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+						ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
+						ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
+
+						// rotation speed
+						ctx.w_speed_target = 0;
+						ctx.w_speed_setpoint = 0;
+						ctx.w_speed_current = gyro_get_dps();
+						ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
+						ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
+
+						// wall position
+						ctx.wall_position_target = WALL_POSITION_OFFSET;
+						ctx.wall_position_setpoint = WALL_POSITION_OFFSET;
+						ctx.wall_position_current = (float) wall_sensor_get_side_error();
+						ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
+						ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
+
+
+						motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
+						motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+
+						float dist = encoder_get_absolute();
+
+						if(dist >= DIST_START)
+						{
+							encoder_set_absolute(dist - DIST_START);
+
+							ctx.sub_action_index = 0;
+							ctx.current_state = get_next_move();
+							ctx.action_time = HAL_GetTick();
+							ctx.current_pid_type = PID_TYPE_GYRO;
+
+							led_toggle();
+						}
 					}
 					break;
 				default:
