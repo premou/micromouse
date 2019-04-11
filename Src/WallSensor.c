@@ -7,9 +7,13 @@
 #include <string.h>
 
 /* APP settings ------------------------------------------------------------------*/
-#define WALL_POSITION_MIN 500
+#define WALL_POSITION_MIN 700
 #define WALL_POSITION_MAX 2000
+//#define WALL_POSITION_MIN 700
+//#define WALL_POSITION_MAX 2000
 #define WALL_FRONT_DISTANCE 160
+#define W_MIDDLE_LEFT 850			//su
+#define W_MIDDLE_RIGHT 850		//su
 
 static uint16_t const id_to_pin[WALL_SENSOR_COUNT] = {
 	IR_LED_DL_Pin, // DL
@@ -96,7 +100,19 @@ int32_t wall_sensor_get_side_error(){
 	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
 	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
 
-	return ctx.raw[WALL_SENSOR_LEFT_DIAG] - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
+	if(wall_sensor_both_wall_presence())
+	{
+		return ctx.raw[WALL_SENSOR_LEFT_DIAG] - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
+	}
+	else if(wall_sensor_wall_left_presence())
+	{
+		return ctx.raw[WALL_SENSOR_LEFT_DIAG] - W_MIDDLE_RIGHT;
+	}
+	else if(wall_sensor_wall_right_presence())
+	{
+		return W_MIDDLE_LEFT - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
+	}
+
 }
 
 bool wall_sensor_wall_left_presence()
@@ -127,6 +143,21 @@ bool wall_sensor_wall_right_presence()
 	}
 }
 
+bool wall_sensor_both_wall_presence()
+{
+	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX)) &&
+	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))	   )
+	{
+		//there is at least one wall
+		return true;
+	}
+	else
+	{
+		//there is no wall
+		return false;
+	}
+}
+
 bool wall_sensor_wall_presence()
 {
 	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX)) ||
@@ -141,6 +172,7 @@ bool wall_sensor_wall_presence()
 		return false;
 	}
 }
+
 
 bool wall_sensor_left_front_presence()
 {

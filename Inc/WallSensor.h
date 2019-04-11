@@ -33,6 +33,7 @@ bool wall_sensor_wall_presence();
 bool wall_sensor_wall_right_presence();
 bool wall_sensor_wall_left_presence();
 bool wall_sensor_left_front_presence();
+bool wall_sensor_both_wall_presence();
 
 #endif /* __APP_WALLSENSOR_H */
 

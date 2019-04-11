@@ -72,7 +72,7 @@ extern HAL_Serial_Handler com;
 #define W_SPEED_KD 0.0
 
 // wall position
-#define WALL_POSITION_KP 0.001
+#define WALL_POSITION_KP 0.01
 #define WALL_POSITION_KI 0.0
 #define WALL_POSITION_KD 0.0
 
@@ -170,8 +170,8 @@ typedef struct  {
 
 
 static action_t actions_scenario[] = {
-	ACTION_U_TURN_RIGHT,
-	ACTION_STOP,
+//	ACTION_U_TURN_RIGHT,
+//	ACTION_STOP,
 	ACTION_IDLE
   };
 
@@ -448,11 +448,11 @@ void controller_update(){
 		HAL_DataLogger_Record(12, 						 // number of fields
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				(int32_t)(ctx.sub_action_index),		 // integer value of each field
-				(int32_t)(ctx.x_speed_target * 1000.0),	 // integer value of each field
-				(int32_t)(ctx.x_speed_setpoint * 1000.0),// integer value of each field
-				(int32_t)(ctx.x_speed_current * 1000.0),	 // integer value of each field
-				(int32_t)(ctx.x_speed_pwm),				 // integer value of each field
-				(int32_t)(ctx.x_speed_error * 10.0),	 // integer value of each field
+				(int32_t)(ctx.wall_position_target * 1.0),	 // integer value of each field
+				(int32_t)(ctx.wall_position_setpoint * 1.0),// integer value of each field
+				(int32_t)(ctx.wall_position_current* 1.0),	 // integer value of each field
+				(int32_t)(ctx.wall_position_pwm),				 // integer value of each field
+				(int32_t)(ctx.wall_position_error * 10.0),	 // integer value of each field
 				(int32_t)(ctx.w_speed_target),	 // integer value of each field
 				(int32_t)(ctx.w_speed_setpoint),// integer value of each field
 				(int32_t)(ctx.w_speed_current),	 // integer value of each field
@@ -642,19 +642,23 @@ void controller_fsm()
 		{
 			if(wall_sensor_wall_presence())
 			{
-				HAL_Serial_Print(&com,".");
+				//HAL_Serial_Print(&com,".");
 				pid_reset(&ctx.w_speed_pid);
 				ctx.current_pid_type = PID_TYPE_WALL;
 				//HAL_Serial_Print(&com,"wall: PID_TYPE_GYRO->PID_TYPE_WALL, dist:%d\n",(int) (dist*1000.0));
 				motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
-				if(ctx.wall_position_pwm > 3.0)
+				if(wall_sensor_both_wall_presence())
 				{
-					HAL_Serial_Print(&com,".");
+					HAL_Serial_Print(&com,"|");
 				}
-				else
+				else if(wall_sensor_wall_left_presence())
 				{
-					HAL_Serial_Print(&com,"+");
+					HAL_Serial_Print(&com,"<");
+				}
+				else if(wall_sensor_wall_right_presence())
+				{
+					HAL_Serial_Print(&com,">");
 				}
 			}
 			else
