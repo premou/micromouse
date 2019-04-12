@@ -32,7 +32,7 @@
 #include "WallSensor.h"
 #include <math.h>
 #include <stdlib.h>     /* qsort */
-
+#include "maze.h"
 
 // globals
 extern HAL_Serial_Handler com;
@@ -137,6 +137,7 @@ typedef struct  {
 	float b_left_straight_slope;
 	float b_right_straight_slope;
 
+	maze_ctx_t maze;
 } controller_t;
 
 //////////
@@ -172,6 +173,7 @@ static controller_t ctx;
 // Functions
 ////////////
 
+#if 0
 static void led_turn_on_left(){
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
@@ -188,6 +190,7 @@ static void led_turn_off(){
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
 }
+#endif
 
 static void led_toggle(){
 	HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
@@ -335,6 +338,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.a_right_straight_slope = A_RIGHT_STRAIGHT_SLOPE_DEFAULT;
 	ctx.b_right_straight_slope = B_RIGHT_STRAIGHT_SLOPE_DEFAULT;
 
+	maze_ctx_init(&ctx.maze);
 
 	return ctx.gyro_state;
 }
@@ -375,6 +379,8 @@ void controller_start()
 	encoder_reset();
 
 	HAL_DataLogger_Clear();
+
+	maze_ctx_start(&ctx.maze) ;
 }
 
 void controller_stop()
@@ -479,6 +485,7 @@ bool controller_is_end(){
 	return ctx.current_state == ACTION_IDLE;
 }
 
+#if 0
 action_t get_next_move()
 {
 	HAL_Serial_Print(&com,"\n%d %d %d %d\n",(int)wall_sensor_get(WALL_SENSOR_LEFT_DIAG), (int)wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT), (int)wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT), (int)wall_sensor_get(WALL_SENSOR_RIGHT_DIAG));
@@ -524,6 +531,8 @@ action_t get_next_move()
 		return actions_scenario[ctx.actions_index++];
 	}
 }
+#endif
+
 // PRIVATE FUNCTIONS
 
 void controller_fsm()
@@ -596,7 +605,9 @@ void controller_fsm()
 
 			//++ctx.actions_index;
 			ctx.sub_action_index = 0;
-			ctx.current_state = get_next_move();
+
+			ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+			//ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -684,7 +695,9 @@ void controller_fsm()
 			encoder_set_absolute(dist - DIST_RUN_1);
 
 			ctx.sub_action_index = 0;
-			ctx.current_state = get_next_move();
+
+			ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+			//ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -745,7 +758,9 @@ void controller_fsm()
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
 				ctx.sub_action_index = 0;
-				ctx.current_state = get_next_move();
+
+				ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -812,7 +827,9 @@ void controller_fsm()
 			if(HAL_GetTick() > ctx.action_time + W_T2)
 			{
 				ctx.sub_action_index = 0;
-				ctx.current_state = get_next_move();
+
+				ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -1026,7 +1043,9 @@ void controller_fsm()
 							encoder_set_absolute(dist - DIST_START);
 
 							ctx.sub_action_index = 0;
-							ctx.current_state = get_next_move();
+
+							ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+							//ctx.current_state = get_next_move();
 							ctx.action_time = HAL_GetTick();
 							ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -1122,7 +1141,9 @@ void controller_fsm()
 
 				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
-				ctx.current_state = get_next_move();
+
+				ctx.current_state = ACTION_IDLE ;//update_maze_ctx(ctx.maze, get_wall_state(ctx.maze));
+				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();

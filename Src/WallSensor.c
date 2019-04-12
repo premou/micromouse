@@ -113,6 +113,8 @@ int32_t wall_sensor_get_side_error(){
 		return W_MIDDLE_LEFT - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
 	}
 
+	// This part of code should be never reached
+	return(0);
 }
 
 bool wall_sensor_wall_left_presence()
