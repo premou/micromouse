@@ -11,6 +11,25 @@
 #include "stm32f7xx_hal.h"
 #include <stdbool.h>
 
+///////
+// Enum
+///////
+
+typedef enum {
+	ACTION_IDLE,
+	ACTION_START,
+	ACTION_RUN_1,
+	ACTION_TURN_RIGHT,
+	ACTION_TURN_LEFT,
+	ACTION_U_TURN_RIGHT,
+	ACTION_STOP,
+	ACTION_CTR
+} action_t;
+
+///////////////////////
+// Function declaration
+///////////////////////
+
 uint32_t controller_init(); // return ZERO if gyro is OK, else return GYRO ERROR
 void controller_start();
 void controller_update();

@@ -30,7 +30,6 @@
 #include "main.h"
 #include "timer_us.h"
 #include "WallSensor.h"
-
 #include <math.h>
 #include <stdlib.h>     /* qsort */
 
@@ -38,7 +37,10 @@
 // globals
 extern HAL_Serial_Handler com;
 
+////////////
 // constants
+////////////
+
 #define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
 #define X_MAX_ACCELERATION 5.0 		// m/s-2
 #define X_MAX_DECELERATION 3.0		// m/s-2
@@ -85,20 +87,7 @@ extern HAL_Serial_Handler com;
 #define A_RIGHT_STRAIGHT_SLOPE_DEFAULT 3471
 #define B_RIGHT_STRAIGHT_SLOPE_DEFAULT 402
 
-
 // ENUM
-
-typedef enum {
-	ACTION_IDLE,
-	ACTION_START,
-	ACTION_RUN_1,
-	ACTION_TURN_RIGHT,
-	ACTION_TURN_LEFT,
-	ACTION_U_TURN_RIGHT,
-	ACTION_STOP,
-	ACTION_CTR
-} action_t;
-
 typedef enum {
 	PID_TYPE_GYRO,
 	PID_TYPE_WALL,
@@ -150,7 +139,10 @@ typedef struct  {
 
 } controller_t;
 
-//// GLOBAL VARIABLES
+//////////
+// Globals
+//////////
+
 //static action_t actions_scenario[] = {
 //	ACTION_START,
 //	ACTION_TURN_RIGHT,
@@ -168,17 +160,17 @@ typedef struct  {
 //  };
 // GLOBAL VARIABLES
 
-
 static action_t actions_scenario[] = {
 //	ACTION_U_TURN_RIGHT,
 //	ACTION_STOP,
 	ACTION_IDLE
   };
 
-
-
 static controller_t ctx;
 
+////////////
+// Functions
+////////////
 
 static void led_turn_on_left(){
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
@@ -276,7 +268,9 @@ static void controller_calibrate_one_led(int32_t* calibration_raw_values, float*
 		*b_slope = b_sum/(float)b_count;
 }
 
+///////////////////
 // PUBLIC FUNCTIONS
+///////////////////
 
 uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 {
@@ -1076,8 +1070,9 @@ void controller_fsm()
 					ctx.sub_action_index++;
 				}
 			}
-				break;
-				//SUB_ACTION_BREAK
+			break;
+
+			//SUB_ACTION_BREAK
 			case 1 :
 			{
 				// forward speed
@@ -1103,8 +1098,9 @@ void controller_fsm()
 				}
 
 			}
-				break;
-				//SUB_ACTION_STOP
+			break;
+
+			//SUB_ACTION_STOP
 			case 2 :
 			{
 				// forward speed
