@@ -7,8 +7,9 @@
 #include <string.h>
 
 /* APP settings ------------------------------------------------------------------*/
-#define WALL_POSITION_MIN 700
-#define WALL_POSITION_MAX 2000
+
+#define WALL_POSITION_MIN_DEFAULT 300
+#define WALL_POSITION_MAX_DEFAULT 1900
 //#define WALL_POSITION_MIN 700
 //#define WALL_POSITION_MAX 2000
 #define WALL_FRONT_DISTANCE 160
@@ -40,6 +41,8 @@ typedef struct
 {
 	int32_t raw[WALL_SENSOR_COUNT];
 
+	int32_t wall_position_min;
+	int32_t wall_position_max;
 } wall_sensor_ctx;
 
 static wall_sensor_ctx ctx;
@@ -47,6 +50,8 @@ static wall_sensor_ctx ctx;
 void wall_sensor_init()
 {
 	memset(&ctx,0,sizeof(wall_sensor_ctx));
+	ctx.wall_position_min = WALL_POSITION_MIN_DEFAULT;
+	ctx.wall_position_max = WALL_POSITION_MAX_DEFAULT;
 }
 
 int32_t read_adc(ADC_HandleTypeDef * phadc, uint32_t sensor_id); // forward declaration
@@ -119,7 +124,7 @@ int32_t wall_sensor_get_side_error(){
 
 bool wall_sensor_wall_left_presence()
 {
-	if((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX))
+	if((ctx.raw[WALL_SENSOR_LEFT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < ctx.wall_position_max))
 	{
 		//there is a wall on the left
  		return true;
@@ -133,7 +138,7 @@ bool wall_sensor_wall_left_presence()
 
 bool wall_sensor_wall_right_presence()
 {
-	if((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))
+	if((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < ctx.wall_position_max))
 	{
 		//there is a wall on the right
  		return true;
@@ -147,8 +152,8 @@ bool wall_sensor_wall_right_presence()
 
 bool wall_sensor_both_wall_presence()
 {
-	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX)) &&
-	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))	   )
+	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < ctx.wall_position_max)) &&
+	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < ctx.wall_position_max))	   )
 	{
 		//there is at least one wall
 		return true;
@@ -162,8 +167,8 @@ bool wall_sensor_both_wall_presence()
 
 bool wall_sensor_wall_presence()
 {
-	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < WALL_POSITION_MAX)) ||
-	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > WALL_POSITION_MIN) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < WALL_POSITION_MAX))	   )
+	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < ctx.wall_position_max)) ||
+	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < ctx.wall_position_max))	   )
 	{
 		//there is at least one wall
 		return true;
@@ -186,4 +191,12 @@ bool wall_sensor_left_front_presence()
 	{
 		return false;
 	}
+}
+
+void wall_sensor_set_wall_position_min(int32_t pos_min){
+	ctx.wall_position_min = pos_min;
+}
+
+void wall_sensor_set_wall_position_max(int32_t pos_max){
+	ctx.wall_position_max = pos_max;
 }

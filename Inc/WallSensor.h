@@ -35,6 +35,9 @@ bool wall_sensor_wall_left_presence();
 bool wall_sensor_left_front_presence();
 bool wall_sensor_both_wall_presence();
 
+void wall_sensor_set_wall_position_min(int32_t pos_min);
+void wall_sensor_set_wall_position_max(int32_t pos_max);
+
 #endif /* __APP_WALLSENSOR_H */
 
 

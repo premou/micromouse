@@ -606,13 +606,13 @@ void controller_fsm()
 			//++ctx.actions_index;
 			ctx.sub_action_index = 0;
 
-			ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+			ctx.current_state = update_maze_ctx(&ctx.maze);
 			//ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
 			led_toggle();
-			HAL_Serial_Print(&com,".");
+			//HAL_Serial_Print(&com,".");
 		}
 
 	}
@@ -655,20 +655,20 @@ void controller_fsm()
 				motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
 				if(wall_sensor_both_wall_presence())
 				{
-					HAL_Serial_Print(&com,"|");
+					//HAL_Serial_Print(&com,"|");
 				}
 				else if(wall_sensor_wall_left_presence())
 				{
-					HAL_Serial_Print(&com,"<");
+					//HAL_Serial_Print(&com,"<");
 				}
 				else if(wall_sensor_wall_right_presence())
 				{
-					HAL_Serial_Print(&com,">");
+					//HAL_Serial_Print(&com,">");
 				}
 			}
 			else
 			{
-				HAL_Serial_Print(&com,",");
+				//HAL_Serial_Print(&com,",");
 				//HAL_Serial_Print(&com,"wall presence : PID_TYPE_WALL->PID_TYPE_GYRO\n");
 				pid_reset(&ctx.wall_position_pid);
 				ctx.current_pid_type = PID_TYPE_GYRO;
@@ -681,7 +681,7 @@ void controller_fsm()
 		}
 		else
 		{
-			HAL_Serial_Print(&com,",");
+			//HAL_Serial_Print(&com,",");
 			pid_reset(&ctx.wall_position_pid);
 			ctx.current_pid_type = PID_TYPE_GYRO;
 			//HAL_Serial_Print(&com,"no wall : PID_TYPE_WALL->PID_TYPE_GYRO\n");
@@ -690,19 +690,20 @@ void controller_fsm()
 		}
 
 		dist = encoder_get_absolute();
+
 		if(dist >= DIST_RUN_1)
 		{
 			encoder_set_absolute(dist - DIST_RUN_1);
 
 			ctx.sub_action_index = 0;
 
-			ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+			ctx.current_state = update_maze_ctx(&ctx.maze);
 			//ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
 			led_toggle();
-			HAL_Serial_Print(&com,"\n");
+			//HAL_Serial_Print(&com,"\n");
 		}
 	}
 	break;
@@ -759,7 +760,7 @@ void controller_fsm()
 			{
 				ctx.sub_action_index = 0;
 
-				ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
+				ctx.current_state = update_maze_ctx(&ctx.maze);
 				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
@@ -767,7 +768,7 @@ void controller_fsm()
 				encoder_reset();
 
 				led_toggle();
-				HAL_Serial_Print(&com,".");
+				//HAL_Serial_Print(&com,".");
 			}
 			break;
 		default:
@@ -828,15 +829,14 @@ void controller_fsm()
 			{
 				ctx.sub_action_index = 0;
 
-				ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
-				//ctx.current_state = get_next_move();
+				ctx.current_state = update_maze_ctx(&ctx.maze);
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
 
 				encoder_reset();
 
 				led_toggle();
-				HAL_Serial_Print(&com,".");
+				//HAL_Serial_Print(&com,".");
 			}
 			break;
 		default:
@@ -989,14 +989,13 @@ void controller_fsm()
 					if(HAL_GetTick() > ctx.action_time + W_U_T2)
 					{
 						//ctx.sub_action_index = 0;
-						//ctx.current_state = get_next_move();
 						ctx.sub_action_index++;
 						//ctx.action_time = HAL_GetTick();
 						ctx.action_time = 0;
 						encoder_reset();
 
 						led_toggle();
-						HAL_Serial_Print(&com,".");
+						//HAL_Serial_Print(&com,".");
 					}
 				}
 					break;
@@ -1044,8 +1043,7 @@ void controller_fsm()
 
 							ctx.sub_action_index = 0;
 
-							ctx.current_state = update_maze_ctx(&ctx.maze, get_wall_state(&ctx.maze));
-							//ctx.current_state = get_next_move();
+							ctx.current_state = update_maze_ctx(&ctx.maze);
 							ctx.action_time = HAL_GetTick();
 							ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -1142,7 +1140,8 @@ void controller_fsm()
 				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
 
-				ctx.current_state = ACTION_IDLE ;//update_maze_ctx(ctx.maze, get_wall_state(ctx.maze));
+				ctx.current_state = ACTION_IDLE ;
+				//update_maze_ctx(ctx.maze, get_wall_state(ctx.maze));
 				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 
@@ -1274,6 +1273,20 @@ void controller_led_calibrate(){
 //				(int)distance_error[i]);
 //	}
 
+	int32_t last_left_diag = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
+	int32_t last_right_diag = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
+
+	HAL_Serial_Print(&com,"right_diag is :%d\n", (int)last_right_diag);
+	HAL_Serial_Print(&com,"left_diag is :%d\n", (int)last_left_diag);
+
+	if(last_right_diag > last_left_diag){
+		wall_sensor_set_wall_position_min(last_left_diag);
+		wall_sensor_set_wall_position_max(last_right_diag);
+	}
+	else{
+		wall_sensor_set_wall_position_min(last_right_diag);
+		wall_sensor_set_wall_position_max(last_left_diag);
+	}
 }
 
 float controller_get_distance_led(int32_t adc){
