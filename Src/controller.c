@@ -672,6 +672,7 @@ void controller_fsm()
 		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
+
 		float dist = encoder_get_absolute();
 
 		if(dist >= DIST_START)
@@ -946,40 +947,13 @@ void controller_fsm()
 
 					if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
 					{
-						ctx.action_time = 0;
 						ctx.sub_action_index++;
 					}
 				}
+				break;
 				//BREAK
-				case 1 :
-				{
-					// straight calibration
-					// wall position
-					ctx.x_wall_front_target = 2900;
-					ctx.x_wall_front_setpoint = 2900;
-					ctx.x_wall_front_current = wall_sensor_get_straight_adc();
-					ctx.x_wall_front_error = ctx.x_wall_front_setpoint - ctx.x_wall_front_current;
-					ctx.x_wall_front_pwm = pid_output(&ctx.x_wall_front_pid, ctx.x_wall_front_error);
-
-					// rotation calibration
-					// wall position
-					ctx.w_wall_front_target = 0;
-					ctx.w_wall_front_setpoint = -800;
-					ctx.w_wall_front_current = wall_sensor_get_straight_diff_adc();
-					ctx.w_wall_front_error = ctx.w_wall_front_setpoint - ctx.w_wall_front_current;
-					ctx.w_wall_front_pwm = pid_output(&ctx.w_wall_front_pid, ctx.w_wall_front_error);
-
-					motor_speed_left(ctx.x_wall_front_pwm + ctx.w_wall_front_pwm);
-					motor_speed_right(ctx.x_wall_front_pwm - ctx.w_wall_front_pwm);
-
-					if(HAL_GetTick() > ctx.action_time + X_BREAK)
-					{
-						ctx.sub_action_index++;
-					}
-				}
-					break;
 					//SUB_ACTION_BREAK
-				case 2 :
+				case 1 :
 				{
 					// forward speed
 					ctx.x_speed_target = 0;
@@ -1001,40 +975,49 @@ void controller_fsm()
 					if(ctx.x_speed_setpoint==ctx.x_speed_target)
 					{
 						ctx.sub_action_index++;
+						ctx.action_time = HAL_GetTick();
+						pid_reset(&ctx.x_wall_front_pid);
+						pid_reset(&ctx.w_wall_front_pid);
 					}
 				}
 					break;
 					//SUB_ACTION_STOP
-				case 3 :
+				case 2 :
 				{
-					// forward speed
-					ctx.x_speed_target = 0;
-					ctx.x_speed_setpoint = 0;
-					ctx.x_speed_current = 0;
-					ctx.x_speed_error = 0;
-					ctx.x_speed_pwm = 0;
+					// straight calibration
+					// wall position
+					ctx.x_wall_front_target = 2900;
+					ctx.x_wall_front_setpoint = 2900;
+					ctx.x_wall_front_current = wall_sensor_get_straight_adc();
+					ctx.x_wall_front_error = ctx.x_wall_front_setpoint - ctx.x_wall_front_current;
+					ctx.x_wall_front_pwm = pid_output(&ctx.x_wall_front_pid, ctx.x_wall_front_error);
 
-					// rotation speed
-					ctx.w_speed_target = 0;
-					ctx.w_speed_setpoint = 0;
-					ctx.w_speed_current = 0;
-					ctx.w_speed_error = 0;
-					ctx.w_speed_pwm = 0;
+					// rotation calibration
+					// wall position
+					ctx.w_wall_front_target = 0;
+					ctx.w_wall_front_setpoint = -800;
+					ctx.w_wall_front_current = wall_sensor_get_straight_diff_adc();
+					ctx.w_wall_front_error = ctx.w_wall_front_setpoint - ctx.w_wall_front_current;
+					ctx.w_wall_front_pwm = pid_output(&ctx.w_wall_front_pid, ctx.w_wall_front_error);
 
-					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+					motor_speed_left(ctx.x_wall_front_pwm + ctx.w_wall_front_pwm);
+					motor_speed_right(ctx.x_wall_front_pwm - ctx.w_wall_front_pwm);
 
-					ctx.sub_action_index++;
-					ctx.action_time = HAL_GetTick();
+					if(HAL_GetTick() > ctx.action_time + 1000)
+					{
+						ctx.sub_action_index++;
+						encoder_reset();
+						led_toggle();
+						ctx.action_time = HAL_GetTick();
+						pid_reset(&ctx.x_speed_pid);
+						pid_reset(&ctx.w_speed_pid);
+					}
 
-					encoder_reset();
-
-					led_toggle();
 				}
 				break;
 
 				//ACCELERATION
-				case 4 :
+				case 3 :
 				{
 					// forward speed
 					ctx.x_speed_target = 0;
@@ -1061,7 +1044,7 @@ void controller_fsm()
 					break;
 				//DECELERATION
 
-				case 5 :
+				case 4 :
 				{
 					// forward speed
 					ctx.x_speed_target = 0;
@@ -1085,8 +1068,7 @@ void controller_fsm()
 					{
 						//ctx.sub_action_index = 0;
 						ctx.sub_action_index++;
-						//ctx.action_time = HAL_GetTick();
-						ctx.action_time = 0;
+						ctx.action_time = HAL_GetTick();
 						encoder_reset();
 
 						led_toggle();
@@ -1094,18 +1076,23 @@ void controller_fsm()
 					}
 				}
 					break;
-				//BREAK
-				case 6 :
-						{
-							if(HAL_GetTick() > ctx.action_time + X_BREAK)
-							{
-								ctx.sub_action_index++;
-							}
-						}
-						break;
-				//START
-				case 7 :
+					//BREAK
+				case 5 :
+				{
+					motor_speed_left(0);
+					motor_speed_right(0);
+
+					if(HAL_GetTick() > ctx.action_time + X_BREAK)
 					{
+						ctx.sub_action_index++;
+						encoder_reset();
+
+					}
+				}
+				break;
+				//START
+				case 6 :
+				{
 						// forward speed
 						ctx.x_speed_target = X_SPEED_LEARNING_RUN;
 						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
