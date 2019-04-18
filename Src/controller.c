@@ -78,6 +78,18 @@ extern HAL_Serial_Handler com;
 #define WALL_POSITION_KI 0.0
 #define WALL_POSITION_KD 0.0
 
+
+// wall pos calibration
+#define X_WALL_FRONT_KP 0.03
+#define X_WALL_FRONT_KI 0.0003
+#define X_WALL_FRONT_KD 0.0
+
+// wall pos calibration
+#define W_WALL_FRONT_KP 0.03
+#define W_WALL_FRONT_KI 0.0005
+#define W_WALL_FRONT_KD 0.0
+
+
 // led
 #define MEDIAN_SIZE 3
 #define CALIBRATION_SIZE 200 // ((size_t)(-DIST_CALIBRATION*1000))
@@ -129,6 +141,22 @@ typedef struct  {
 	float wall_position_error;
 	float wall_position_pwm;
 	pid_context_t wall_position_pid;
+
+	// wall pos calibration
+	float x_wall_front_target;
+	float x_wall_front_setpoint;
+	float x_wall_front_current;
+	float x_wall_front_error;
+	float x_wall_front_pwm;
+	pid_context_t x_wall_front_pid;
+
+	// wall rotation calibration
+	float w_wall_front_target;
+	float w_wall_front_setpoint;
+	float w_wall_front_current;
+	float w_wall_front_error;
+	float w_wall_front_pwm;
+	pid_context_t w_wall_front_pid;
 
 	//led IR
 	float a_left_straight_slope;
@@ -309,6 +337,23 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	pid_init(&ctx.wall_position_pid, WALL_POSITION_KP, WALL_POSITION_KI, WALL_POSITION_KD);
 
 
+	// wall pos calibration
+	ctx.x_wall_front_target = 0;
+	ctx.x_wall_front_setpoint = 0;
+	ctx.x_wall_front_current = 0;
+	ctx.x_wall_front_error = 0;
+	ctx.x_wall_front_pwm = 0;
+	pid_init(&ctx.x_wall_front_pid, X_WALL_FRONT_KP, X_WALL_FRONT_KI, X_WALL_FRONT_KD);
+
+
+	// wall rotation calibration
+	ctx.w_wall_front_target = 0;
+	ctx.w_wall_front_setpoint = 0;
+	ctx.w_wall_front_current = 0;
+	ctx.w_wall_front_error = 0;
+	ctx.w_wall_front_pwm = 0;
+	pid_init(&ctx.w_wall_front_pid, W_WALL_FRONT_KP, W_WALL_FRONT_KI, W_WALL_FRONT_KD);
+
 	motor_init();
 	encoder_init();
 	ctx.gyro_state = gyro_init();
@@ -376,6 +421,22 @@ void controller_start()
 	ctx.wall_position_pwm = 0;
 	pid_reset(&ctx.wall_position_pid);
 
+	// wall pos calibration
+	ctx.x_wall_front_target = 0;
+	ctx.x_wall_front_setpoint = 0;
+	ctx.x_wall_front_current = 0;
+	ctx.x_wall_front_error = 0;
+	ctx.x_wall_front_pwm = 0;
+	pid_reset(&ctx.x_wall_front_pid);
+
+	// wall rotation calibration
+	ctx.w_wall_front_target = 0;
+	ctx.w_wall_front_setpoint = 0;
+	ctx.w_wall_front_current = 0;
+	ctx.w_wall_front_error = 0;
+	ctx.w_wall_front_pwm = 0;
+	pid_reset(&ctx.w_wall_front_pid);
+
 	encoder_reset();
 
 	HAL_DataLogger_Clear();
@@ -417,6 +478,21 @@ void controller_stop()
 	ctx.wall_position_pwm = 0;
 	pid_reset(&ctx.wall_position_pid);
 
+	// wall pos calibration
+	ctx.x_wall_front_target = 0;
+	ctx.x_wall_front_setpoint = 0;
+	ctx.x_wall_front_current = 0;
+	ctx.x_wall_front_error = 0;
+	ctx.x_wall_front_pwm = 0;
+	pid_reset(&ctx.x_wall_front_pid);
+
+	// wall rotation calibration
+	ctx.w_wall_front_target = 0;
+	ctx.w_wall_front_setpoint = 0;
+	ctx.w_wall_front_current = 0;
+	ctx.w_wall_front_error = 0;
+	ctx.w_wall_front_pwm = 0;
+	pid_reset(&ctx.w_wall_front_pid);
 
 	ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -877,6 +953,25 @@ void controller_fsm()
 				//BREAK
 				case 1 :
 				{
+					// straight calibration
+					// wall position
+					ctx.x_wall_front_target = 2900;
+					ctx.x_wall_front_setpoint = 2900;
+					ctx.x_wall_front_current = wall_sensor_get_straight_adc();
+					ctx.x_wall_front_error = ctx.x_wall_front_setpoint - ctx.x_wall_front_current;
+					ctx.x_wall_front_pwm = pid_output(&ctx.x_wall_front_pid, ctx.x_wall_front_error);
+
+					// rotation calibration
+					// wall position
+					ctx.w_wall_front_target = 0;
+					ctx.w_wall_front_setpoint = -800;
+					ctx.w_wall_front_current = wall_sensor_get_straight_diff_adc();
+					ctx.w_wall_front_error = ctx.w_wall_front_setpoint - ctx.w_wall_front_current;
+					ctx.w_wall_front_pwm = pid_output(&ctx.w_wall_front_pid, ctx.w_wall_front_error);
+
+					motor_speed_left(ctx.x_wall_front_pwm + ctx.w_wall_front_pwm);
+					motor_speed_right(ctx.x_wall_front_pwm - ctx.w_wall_front_pwm);
+
 					if(HAL_GetTick() > ctx.action_time + X_BREAK)
 					{
 						ctx.sub_action_index++;
@@ -1007,6 +1102,7 @@ void controller_fsm()
 								ctx.sub_action_index++;
 							}
 						}
+						break;
 				//START
 				case 7 :
 					{
@@ -1289,6 +1385,7 @@ void controller_led_calibrate(){
 	}
 }
 
+//a mettre dans wall sensor
 float controller_get_distance_led(int32_t adc){
 	return ctx.a_left_straight_slope/log(adc) - ctx.b_left_straight_slope;
 }

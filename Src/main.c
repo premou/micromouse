@@ -243,8 +243,8 @@ int main(void)
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
 			  HAL_Serial_Print(&com,"IDLE->CALIBRATION\r\n");
-
 			  current_state = CALIBRATION;
+
 			  tim_start=HAL_GetTick();
 		  }
 		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // upload data logger
@@ -254,7 +254,10 @@ int main(void)
 
 			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
 
-			  current_state = UPLOAD;
+//			  current_state = UPLOAD;
+
+			  controller_init();
+			  current_state = WARMUP;
 		  }
 	  }
 	  break;

@@ -29,6 +29,9 @@ void wall_sensor_update();
 // get one wall sensor raw value (12-bit ADC measure)
 int32_t wall_sensor_get(uint32_t sensor_id);
 int32_t wall_sensor_get_side_error();
+int32_t wall_sensor_get_straight_adc();
+int32_t wall_sensor_get_straight_diff_adc();
+
 bool wall_sensor_wall_presence();
 bool wall_sensor_wall_right_presence();
 bool wall_sensor_wall_left_presence();

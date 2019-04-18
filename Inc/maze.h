@@ -3,7 +3,7 @@
 
 // Define & Macro
 /////////////////
-#define MAX_MAZE_DEPTH 10
+#define MAX_MAZE_DEPTH 20
 
 #define IS_SET(value, flag, mask)       ( (value) & ((mask) & (flag)) )
 #define IS_NOT_SET(value, flag, mask)  !( IS_SET( (value),(flag),(mask) ) )
@@ -15,6 +15,7 @@
 #define MAZE_CASE_WALL_MASK     0x000F
 #define MAZE_CASE_NUMBER_MASK   0xFF00
 #define MAZE_CASE_NUMBER_OFFSET 8
+
 
 // Enum
 ///////
@@ -115,6 +116,14 @@ typedef struct {
 
     // For solve mode
     maze_case_t solve_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH];
+
+    // For solve mode
+    maze_case_t shortest_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH];
+
+    // Min distance for shortest way
+    int min_dist;
+
+    uint8_t switch_led;
 } maze_ctx_t;
 
 // Prototypes
@@ -129,7 +138,12 @@ void         display_case(maze_ctx_t *pCtx, int x, int y);
 int          is_it_the_end(maze_ctx_t *pCtx);
 void         maze_ctx_start(maze_ctx_t *pCtx);
 maze_case_t  get_wall_state(robot_direction_t current_direction);
-
+void         findShortestPath(maze_ctx_t *pCtx,
+                      int i, int j, // current position
+                      int x, int y, // exit
+                      int dist);
+int          isValid(int x, int y);
+int          isSafe(maze_ctx_t *pCtx, int x, int y);
 
 #endif // _MAZE_INC
 

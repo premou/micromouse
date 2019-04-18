@@ -5,11 +5,12 @@
 #include "main.h"
 #include "controller.h"
 #include <string.h>
+#include <math.h>
 
 /* APP settings ------------------------------------------------------------------*/
 
 #define WALL_POSITION_MIN_DEFAULT 300
-#define WALL_POSITION_MAX_DEFAULT 1900
+#define WALL_POSITION_MAX_DEFAULT 1700
 //#define WALL_POSITION_MIN 700
 //#define WALL_POSITION_MAX 2000
 #define WALL_FRONT_DISTANCE 160
@@ -120,6 +121,14 @@ int32_t wall_sensor_get_side_error(){
 
 	// This part of code should be never reached
 	return(0);
+}
+
+int32_t wall_sensor_get_straight_adc(){
+	return ceil(((float)(ctx.raw[WALL_SENSOR_LEFT_STRAIGHT] + ctx.raw[WALL_SENSOR_RIGHT_STRAIGHT])) / 2.0);
+}
+
+int32_t wall_sensor_get_straight_diff_adc(){
+	return ctx.raw[WALL_SENSOR_LEFT_STRAIGHT] - ctx.raw[WALL_SENSOR_RIGHT_STRAIGHT];
 }
 
 bool wall_sensor_wall_left_presence()
