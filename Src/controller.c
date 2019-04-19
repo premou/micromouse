@@ -668,7 +668,6 @@ void controller_fsm()
 		ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
 		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
 
-
 		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
@@ -679,17 +678,13 @@ void controller_fsm()
 		{
 			encoder_set_absolute(dist - DIST_START);
 
-
-			//++ctx.actions_index;
 			ctx.sub_action_index = 0;
 
 			ctx.current_state = update_maze_ctx(&ctx.maze);
-			//ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
 			led_toggle();
-			//HAL_Serial_Print(&com,".");
 		}
 
 	}
@@ -697,7 +692,6 @@ void controller_fsm()
 
 	case ACTION_RUN_1 :
 	{
-		//HAL_Serial_Print(&com,"CONTROLLER ACTION_RUN_1\n");
 		// forward speed
 		ctx.x_speed_target = X_SPEED_LEARNING_RUN;
 		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
@@ -724,12 +718,12 @@ void controller_fsm()
 		{
 			if(wall_sensor_wall_presence())
 			{
-				//HAL_Serial_Print(&com,".");
 				pid_reset(&ctx.w_speed_pid);
 				ctx.current_pid_type = PID_TYPE_WALL;
 				//HAL_Serial_Print(&com,"wall: PID_TYPE_GYRO->PID_TYPE_WALL, dist:%d\n",(int) (dist*1000.0));
 				motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
+#if 0
 				if(wall_sensor_both_wall_presence())
 				{
 					//HAL_Serial_Print(&com,"|");
@@ -742,6 +736,7 @@ void controller_fsm()
 				{
 					//HAL_Serial_Print(&com,">");
 				}
+#endif
 			}
 			else
 			{
@@ -775,12 +770,10 @@ void controller_fsm()
 			ctx.sub_action_index = 0;
 
 			ctx.current_state = update_maze_ctx(&ctx.maze);
-			//ctx.current_state = get_next_move();
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
 			led_toggle();
-			//HAL_Serial_Print(&com,"\n");
 		}
 	}
 	break;
@@ -838,14 +831,12 @@ void controller_fsm()
 				ctx.sub_action_index = 0;
 
 				ctx.current_state = update_maze_ctx(&ctx.maze);
-				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
 
 				encoder_reset();
 
 				led_toggle();
-				//HAL_Serial_Print(&com,".");
 			}
 			break;
 		default:
@@ -913,7 +904,6 @@ void controller_fsm()
 				encoder_reset();
 
 				led_toggle();
-				//HAL_Serial_Print(&com,".");
 			}
 			break;
 		default:
@@ -1072,7 +1062,6 @@ void controller_fsm()
 						encoder_reset();
 
 						led_toggle();
-						//HAL_Serial_Print(&com,".");
 					}
 				}
 					break;
@@ -1113,7 +1102,6 @@ void controller_fsm()
 						ctx.wall_position_current = (float) wall_sensor_get_side_error();
 						ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
 						ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
-
 
 						motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 						motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
@@ -1220,18 +1208,26 @@ void controller_fsm()
 				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-				//++ctx.actions_index;
 				ctx.sub_action_index = 0;
 
 				ctx.current_state = ACTION_IDLE ;
-				//update_maze_ctx(ctx.maze, get_wall_state(ctx.maze));
-				//ctx.current_state = get_next_move();
 				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
 
 				led_toggle();
 				HAL_Serial_Print(&com,".");
+
+				if(ctx.maze.mode == SOLVE)
+				{
+					ctx.maze.min_dist = 2147483647;
+					find_shortest_path(&ctx.maze,
+							ctx.maze.start_x, ctx.maze.start_y,
+							ctx.maze.end_x, ctx.maze.end_y,
+							0);
+					HAL_Serial_Print(&com, "[from:(%d,%d) find_shortest_path: dist:%d]\n", ctx.maze.current_x, ctx.maze.current_y, &ctx.maze.min_dist);
+					display_maze_ctx(&ctx.maze);
+				}
 			}
 			break;
 		}

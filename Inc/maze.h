@@ -138,12 +138,13 @@ void         display_case(maze_ctx_t *pCtx, int x, int y);
 int          is_it_the_end(maze_ctx_t *pCtx);
 void         maze_ctx_start(maze_ctx_t *pCtx);
 maze_case_t  get_wall_state(robot_direction_t current_direction);
-void         findShortestPath(maze_ctx_t *pCtx,
+void         find_shortest_path(maze_ctx_t *pCtx,
                       int i, int j, // current position
                       int x, int y, // exit
                       int dist);
 int          isValid(int x, int y);
 int          isSafe(maze_ctx_t *pCtx, int x, int y);
+int is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall);
 
 #endif // _MAZE_INC
 
