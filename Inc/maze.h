@@ -3,7 +3,7 @@
 
 // Define & Macro
 /////////////////
-#define MAX_MAZE_DEPTH 20
+#define MAX_MAZE_DEPTH (4*5)
 
 #define IS_SET(value, flag, mask)       ( (value) & ((mask) & (flag)) )
 #define IS_NOT_SET(value, flag, mask)  !( IS_SET( (value),(flag),(mask) ) )
@@ -29,7 +29,8 @@ typedef enum {
     CASE_WALL_W      = 0x08,  // 00001000b : 8
     CASE_START       = 0x10,  // 00010000b : 16
     CASE_END         = 0x20,  // 00100000b : 32
-    CASE_VISITED     = 0x40   // 01000000b : 64
+    CASE_VISITED     = 0x40,  // 01000000b : 64
+    CASE_TO_VISIT    = 0x80   // 10000000b :128
 } maze_case_t ;
 
 // All the robot direction: do not change the order

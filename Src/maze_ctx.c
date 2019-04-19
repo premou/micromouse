@@ -151,14 +151,6 @@ const char* maze_mode_txt[2] =
 		"SOLVE"
 };
 
-// These arrays are used to get row and column
-// numbers of 4 neighbours of a given cell
-const int rowNum[4] = {-1, 0, 0, 1};
-const int colNum[4] = {0, -1, 1, 0};
-
-// Local global
-static int step = 0;
-
 // Txt function for enum action_t
 static inline char *action2txt(action_t a)
 {
@@ -206,8 +198,6 @@ void maze_ctx_start(maze_ctx_t *pCtx)
 	pCtx->current_x = pCtx->start_x ;
 	pCtx->current_y = pCtx->start_y ;
 
-	HAL_Serial_Print(&com, "[maze_ctx_start:(%d,%d) mode:%s]\n", pCtx->current_x, pCtx->current_y, maze_mode_txt[pCtx->mode]);
-
 	// In SOLVE mode, the first action is done by START action, so we start to the next case
 	if(pCtx->mode == SOLVE)
 	{
@@ -215,7 +205,7 @@ void maze_ctx_start(maze_ctx_t *pCtx)
 		pCtx->current_y += 1;
 	}
 
-	HAL_Serial_Print(&com, "[maze_ctx_start:(%d,%d) mode:%s]\n", pCtx->current_x, pCtx->current_y, maze_mode_txt[pCtx->mode]);
+	HAL_Serial_Print(&com, "[maze_ctx_start: mode:%s (%d,%d)]\n", maze_mode_txt[pCtx->mode], pCtx->current_x, pCtx->current_y);
 }// end of maze_ctx_start
 
 // Fill the array maze with case unknown pattern
@@ -238,7 +228,7 @@ void maze_ctx_init(maze_ctx_t *pCtx)
 	pCtx->current_direction = DIR_N;
 
 	pCtx->start_x = (MAX_MAZE_DEPTH/2)-1;
-	pCtx->start_y = 0;
+	pCtx->start_y = (MAX_MAZE_DEPTH/2)-1;
 
 	// End position is unknown
 	pCtx->end_x = -1;
@@ -254,8 +244,6 @@ void maze_ctx_init(maze_ctx_t *pCtx)
 			CASE_WALL_S  ;
 
 	upadte_connex_case(pCtx);
-
-	pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= (step++) << MAZE_CASE_NUMBER_OFFSET;
 
 }// end of maze_ctx_init
 
@@ -609,7 +597,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 		pCtx->current_direction  = new_direction;
 
 		// Update case with walls position, visited flag and case number
-		newState = wall_sensor | CASE_VISITED | ((step++) << MAZE_CASE_NUMBER_OFFSET) ;
+		newState = wall_sensor | CASE_VISITED ;
 		pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= newState;
 
 		// Populate the case state for the connex cases
@@ -764,6 +752,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 	return(action);
 }// end of update_maze_ctx
 
+// Return 1 if the wall is not present depending of the case and the wall to check
 int is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall)
 {
 	if( (wall & GET_WALL_STATE(pCtx->maze_array[x][y])) != wall )
@@ -771,12 +760,15 @@ int is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall)
 	return 0;
 }
 
+// Return 1 if the case has been visited
 int isSafe(maze_ctx_t *pCtx, int x, int y)
 {
 	if (( (CASE_VISITED & pCtx->maze_array[x][y]) == CASE_VISITED ) && (pCtx->solve_array[x][y]==0))
 		return 1;
 	return 0;
 }
+
+// Return 1 if the case is valid, in the usage domaine
 int isValid(int x, int y)
 {
 	if ( (x<MAX_MAZE_DEPTH) && (y<MAX_MAZE_DEPTH) && (x>=0) && (y>=0) )
@@ -788,6 +780,8 @@ int isValid(int x, int y)
 		return(0);
 	}
 }
+
+// Find the shortest path
 void find_shortest_path(maze_ctx_t *pCtx,
 		int i, int j, // current position
 		int x, int y, // exit
@@ -810,6 +804,8 @@ void find_shortest_path(maze_ctx_t *pCtx,
 			}
 			pCtx->min_dist = dist;
 			pCtx->shortest_array[pCtx->end_x][pCtx->end_y] = pCtx->min_dist + 1 ;
+
+			HAL_Serial_Print(&com, "[find_shortest_path] path to the exit found in %d steps\n", dist);
 		}
 		return;
 	}
