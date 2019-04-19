@@ -1374,3 +1374,197 @@ float controller_get_distance_led(int32_t adc){
 }
 
 
+///// wall calibration helper
+//enum {
+//	CALIBRATION_IDLE,
+//	CALIBRATION_NO_WALL,
+//	CALIBRATION_POST_LEFT,
+//	CALIBRATION_POST_RIGHT,
+//	CALIBRATION_POST_BOTH,
+//	CALIBRATION_WALL_LEFT,
+//	CALIBRATION_WALL_RIGHT,
+//	CALIBRATION_WALL_BOTH,
+//	CALIBRATION_WALL_LEFT_with_RIGHT_POST,
+//	CALIBRATION_WALL_RIGHT_with_LEFT_POST,
+//	CALIBRATION_END,
+//};
+//uint32_t calibration_state = CALIBRATION_IDLE;
+//float ewma_alpha_calibration_wall_distance = 0.25f;
+//ewma_handler ewma_calibration_wall_distance_left = {&ewma_alpha_calibration_wall_distance, 0.0};
+//ewma_handler ewma_calibration_wall_distance_right = {&ewma_alpha_calibration_wall_distance, 0.0};
+//float calibration_wall_distance_left = 0.0f;
+//float calibration_wall_distance_right = 0.0f;
+//
+//void calibration_reset()
+//{
+//	calibration_state = CALIBRATION_IDLE;
+//	reset_ewma(&ewma_calibration_wall_distance_left);
+//	reset_ewma(&ewma_calibration_wall_distance_right);
+//	calibration_wall_distance_left = 0.0f;
+//	calibration_wall_distance_right = 0.0f;
+//}
+//
+//bool calibration_process()
+//{
+//	calibration_wall_distance_left = process_ewma(&ewma_calibration_wall_distance_left,HAL_WallSensor_Get(WALL_SENSOR_LEFT_DIAG));
+//	calibration_wall_distance_right = process_ewma(&ewma_calibration_wall_distance_right,HAL_WallSensor_Get(WALL_SENSOR_RIGHT_DIAG));
+//	switch(calibration_state)
+//	{
+//	case CALIBRATION_IDLE:
+//		{
+//			if(remaining_distance<0.15f)
+//			{
+//				if(calibration_wall_distance_left<120 && calibration_wall_distance_right<120)
+//				{
+//					calibration_state = CALIBRATION_WALL_BOTH;
+//				}
+//				else if(calibration_wall_distance_left<120)
+//				{
+//					calibration_state = CALIBRATION_WALL_LEFT;
+//				}
+//				else if(calibration_wall_distance_right<120)
+//				{
+//					calibration_state = CALIBRATION_WALL_RIGHT;
+//				}
+//				else
+//				{
+//					calibration_state = CALIBRATION_NO_WALL;
+//				}
+//			}
+//		}
+//		break;
+//	case CALIBRATION_NO_WALL:
+//		{
+//			if(calibration_wall_distance_left<140 && calibration_wall_distance_right<140)
+//			{
+//				calibration_state = CALIBRATION_POST_BOTH;
+//			}
+//			else if(calibration_wall_distance_left<140)
+//			{
+//				calibration_state = CALIBRATION_POST_LEFT;
+//			}
+//			else if(calibration_wall_distance_right<140)
+//			{
+//				calibration_state = CALIBRATION_POST_RIGHT;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_POST_LEFT:
+//		{
+//			if(calibration_wall_distance_left>140)
+//			{
+//				remaining_distance = 0.070;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//			if(calibration_wall_distance_right<140)
+//			{
+//				calibration_state = CALIBRATION_POST_BOTH;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_POST_RIGHT:
+//		{
+//			if(calibration_wall_distance_right>140)
+//			{
+//				remaining_distance = 0.070;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//			if(calibration_wall_distance_left<140)
+//			{
+//				calibration_state = CALIBRATION_POST_BOTH;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_POST_BOTH:
+//		{
+//			if(calibration_wall_distance_right>140 || calibration_wall_distance_left>140)
+//			{
+//				remaining_distance = 0.070;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_WALL_LEFT:
+//		{
+//			if(calibration_wall_distance_left>140)
+//			{
+//				remaining_distance = 0.065;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//			if(calibration_wall_distance_right<140)
+//			{
+//				calibration_state = CALIBRATION_WALL_LEFT_with_RIGHT_POST;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_WALL_RIGHT:
+//		{
+//			if(calibration_wall_distance_right>140)
+//			{
+//				remaining_distance = 0.065;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//			if(calibration_wall_distance_left<140)
+//			{
+//				calibration_state = CALIBRATION_WALL_RIGHT_with_LEFT_POST;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_WALL_BOTH:
+//		{
+//			if(calibration_wall_distance_right>140 || calibration_wall_distance_left>140)
+//			{
+//				remaining_distance = 0.065;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//		}
+//		break;
+//	case CALIBRATION_WALL_LEFT_with_RIGHT_POST:
+//		{
+//			if(calibration_wall_distance_left>140)
+//			{
+//				remaining_distance = 0.065;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//			if(calibration_wall_distance_right>140)
+//			{
+//				remaining_distance = 0.070;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//
+//		}
+//		break;
+//	case CALIBRATION_WALL_RIGHT_with_LEFT_POST:
+//		{
+//			if(calibration_wall_distance_right>140)
+//			{
+//				remaining_distance = 0.065;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//			if(calibration_wall_distance_left>140)
+//			{
+//				remaining_distance = 0.070;
+//				calibration_state = CALIBRATION_END;
+//				return true;
+//			}
+//
+//		}
+//		break;
+//
+//	case CALIBRATION_END:
+//		{
+//
+//		}
+//		break;
+//	}
+//	return false;
+//}
