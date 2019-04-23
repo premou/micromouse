@@ -48,6 +48,14 @@ extern HAL_Serial_Handler com;
 #define W_MAX_DECELERATION 5000		// °/s-2
 #define X_SPEED_LEARNING_RUN 0.34 	// m/s
 #define W_SPEED_LEARNING_RUN 205 	// °/s
+
+#define X_SPEED_FAST_RUN 0.5 // m/s
+#define W_SPEED_FAST_RUN 300 // °/s
+
+#define X_SPEED_FAST_RUN_2 0.7 // m/s
+#define W_SPEED_FAST_RUN_2 400 // °/s
+
+
 #define X_SPEED_CALIBRATION -0.08 	// m/s
 #define WALL_POSITION_OFFSET 0
 #define DIST_START 0.09 			// m
@@ -694,8 +702,14 @@ void controller_fsm()
 
 	case ACTION_RUN_1 :
 	{
+		if (get_next_next_action(&ctx.maze) == ACTION_RUN_1){
+			ctx.x_speed_target = X_SPEED_LEARNING_RUN * 2;
+		}
+		else
+		{
+			ctx.x_speed_target = X_SPEED_LEARNING_RUN;
+		}
 		// forward speed
-		ctx.x_speed_target = X_SPEED_LEARNING_RUN;
 		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
 		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
 		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
@@ -725,20 +739,6 @@ void controller_fsm()
 				//HAL_Serial_Print(&com,"wall: PID_TYPE_GYRO->PID_TYPE_WALL, dist:%d\n",(int) (dist*1000.0));
 				motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
-#if 0
-				if(wall_sensor_both_wall_presence())
-				{
-					//HAL_Serial_Print(&com,"|");
-				}
-				else if(wall_sensor_wall_left_presence())
-				{
-					//HAL_Serial_Print(&com,"<");
-				}
-				else if(wall_sensor_wall_right_presence())
-				{
-					//HAL_Serial_Print(&com,">");
-				}
-#endif
 			}
 			else
 			{
@@ -747,7 +747,6 @@ void controller_fsm()
 				pid_reset(&ctx.wall_position_pid);
 				ctx.current_pid_type = PID_TYPE_GYRO;
 				//HAL_Serial_Print(&com,"wall: PID_TYPE_WALL->PID_TYPE_GYRO, dist:%d\n", (int) (dist*1000.0));
-
 				motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 				motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 			}
@@ -1227,7 +1226,7 @@ void controller_fsm()
 
 				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
 				{
-					HAL_Serial_Print(&com,"Have to break!!");
+					HAL_Serial_Print(&com,"Have to break!!\n");
 					ctx.sub_action_index++;
 				}
 			}
@@ -1315,6 +1314,7 @@ void controller_fsm()
 
 	}
 }
+
 
 void controller_led_calibrate(){
 	float dist = DIST_CALIBRATION + 1.0;
