@@ -267,7 +267,7 @@ void save_data_file()
 int main()
 {
     cout << "Open robot com...";
-    com_robot = new Serial("\\\\.\\COM3",115200);
+    com_robot = new Serial("\\\\.\\COM6",115200);
     if (com_robot->IsConnected())
     {
         cout << " [OK]" << endl;
@@ -277,7 +277,7 @@ int main()
         cout << " [FAIL]" << endl;
     }
     cout << "Open table com...";
-    com_table = new Serial("\\\\.\\COM16",38400);
+    com_table = new Serial("\\\\.\\COM4",9600); //38400);
     if (com_table->IsConnected())
     {
         cout << " [OK]" << endl;
