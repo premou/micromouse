@@ -54,6 +54,7 @@
 #include "timer_us.h"
 #include "configuration.h"
 #include "robot_math.h"
+#include "WallSensor.h"
 
 /* USER CODE END Includes */
 
@@ -199,10 +200,31 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+
 	  switch(current_state)
 	  {
 	  case IDLE :
 	  {
+		  if(1) // IR LED/PHOTO calibration setup ONLY
+		// comment all theses line of code when running micromouse
+		  {
+			  static uint32_t time = 0;
+			  if( HAL_GetTick() >= time + 100) // every 0.1 sec
+			  {
+				  time = HAL_GetTick(); // update time
+				  wall_sensor_update();
+				  HAL_Serial_Print(&com,"%d %d %d %d\r\n",
+						  wall_sensor_get(WALL_SENSOR_LEFT_DIAG),
+						  wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT),
+						  wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT),
+						  wall_sensor_get(WALL_SENSOR_RIGHT_DIAG)
+						  );
+				  HAL_Delay(10);
+			  }
+
+		  }
+
 		  // decode CLI
 		  while(HAL_Serial_Available(&com)>0)
 		  {

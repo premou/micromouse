@@ -1,0 +1,45 @@
+# depslib dependency file v1.0
+1420639953 source:e:\dev\banc_micromouse\serial.cpp
+	"Serial.h"
+
+1420639896 e:\dev\banc_micromouse\serial.h
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+
+1425841724 source:e:\dev\banc_micromouse\main.cpp
+	<iostream>
+	<sstream>
+	<fstream>
+	<windows.h>
+	"serial.h"
+	"attribute.h"
+
+1423312838 e:\dev\banc_micromouse\attribute.h
+
+1525553673 source:c:\devrobot\banc_micromouse\main.cpp
+	<iostream>
+	<sstream>
+	<fstream>
+	<windows.h>
+	"serial.h"
+	"attribute.h"
+
+1420643496 c:\devrobot\banc_micromouse\serial.h
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+
+1423316438 c:\devrobot\banc_micromouse\attribute.h
+
+1420643553 source:c:\devrobot\banc_micromouse\serial.cpp
+	"Serial.h"
+
+1556019849 source:c:\github\micromouse\banc_micromouse\serial.cpp
+	"Serial.h"
+
+1556019849 c:\github\micromouse\banc_micromouse\serial.h
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+
