@@ -206,8 +206,9 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
-		  if(1) // IR LED/PHOTO calibration setup ONLY
-		// comment all theses line of code when running micromouse
+		  // IR LED/PHOTO calibration setup ONLY
+          // comment all theses line of code when running micromouse
+		  if(0)
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 100) // every 0.1 sec
@@ -275,9 +276,7 @@ int main(void)
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
 			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
-
-//			  current_state = UPLOAD;
-
+			  //current_state = UPLOAD;
 			  controller_init();
 			  current_state = WARMUP;
 		  }

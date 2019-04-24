@@ -612,12 +612,25 @@ void add_inter(maze_ctx_t *pCtx, int x, int y)
 }
 
 // check depending on the position if a new intresection is present
-void upadte_inter(maze_ctx_t *pCtx)
+void update_inter(maze_ctx_t *pCtx)
 {
-    int x,y;
+    int x, y, i;
 
     x = pCtx->current_x;
     y = pCtx->current_y;
+
+    // Check if the intersection have been visited
+    for (i=0;i<MAX_INTER;i++)
+    {
+        if(pCtx->inter_array[i].enable == 1)
+        {
+            if((pCtx->maze_array[pCtx->inter_array[i].x][pCtx->inter_array[i].y] & CASE_VISITED) == CASE_VISITED)
+            {
+                pCtx->inter_array[i].enable = 0;
+                pCtx->nb_inter--;
+            }
+        }
+    }
 
     switch(pCtx->current_direction)
     {
@@ -632,6 +645,7 @@ void upadte_inter(maze_ctx_t *pCtx)
                IS_NOT_SET(pCtx->maze_array[x+1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
             {
                 add_inter(pCtx, x+1, y);
+                pCtx->maze_array[x+1][y] |= CASE_TO_VISIT;
             }
             break;
             break;
@@ -646,6 +660,7 @@ void upadte_inter(maze_ctx_t *pCtx)
                IS_NOT_SET(pCtx->maze_array[x][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK))
             {
                 add_inter(pCtx, x, y-1);
+                pCtx->maze_array[x][y-1] |= CASE_TO_VISIT;
             }
             break;
     }
@@ -679,73 +694,140 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 			(char *)wall_state_txt[GET_WALL_STATE(pCtx->maze_array[pCtx->current_x][pCtx->current_y])],
 			(char *)wall_state_txt[MAZE_CASE_WALL_MASK & wall_sensor]);
 
+    // Check if we reach the end pattern
+    the_end = is_it_the_end(pCtx) ;
 	if(pCtx->mode == LEARN)
 	{
 		/////////////
 		// LEARN mode
 		/////////////
 
-		// Get the next action depending on the sensor information and the left/right hand
-		action = get_next_action(pCtx, wall_sensor);
-
-		HAL_Serial_Print(&com, " >> [a:%s]", (char *)action_txt[action]);
-
-		// Get the new position/direction depending on the action to perform
-		switch(action)
+		if((pCtx->current_action_index != -1) && (pCtx->current_action_index < pCtx->nb_action))
 		{
-		default:
-		case ACTION_START:
-		case ACTION_IDLE:
-		case ACTION_STOP:
-			break;
-		case ACTION_RUN_1:
-			pAlgo = (algo_update_t *) algo_update_maze_ctx_RUN_1;
-			break;
-		case ACTION_TURN_RIGHT:
-			pAlgo = (algo_update_t *) algo_update_maze_ctx_TURN_RIGHT;
-			break;
-		case ACTION_TURN_LEFT:
-			pAlgo = (algo_update_t *) algo_update_maze_ctx_TURN_LEFT;
-			break;
-		case ACTION_U_TURN_RIGHT:
-			pAlgo = (algo_update_t *) algo_update_maze_ctx_U_TURN_RIGHT;
-			break;
+			pCtx->current_x         = pCtx->action_array[pCtx->current_action_index].x;
+			pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
+			pCtx->current_direction = pCtx->action_array[pCtx->current_action_index].dir;
+			action                  = pCtx->action_array[pCtx->current_action_index].action;
+			pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
+			pCtx->current_action_index++;
 		}
-
-		// According to the action, change the position and direction
-		if(NULL!=pAlgo)
+		else
 		{
-			step_x        = pAlgo[pCtx->current_direction].x ;
-			step_y        = pAlgo[pCtx->current_direction].y ;
-			new_direction = pAlgo[pCtx->current_direction].direction;
+            // End reached ?
+            if(the_end)
+            {
+                pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_END ;
+                action = ACTION_STOP;
+            }
+            else
+            {
+                // Get the next action depending on the sensor information and the left/right hand
+                action = get_next_action(pCtx, wall_sensor);
+            }
+
+			HAL_Serial_Print(&com, " >> [a:%s]", (char *)action_txt[action]);
+
+			// Get the new position/direction depending on the action to perform
+			switch(action)
+			{
+			default:
+			case ACTION_START:
+			case ACTION_IDLE:
+			case ACTION_STOP:
+				break;
+			case ACTION_RUN_1:
+				pAlgo = (algo_update_t *) algo_update_maze_ctx_RUN_1;
+				break;
+			case ACTION_TURN_RIGHT:
+				pAlgo = (algo_update_t *) algo_update_maze_ctx_TURN_RIGHT;
+				break;
+			case ACTION_TURN_LEFT:
+				pAlgo = (algo_update_t *) algo_update_maze_ctx_TURN_LEFT;
+				break;
+			case ACTION_U_TURN_RIGHT:
+				pAlgo = (algo_update_t *) algo_update_maze_ctx_U_TURN_RIGHT;
+				break;
+			}
+
+			// According to the action, change the position and direction
+			if(NULL!=pAlgo)
+			{
+				step_x        = pAlgo[pCtx->current_direction].x ;
+				step_y        = pAlgo[pCtx->current_direction].y ;
+				new_direction = pAlgo[pCtx->current_direction].direction;
+			}
+
+			// Apply modification
+			pCtx->current_x         += step_x;
+			pCtx->current_y         += step_y;
+			pCtx->current_direction  = new_direction;
+
+			// Check if the new position is known ?
+			if( (pCtx->maze_array[pCtx->current_x][pCtx->current_y] & CASE_VISITED) == CASE_VISITED)
+			{
+				if(pCtx->nb_inter!=0)
+				{
+					// Scann all the intersection and compute the min distance
+					int min_inter_indice = -1      ;
+					int min_inter        = MAX_INT ;
+					inter_t *pInter                ;
+					for(int t=0; t<MAX_INTER; t++)
+					{
+						pInter = &pCtx->inter_array[t] ;
+						if(pInter->enable)
+						{
+							pCtx->min_dist = MAX_INT;
+							find_shortest_path(pCtx,
+									pCtx->current_x, pCtx->current_y,
+									pInter->x, pInter->y,
+									0);
+							if(pCtx->min_dist < min_inter)
+							{
+								min_inter_indice = t ;
+								min_inter        = pCtx->min_dist ;
+							}
+						}
+					}
+
+					if(min_inter_indice != -1)
+					{
+						build_action_list(pCtx,
+								pCtx->current_direction,
+								pCtx->current_x,
+								pCtx->current_y,
+								pCtx->inter_array[min_inter_indice].x,
+								pCtx->inter_array[min_inter_indice].y);
+					}
+					else
+					{
+						HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+					}
+				}
+			}
+
+			// Update case with walls position, visited flag and case number
+			newState = wall_sensor | CASE_VISITED ;
+			pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= newState;
+
+			// Populate the case state for the connex cases
+			upadte_connex_case(pCtx);
+
+            // find case to check
+            update_inter(pCtx);
+
+			// Check if the end is reached
+			if(the_end)
+			{
+				action = ACTION_STOP ;
+				pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_END ;
+
+				// Change mode to SOLVE
+				pCtx->mode = SOLVE;
+
+				// Build the action list for the SOLVE mode
+				build_action_list(pCtx, DIR_N, pCtx->start_x, pCtx->start_y, pCtx->end_x, pCtx->end_y);
+			}
 		}
-
-		// Apply modification
-		pCtx->current_x         += step_x;
-		pCtx->current_y         += step_y;
-		pCtx->current_direction  = new_direction;
-
-		// Update case with walls position, visited flag and case number
-		newState = wall_sensor | CASE_VISITED ;
-		pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= newState;
-
-		// Populate the case state for the connex cases
-		upadte_connex_case(pCtx);
-
-		// Check if the end is reached
-		the_end = is_it_the_end(pCtx) ;
-		if(the_end)
-		{
-			action = ACTION_STOP ;
-			pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_END ;
-
-			// Change mode to SOLVE
-			pCtx->mode = SOLVE;
-
-			// Build the action list for the SOLVE mode
-			build_action_list(pCtx, DIR_N, pCtx->start_x, pCtx->start_y, pCtx->end_x, pCtx->end_y);
-		}
-
 		HAL_Serial_Print(&com, " >> [t:(%d,%d) d:%s w:%s] >> [e:%d]\n",
 				pCtx->current_x, pCtx->current_y,
 				(char *) direction_txt[pCtx->current_direction],
@@ -757,7 +839,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 		/////////////
 		// SOLVE mode
 		/////////////
-        if((pCtx->current_action_index == -1) || (pCtx->current_action_index >= pCtx->nb_action))
+        if( the_end || (pCtx->current_action_index == -1) || (pCtx->current_action_index >= pCtx->nb_action) )
         {
             action = ACTION_STOP;
         }
@@ -767,6 +849,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
             pCtx->current_direction = pCtx->action_array[pCtx->current_action_index].dir;
             action                  = pCtx->action_array[pCtx->current_action_index].action;
+            pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
             pCtx->current_action_index++;
         }
 
@@ -791,9 +874,10 @@ int is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall)
 // Return 1 if the case has been visited
 int is_safe(maze_ctx_t *pCtx, int x, int y)
 {
-	if (( (CASE_VISITED & pCtx->maze_array[x][y]) == CASE_VISITED ) && (pCtx->solve_array[x][y]==0))
-		return 1;
-	return 0;
+    if (( ((CASE_VISITED  & pCtx->maze_array[x][y]) == CASE_VISITED) ||
+          ((CASE_TO_VISIT & pCtx->maze_array[x][y]) == CASE_TO_VISIT) ) && (pCtx->solve_array[x][y]==0))
+        return 1;
+    return 0;
 }
 
 // Return 1 if the case is valid, in the usage domaine
@@ -831,7 +915,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
 				}
 			}
 			pCtx->min_dist = dist;
-			pCtx->shortest_array[pCtx->end_x][pCtx->end_y] = pCtx->min_dist + 1 ;
+			pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
 		}
 		return;
 	}
@@ -1064,16 +1148,18 @@ void display_maze_ctx(maze_ctx_t *pCtx)
 
 	display_action_list(pCtx);
 
-	HAL_Serial_Print(&com, "Nb inter:%d\n", pCtx->nb_inter);
+	HAL_Serial_Print(&com, "Nb inter:%d ", pCtx->nb_inter);
 	HAL_Delay(10);
     for(yy=0;yy<MAX_INTER;yy++)
     {
         if(pCtx->inter_array[yy].enable != 0)
         {
-        	HAL_Serial_Print(&com, "inter[%d]:(%d,%d)\n", yy, pCtx->inter_array[yy].x, pCtx->inter_array[yy].y);
+        	HAL_Serial_Print(&com, "[%d](%d,%d) ", yy, pCtx->inter_array[yy].x, pCtx->inter_array[yy].y);
         	HAL_Delay(10);
         }
     }
+    HAL_Serial_Print(&com, "\n");
+    HAL_Delay(10);
 
 }// end of display_maze_ctx
 

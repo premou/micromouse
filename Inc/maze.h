@@ -23,14 +23,15 @@
 
 // All the maze case type
 typedef enum {
-    CASE_UNKNOWN     = 0x00,  // 00000000b : 0
-    CASE_WALL_N      = 0x01,  // 00000001b : 1
-    CASE_WALL_S      = 0x02,  // 00000010b : 2
-    CASE_WALL_E      = 0x04,  // 00000100b : 4
-    CASE_WALL_W      = 0x08,  // 00001000b : 8
+    CASE_UNKNOWN     = 0x00,  // 00000000b :  0
+    CASE_WALL_N      = 0x01,  // 00000001b :  1
+    CASE_WALL_S      = 0x02,  // 00000010b :  2
+    CASE_WALL_E      = 0x04,  // 00000100b :  4
+    CASE_WALL_W      = 0x08,  // 00001000b :  8
     CASE_START       = 0x10,  // 00010000b : 16
     CASE_END         = 0x20,  // 00100000b : 32
     CASE_VISITED     = 0x40,  // 01000000b : 64
+    CASE_TO_VISIT    = 0x80,  // 10000000b :128
 } maze_case_t ;
 
 // All the robot direction: do not change the order
@@ -162,6 +163,7 @@ int          is_safe(maze_ctx_t *pCtx, int x, int y);
 int          is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall);
 void         build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x, int from_y, int to_x, int to_y);
 action_t     get_next_next_action(maze_ctx_t *pCtx);
+void         update_inter(maze_ctx_t *pCtx);
 
 #endif // _MAZE_INC
 
