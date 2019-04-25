@@ -164,6 +164,8 @@ int          is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall);
 void         build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x, int from_y, int to_x, int to_y);
 action_t     get_next_next_action(maze_ctx_t *pCtx);
 void         update_inter(maze_ctx_t *pCtx);
+int          is_good_choice(maze_ctx_t *pCtx, action_t next_action);
+
 
 #endif // _MAZE_INC
 
