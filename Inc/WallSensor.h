@@ -26,6 +26,11 @@ void wall_sensor_init();
 // update all 4 wall sensors
 void wall_sensor_update();
 
+// accessers
+int32_t wall_sensor_get_raw(uint32_t sensor_id);
+float wall_sensor_get_dist(uint32_t sensor_id);
+
+
 // get one wall sensor raw value (12-bit ADC measure)
 int32_t wall_sensor_get(uint32_t sensor_id);
 int32_t wall_sensor_get_side_error();

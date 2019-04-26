@@ -208,6 +208,23 @@ int main(void)
 	  {
 		  // IR LED/PHOTO calibration setup ONLY
           // comment all theses line of code when running micromouse
+		  if(0)
+		  {
+			  static uint32_t time = 0;
+			  if( HAL_GetTick() >= time + 100) // every 0.1 sec
+			  {
+				  time = HAL_GetTick(); // update time
+				  wall_sensor_update();
+				  HAL_Serial_Print(&com,"%d %d %d %d\r\n",
+						  wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG),
+						  wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT),
+						  wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT),
+						  wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
+						  );
+				  HAL_Delay(10);
+			  }
+
+		  }
 		  if(1)
 		  {
 			  static uint32_t time = 0;
@@ -216,10 +233,10 @@ int main(void)
 				  time = HAL_GetTick(); // update time
 				  wall_sensor_update();
 				  HAL_Serial_Print(&com,"%d %d %d %d\r\n",
-						  wall_sensor_get(WALL_SENSOR_LEFT_DIAG),
-						  wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT),
-						  wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT),
-						  wall_sensor_get(WALL_SENSOR_RIGHT_DIAG)
+						  (int)wall_sensor_get_dist(WALL_SENSOR_LEFT_DIAG),
+						  (int)wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT),
+						  (int)wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT),
+						  (int)wall_sensor_get_dist(WALL_SENSOR_RIGHT_DIAG)
 						  );
 				  HAL_Delay(10);
 			  }
@@ -345,8 +362,8 @@ int main(void)
 	  {
 		  HAL_Delay(2000); // wait for button release
 
-//		  gyro_calibrate();
-		  controller_led_calibrate();
+		  gyro_calibrate();
+//		  controller_led_calibrate();
 		  current_state = IDLE;
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
