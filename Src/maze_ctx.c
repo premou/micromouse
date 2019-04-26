@@ -237,7 +237,7 @@ void init_action_array(maze_ctx_t *pCtx)
 
     // Action list
     pCtx->nb_action = 0;
-    pCtx->current_action_index = -1;
+    pCtx->current_action_index = 0;
     for(x=0; x<MAX_ACTION; x++)
     {
         pCtx->action_array[x].action = ACTION_STOP;
@@ -261,24 +261,120 @@ void init_inter_array(maze_ctx_t *pCtx)
     }
 }// end of init_inter_array
 
+//
+// TODO : find where in the function update_maze_ctx, the function find_nearest_intersection
+//        should be called.
+//
+// Find the nearest intersection and build the action list to the found intersection
+int find_nearest_intersection(maze_ctx_t *pCtx)
+{
+	int x;
+    int min_dist;
+    int min_dist_index;
+
+	// At least, one intersection
+	if(pCtx->nb_inter > 0)
+	{
+		// Scan all the intersection and find the nearest intersection from the current position
+		for(x=0; x<MAX_INTER; x++)
+		{
+			if(pCtx->inter_array[x].enable)
+			{
+				pCtx->min_dist = MAX_INT;
+				find_shortest_path(pCtx,
+						pCtx->current_x, pCtx->current_y,
+						pCtx->inter_array[x].x, pCtx->inter_array[x].y,
+						0);
+				if(pCtx->min_dist < min_dist)
+				{
+					min_dist       = pCtx->min_dist ;
+					min_dist_index = x ;
+				}
+			}
+		}
+
+		// Build the action to the nearest
+		build_action_list(pCtx,
+				pCtx->current_direction,
+				pCtx->current_x,
+				pCtx->current_y,
+				pCtx->inter_array[min_dist_index].x,
+				pCtx->inter_array[min_dist_index].y);
+
+		return 1;
+	}
+
+	return 0;
+}
+
+void display_intersection(maze_ctx_t *pCtx)
+{
+    int x;
+    int min_dist;
+    int min_dist_index;
+
+    min_dist = MAX_INT ;
+    HAL_Serial_Print(&com,"#> nbInter:%d\n", pCtx->nb_inter);
+    HAL_Delay(10);
+    for(x=0; x<MAX_INTER; x++)
+    {
+        if(pCtx->inter_array[x].enable)
+        {
+            pCtx->min_dist = MAX_INT;
+            find_shortest_path(pCtx,
+                               pCtx->current_x, pCtx->current_y,
+                               pCtx->inter_array[x].x, pCtx->inter_array[x].y,
+                               0);
+            HAL_Serial_Print(&com,"#>\t(%d,%d->%d)\n",
+                   pCtx->inter_array[x].x,
+                   pCtx->inter_array[x].y,
+                   pCtx->min_dist);
+            HAL_Delay(10);
+            if(pCtx->min_dist < min_dist)
+            {
+                min_dist       = pCtx->min_dist ;
+                min_dist_index = x ;
+            }
+        }
+    }
+
+    if(pCtx->nb_inter!=0)
+    {
+    	HAL_Serial_Print(&com,"#> action list to min dist from (%d,%d %s) to (%d,%d)\n",
+               pCtx->current_x, pCtx->current_y, (char*)direction_txt[pCtx->current_direction],
+               pCtx->inter_array[min_dist_index].x, pCtx->inter_array[min_dist_index].y);
+    	 HAL_Delay(10);
+        build_action_list(pCtx,
+                          pCtx->current_direction,
+                          pCtx->current_x,
+                          pCtx->current_y,
+                          pCtx->inter_array[min_dist_index].x,
+                          pCtx->inter_array[min_dist_index].y);
+        display_action_list(pCtx);
+        init_action_array(pCtx);
+    }
+}
+
 void display_action_list(maze_ctx_t *pCtx)
 {
     int x;
 
     // Action list
-    HAL_Serial_Print(&com, "[nb_action:%d current_index:%d]\n",
-           pCtx->nb_action, pCtx->current_action_index);
+    HAL_Serial_Print(&com,"#>\t\t[nb_a:%d]\n",
+           pCtx->nb_action);
     HAL_Delay(10);
-    for(x=0; x < pCtx->nb_action; x++)
+    for(x=1; x <= pCtx->nb_action; x++)
     {
-    	HAL_Serial_Print(&com, "\taction[%d]:%s (%d,%d) %s\n",
+    	HAL_Serial_Print(&com,"#>\t\ta[%d]=%s (%d,%d) %s\n",
                x,
                (char*)action_txt[pCtx->action_array[x].action],
                pCtx->action_array[x].x,
                pCtx->action_array[x].y,
                (char*)direction_txt[pCtx->action_array[x].dir]);
-    	HAL_Delay(10);
+    	 HAL_Delay(10);
     }
+    HAL_Serial_Print(&com,"\n");
+    HAL_Delay(10);
 }// end of display_action_array
 
 action_t get_next_next_action(maze_ctx_t *pCtx)
@@ -385,6 +481,7 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
 		}
 	}
 
+	// Retry with other algo if the choice is not the best (i.e. case already visited)
 	if(0 == is_good_choice(pCtx, next_action))
 	{
 		// change algo
@@ -677,24 +774,22 @@ maze_case_t get_wall_state(robot_direction_t current_direction)
 }// end of get_wall_state
 
 // Add intersection in list
-void add_inter(maze_ctx_t *pCtx, int x, int y)
+void add_intersection(maze_ctx_t *pCtx, int x, int y)
 {
     int i;
-    int to_add = 1;
 
     // Already present ?
     for (i=0;i<MAX_INTER;i++)
     {
-        if(pCtx->inter_array[i].enable == 1)
+        if((pCtx->inter_array[i].enable == 1) &&
+           (pCtx->inter_array[i].x == x) && (pCtx->inter_array[i].y == y))
         {
-            if((pCtx->inter_array[i].x == x) && (pCtx->inter_array[i].y == y))
-            {
-                to_add = 0;
-            }
+            // Exit now
+            return;
         }
     }
 
-    if(to_add == 1)
+    if(pCtx->nb_inter < MAX_INTER)
     {
         for (i=0;i<MAX_INTER;i++)
         {
@@ -703,21 +798,19 @@ void add_inter(maze_ctx_t *pCtx, int x, int y)
                 pCtx->inter_array[i].x = x;
                 pCtx->inter_array[i].y = y;
                 pCtx->inter_array[i].enable = 1;
-
-                if(pCtx->nb_inter<MAX_INTER)
-                    pCtx->nb_inter++;
-                else
-                	HAL_Serial_Print(&com,"###BIG MESS### in line: %d\n", __LINE__);
-                break;
+                pCtx->nb_inter++;
+                // Exit now
+                return;
             }
         }
     }
 }
 
 // check depending on the position if a new intresection is present
-void update_inter(maze_ctx_t *pCtx)
+void update_intersection(maze_ctx_t *pCtx)
 {
-    int x, y, i;
+    int x,y;
+    int i;
 
     x = pCtx->current_x;
     y = pCtx->current_y;
@@ -725,13 +818,11 @@ void update_inter(maze_ctx_t *pCtx)
     // Check if the intersection have been visited
     for (i=0;i<MAX_INTER;i++)
     {
-        if(pCtx->inter_array[i].enable == 1)
+        if( (pCtx->inter_array[i].enable == 1) &&
+           ((pCtx->maze_array[pCtx->inter_array[i].x][pCtx->inter_array[i].y] & CASE_VISITED) == CASE_VISITED))
         {
-            if((pCtx->maze_array[pCtx->inter_array[i].x][pCtx->inter_array[i].y] & CASE_VISITED) == CASE_VISITED)
-            {
-                pCtx->inter_array[i].enable = 0;
-                pCtx->nb_inter--;
-            }
+            pCtx->inter_array[i].enable = 0;
+            pCtx->nb_inter--;
         }
     }
 
@@ -742,12 +833,13 @@ void update_inter(maze_ctx_t *pCtx)
             if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_W, MAZE_CASE_STATE_MASK) &&
                IS_NOT_SET(pCtx->maze_array[x-1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
             {
-                add_inter(pCtx, x-1, y);
+                add_intersection(pCtx, x-1, y);
+                pCtx->maze_array[x-1][y] |= CASE_TO_VISIT;
             }
             if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_E, MAZE_CASE_STATE_MASK) &&
                IS_NOT_SET(pCtx->maze_array[x+1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
             {
-                add_inter(pCtx, x+1, y);
+                add_intersection(pCtx, x+1, y);
                 pCtx->maze_array[x+1][y] |= CASE_TO_VISIT;
             }
             break;
@@ -757,12 +849,13 @@ void update_inter(maze_ctx_t *pCtx)
             if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
                IS_NOT_SET(pCtx->maze_array[x][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK))
             {
-                add_inter(pCtx, x, y+1);
+                add_intersection(pCtx, x, y+1);
+                pCtx->maze_array[x][y+1] |= CASE_TO_VISIT;
             }
             if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
                IS_NOT_SET(pCtx->maze_array[x][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK))
             {
-                add_inter(pCtx, x, y-1);
+                add_intersection(pCtx, x, y-1);
                 pCtx->maze_array[x][y-1] |= CASE_TO_VISIT;
             }
             break;
@@ -797,27 +890,30 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 			(char *)wall_state_txt[GET_WALL_STATE(pCtx->maze_array[pCtx->current_x][pCtx->current_y])],
 			(char *)wall_state_txt[MAZE_CASE_WALL_MASK & wall_sensor]);
 
-    // Fetch end state depending of the current position
+    // FIrst, fetch end state depending of the current position
     the_end = is_it_the_end(pCtx) ;
 
+	/////////////
+	// LEARN mode
+	/////////////
 	if(pCtx->mode == LEARN)
 	{
-		/////////////
-		// LEARN mode
-		/////////////
-
-		if((pCtx->current_action_index != -1) && (pCtx->current_action_index < pCtx->nb_action))
+		// Are we in action mode ? i.e.learn mode but we are travelling to a case set as TO_VISIT : intersection to visit
+		if((pCtx->current_action_index >= 1) && (pCtx->current_action_index <= pCtx->nb_action))
 		{
 			pCtx->current_x         = pCtx->action_array[pCtx->current_action_index].x;
 			pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
 			pCtx->current_direction = pCtx->action_array[pCtx->current_action_index].dir;
 			action                  = pCtx->action_array[pCtx->current_action_index].action;
+
 			pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
+
 			pCtx->current_action_index++;
 
-			if(pCtx->current_action_index >= pCtx->nb_action)
+			// Last action ?
+			if(pCtx->current_action_index > pCtx->nb_action)
 			{
-				pCtx->current_action_index = - 1;
+				pCtx->current_action_index = 0;
 				pCtx->nb_action = 0;
 
 				if(pCtx->algo == LEFT_HAND)
@@ -881,51 +977,6 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 			pCtx->current_y         += step_y;
 			pCtx->current_direction  = new_direction;
 
-#if 0
-			// Check if the new position is known ?
-			if( (pCtx->maze_array[pCtx->current_x][pCtx->current_y] & CASE_VISITED) == CASE_VISITED)
-			{
-				if(pCtx->nb_inter!=0)
-				{
-					// Scann all the intersection and compute the min distance
-					int min_inter_indice = -1      ;
-					int min_inter        = MAX_INT ;
-					inter_t *pInter                ;
-					for(int t=0; t<MAX_INTER; t++)
-					{
-						pInter = &pCtx->inter_array[t] ;
-						if(pInter->enable)
-						{
-							pCtx->min_dist = MAX_INT;
-							find_shortest_path(pCtx,
-									pCtx->current_x, pCtx->current_y,
-									pInter->x, pInter->y,
-									0);
-							if(pCtx->min_dist < min_inter)
-							{
-								min_inter_indice = t ;
-								min_inter        = pCtx->min_dist ;
-							}
-						}
-					}
-
-					if(min_inter_indice != -1)
-					{
-						build_action_list(pCtx,
-								pCtx->current_direction,
-								pCtx->current_x,
-								pCtx->current_y,
-								pCtx->inter_array[min_inter_indice].x,
-								pCtx->inter_array[min_inter_indice].y);
-					}
-					else
-					{
-						HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
-					}
-				}
-			}
-#endif
-
 			// Update case with walls position, visited flag and case number
 			newState = wall_sensor | CASE_VISITED ;
 			pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= newState;
@@ -934,7 +985,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 			upadte_connex_case(pCtx);
 
             // find case to check
-            update_inter(pCtx);
+			update_intersection(pCtx);
 
 			// Check if the end is reached
 			if(the_end)
@@ -960,7 +1011,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 		/////////////
 		// SOLVE mode
 		/////////////
-        if( the_end || (pCtx->current_action_index == -1) || (pCtx->current_action_index >= pCtx->nb_action) )
+        if( the_end || (pCtx->current_action_index <= 0) || (pCtx->current_action_index > pCtx->nb_action) )
         {
             action = ACTION_STOP;
         }
@@ -974,12 +1025,12 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             pCtx->current_action_index++;
 
             the_end = is_it_the_end(pCtx) ;
-            if((pCtx->current_action_index >= pCtx->nb_action) || the_end)
-			{
-				pCtx->current_action_index = - 1;
-				pCtx->nb_action = 0;
-
-				action = ACTION_STOP;
+            // Last action ?
+            if((pCtx->current_action_index > pCtx->nb_action) || the_end)
+            {
+				pCtx->current_action_index = 0;
+				pCtx->nb_action            = 0;
+				action                     = ACTION_STOP;
 			}
         }
 
@@ -1088,7 +1139,7 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
     int next_number;
     int step_x;
     int step_y;
-    action_t action;
+    action_t action = -1;
     robot_direction_t new_direction;
 
     init_action_array(pCtx);
@@ -1098,10 +1149,9 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
                        from_x, from_y,
                        to_x, to_y,
                        0);
-
     if(pCtx->min_dist > MAX_ACTION)
     {
-    	HAL_Serial_Print(&com,"###BIG MESS### in line: %d\n", __LINE__);
+    	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
     }
 
     pCtx->nb_action = pCtx->min_dist ;
@@ -1109,126 +1159,132 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
     pCtx->action_array[0].x   = from_x;
     pCtx->action_array[0].y   = from_y;
     pCtx->action_array[0].dir = from_dir;
+    new_direction             = from_dir;
+    step_x = 0;
+    step_y = 0;
 
-    for(a=0;a<pCtx->nb_action;a++)
+    for( a=0 ; a <= pCtx->nb_action ; a++)
     {
-    	// Default value
-    	action = ACTION_STOP;
-    	step_x        = 0;
-    	step_y        = 0;
-    	new_direction = -1;
-
         // Get current case
         x = pCtx->action_array[a].x;
         y = pCtx->action_array[a].y;
-        current_number = pCtx->shortest_array[x][y] ;
 
-        // Next case to find
-        next_number = current_number + 1;
-
-        if (is_valid(x + 1, y) && (next_number == pCtx->shortest_array[x+1][y]))
+        if((x == to_x) && (y == to_y))
         {
-            step_x = 1;
-            step_y = 0;
-            switch(pCtx->action_array[a].dir)
-            {
-                case DIR_N:
-                    action = ACTION_TURN_RIGHT;
-                    new_direction = DIR_E;
-                    break;
-                case DIR_E:
-                    action = ACTION_RUN_1;
-                    new_direction = DIR_E;
-                    break;
-                case DIR_S:
-                    action = ACTION_TURN_LEFT;
-                    new_direction = DIR_E;
-                    break;
-                case DIR_W:
-                    action = ACTION_U_TURN_RIGHT;
-                    new_direction = DIR_E;
-                    break;
-            }
-        }
-        else if (is_valid(x, y + 1) && (next_number == pCtx->shortest_array[x][y+1]))
-        {
+            action = ACTION_STOP;
             step_x = 0;
-            step_y = 1;
-            switch(pCtx->action_array[a].dir)
-            {
-                case DIR_N:
-                    action = ACTION_RUN_1;
-                    new_direction = DIR_N;
-                    break;
-                case DIR_E:
-                    action = ACTION_TURN_LEFT;
-                    new_direction = DIR_N;
-                    break;
-                case DIR_S:
-                    action = ACTION_U_TURN_RIGHT;
-                    new_direction = DIR_N;
-                    break;
-                case DIR_W:
-                    action = ACTION_TURN_RIGHT;
-                    new_direction = DIR_N;
-                    break;
-            }
-        }
-        else if (is_valid(x - 1, y) && (next_number == pCtx->shortest_array[x-1][y]))
-        {
-            step_x = -1;
             step_y = 0;
-            switch(pCtx->action_array[a].dir)
-            {
-                case DIR_N:
-                    action = ACTION_TURN_LEFT;
-                    new_direction = DIR_W;
-                    break;
-                case DIR_E:
-                    action = ACTION_U_TURN_RIGHT;
-                    new_direction = DIR_W;
-                    break;
-                case DIR_S:
-                    action = ACTION_TURN_RIGHT;
-                    new_direction = DIR_W;
-                    break;
-                case DIR_W:
-                    action = ACTION_RUN_1;
-                    new_direction = DIR_W;
-                    break;
-            }
-        }
-        else if (is_valid(x, y - 1) && (next_number == pCtx->shortest_array[x][y-1]))
-        {
-            step_x = 0;
-            step_y = -1;
-            switch(pCtx->action_array[a].dir)
-            {
-                case DIR_N:
-                    action = ACTION_U_TURN_RIGHT;
-                    new_direction = DIR_S;
-                    break;
-                case DIR_E:
-                    action = ACTION_TURN_RIGHT;
-                    new_direction = DIR_S;
-                    break;
-                case DIR_S:
-                    action = ACTION_RUN_1;
-                    new_direction = DIR_S;
-                    break;
-                case DIR_W:
-                    action = ACTION_TURN_LEFT;
-                    new_direction = DIR_S;
-                    break;
-            }
         }
         else
         {
-        	HAL_Serial_Print(&com,"###BIG MESS### in line: %d\n", __LINE__);
+            current_number = pCtx->shortest_array[x][y] ;
+
+            // Next case to find
+            next_number = current_number + 1;
+
+            if (is_valid(x + 1, y) && (next_number == pCtx->shortest_array[x+1][y]))
+            {
+                step_x = 1;
+                step_y = 0;
+                switch(pCtx->action_array[a].dir)
+                {
+                    case DIR_N:
+                        action = ACTION_TURN_RIGHT;
+                        new_direction = DIR_E;
+                        break;
+                    case DIR_E:
+                        action = ACTION_RUN_1;
+                        new_direction = DIR_E;
+                        break;
+                    case DIR_S:
+                        action = ACTION_TURN_LEFT;
+                        new_direction = DIR_E;
+                        break;
+                    case DIR_W:
+                        action = ACTION_U_TURN_RIGHT;
+                        new_direction = DIR_E;
+                        break;
+                }
+            }
+            else if (is_valid(x, y + 1) && (next_number == pCtx->shortest_array[x][y+1]))
+            {
+                step_x = 0;
+                step_y = 1;
+                switch(pCtx->action_array[a].dir)
+                {
+                    case DIR_N:
+                        action = ACTION_RUN_1;
+                        new_direction = DIR_N;
+                        break;
+                    case DIR_E:
+                        action = ACTION_TURN_LEFT;
+                        new_direction = DIR_N;
+                        break;
+                    case DIR_S:
+                        action = ACTION_U_TURN_RIGHT;
+                        new_direction = DIR_N;
+                        break;
+                    case DIR_W:
+                        action = ACTION_TURN_RIGHT;
+                        new_direction = DIR_N;
+                        break;
+                }
+            }
+            else if (is_valid(x - 1, y) && (next_number == pCtx->shortest_array[x-1][y]))
+            {
+                step_x = -1;
+                step_y = 0;
+                switch(pCtx->action_array[a].dir)
+                {
+                    case DIR_N:
+                        action = ACTION_TURN_LEFT;
+                        new_direction = DIR_W;
+                        break;
+                    case DIR_E:
+                        action = ACTION_U_TURN_RIGHT;
+                        new_direction = DIR_W;
+                        break;
+                    case DIR_S:
+                        action = ACTION_TURN_RIGHT;
+                        new_direction = DIR_W;
+                        break;
+                    case DIR_W:
+                        action = ACTION_RUN_1;
+                        new_direction = DIR_W;
+                        break;
+                }
+            }
+            else if (is_valid(x, y - 1) && (next_number == pCtx->shortest_array[x][y-1]))
+            {
+                step_x = 0;
+                step_y = -1;
+                switch(pCtx->action_array[a].dir)
+                {
+                    case DIR_N:
+                        action = ACTION_U_TURN_RIGHT;
+                        new_direction = DIR_S;
+                        break;
+                    case DIR_E:
+                        action = ACTION_TURN_RIGHT;
+                        new_direction = DIR_S;
+                        break;
+                    case DIR_S:
+                        action = ACTION_RUN_1;
+                        new_direction = DIR_S;
+                        break;
+                    case DIR_W:
+                        action = ACTION_TURN_LEFT;
+                        new_direction = DIR_S;
+                        break;
+                }
+            }
+            else
+            {
+            	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+            }
         }
 
-        pCtx->action_array[a].action = action;
-
+        pCtx->action_array[a+1].action = action;
         pCtx->action_array[a+1].x   = pCtx->action_array[a].x + step_x;
         pCtx->action_array[a+1].y   = pCtx->action_array[a].y + step_y;
         pCtx->action_array[a+1].dir = new_direction;
@@ -1236,7 +1292,6 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
 
     pCtx->current_action_index = 1;
 
-    //display_action_list(pCtx);
 }// end of build_action_list
 
 // ugly patch

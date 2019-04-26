@@ -181,30 +181,6 @@ typedef struct  {
 //////////
 // Globals
 //////////
-
-//static action_t actions_scenario[] = {
-//	ACTION_START,
-//	ACTION_TURN_RIGHT,
-//	ACTION_RUN_1,
-//	ACTION_TURN_RIGHT,
-//	ACTION_STOP,
-//	ACTION_U_TURN_RIGHT,
-//	ACTION_START,
-//	ACTION_TURN_LEFT,
-//	ACTION_TURN_RIGHT,
-//	ACTION_TURN_LEFT,
-//	ACTION_TURN_RIGHT,
-//	ACTION_STOP,
-//	ACTION_IDLE
-//  };
-// GLOBAL VARIABLES
-
-static action_t actions_scenario[] = {
-//	ACTION_U_TURN_RIGHT,
-//	ACTION_STOP,
-	ACTION_IDLE
-  };
-
 static controller_t ctx;
 
 ////////////
