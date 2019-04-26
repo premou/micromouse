@@ -208,7 +208,7 @@ int main(void)
 	  {
 		  // IR LED/PHOTO calibration setup ONLY
           // comment all theses line of code when running micromouse
-		  if(0)
+		  if(1)
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 100) // every 0.1 sec
