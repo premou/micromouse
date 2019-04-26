@@ -1,4 +1,5 @@
 % machine learning
+%% data file order "DL"(2) ,"FL"(3) ,"FR"(4), "DR"(5)
 
 %% initialization
 clear ; close all; clc
@@ -11,7 +12,7 @@ m = size(data,1)-1;
 
 %% build data set X (first 1 col) and y
 y = data(2:m+1,1);
-rawX = data(2:m+1,5);
+rawX = data(2:m+1,5); %% SELECT DATA SET : "DL"(2) ,"FL"(3) ,"FR"(4), "DR"(5)
 
 % one feature with polynomial regression
 

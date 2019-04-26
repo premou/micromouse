@@ -1,0 +1,19 @@
+# Created by Octave 5.1.0, Fri Apr 26 12:40:53 2019 GMT <unknown@LAPTOP-Q17GF7V8>
+# name: theta
+# type: matrix
+# rows: 2
+# columns: 1
+ 89.783549163781998
+ 50.922560384729024
+
+
+# name: mu
+# type: scalar
+0.0016429757797189024
+
+
+# name: sigma
+# type: scalar
+0.0011504001026292729
+
+
