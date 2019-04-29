@@ -10,6 +10,8 @@
 
 #include "WallSensor.h"
 
+#include <math.h>
+
 #define __BERNARD__
 
 
@@ -18,31 +20,24 @@
 // DL, FL, FR, DR
 float theta0[WALL_SENSOR_COUNT] =
 	{
-			89.783549163781984,
-			89.783549163781984,
-			89.783549163781998,
-			89.783549163781984
+			-31.451667230000375,
+			-31.214148588750962,
+			-37.514381300859526,
+			-27.383779201410519
 	};
 float theta1[WALL_SENSOR_COUNT] =
 	{
-			51.595267655205198,
-			50.579665361660197,
-			50.922560384729024,
-			51.548023645188088
+			2491.3772726321713,
+			2943.9480100218689,
+			3355.7825797504011,
+			2152.7356524911202
 	};
-float mu[WALL_SENSOR_COUNT] =
+float theta2[WALL_SENSOR_COUNT] =
 	{
-			0.0017861672732610281,
-			0.0020687933547682788,
-			0.0016429757797189024,
-			0.0024579590390316837
-	};
-float sigma[WALL_SENSOR_COUNT] =
-	{
-			0.0010247903129681592,
-			0.0015631163274954065,
-			0.0011504001026292729,
-			0.0015151345784583646
+			5091840.6972101126,
+			-241993.74478182383,
+			289366.73746078881,
+			2049489.3538577068
 	};
 
 #else
@@ -52,7 +47,10 @@ float sigma[WALL_SENSOR_COUNT] =
 void raw_to_distance(int32_t const * raw, float * distance)
 {
 	for(uint32_t sensor=0;sensor<WALL_SENSOR_COUNT;++sensor)
-		distance[sensor] = theta1[sensor] * ( 1.0/(float)raw[sensor] - mu[sensor] ) / sigma[sensor] + theta0[sensor];
+		distance[sensor] =
+				theta0[sensor] * 1.0 +
+				theta1[sensor] / sqrt( (float)raw[sensor] ) +
+				theta2[sensor] / pow( (float)raw[sensor], 2 );
 }
 
 

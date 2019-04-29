@@ -211,7 +211,7 @@ int main(void)
 		  if(0)
 		  {
 			  static uint32_t time = 0;
-			  if( HAL_GetTick() >= time + 100) // every 0.1 sec
+			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
 			  {
 				  time = HAL_GetTick(); // update time
 				  wall_sensor_update();
@@ -228,15 +228,18 @@ int main(void)
 		  if(1)
 		  {
 			  static uint32_t time = 0;
-			  if( HAL_GetTick() >= time + 100) // every 0.1 sec
+			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
 			  {
 				  time = HAL_GetTick(); // update time
 				  wall_sensor_update();
-				  HAL_Serial_Print(&com,"%d %d %d %d\r\n",
+				  HAL_Serial_Print(&com,"%d %d %d %d    %d %d %d\r\n",
 						  (int)wall_sensor_get_dist(WALL_SENSOR_LEFT_DIAG),
 						  (int)wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT),
 						  (int)wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT),
-						  (int)wall_sensor_get_dist(WALL_SENSOR_RIGHT_DIAG)
+						  (int)wall_sensor_get_dist(WALL_SENSOR_RIGHT_DIAG),
+						  (int)wall_sensor_is_left_wall_detected(),
+						  (int)wall_sensor_is_front_wall_detected(),
+						  (int)wall_sensor_is_right_wall_detected()
 						  );
 				  HAL_Delay(10);
 			  }

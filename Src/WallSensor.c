@@ -113,9 +113,23 @@ float wall_sensor_get_dist(uint32_t sensor_id)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+bool wall_sensor_is_left_wall_detected()
+{
+	return ctx.distance[WALL_SENSOR_LEFT_DIAG] < 110; //mm
+}
+
+bool wall_sensor_is_front_wall_detected()
+{
+	return (ctx.distance[WALL_SENSOR_RIGHT_STRAIGHT]+ctx.distance[WALL_SENSOR_LEFT_STRAIGHT]) < 320; //mm
+}
+
+bool wall_sensor_is_right_wall_detected()
+{
+	return ctx.distance[WALL_SENSOR_RIGHT_DIAG] < 110; //mm
+}
 
 
-
+///////////////////////////////////////////////////////////////////////////////
 
 int32_t wall_sensor_get_side_error(){
 	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
