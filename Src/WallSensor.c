@@ -8,16 +8,12 @@
 
 /* APP settings ------------------------------------------------------------------*/
 
-#define WALL_POSITION_MIN_DEFAULT 300
-#define WALL_POSITION_MAX_DEFAULT 1700
-//#define WALL_POSITION_MIN 700
-//#define WALL_POSITION_MAX 2000
-#define WALL_FRONT_DISTANCE 160
-//#define W_MIDDLE_LEFT 850			//su
-//#define W_MIDDLE_RIGHT 850		//su
-#define LEFT_WALL_DISTANCE_NO_SIDE_ERROR 87.0			//mm
-#define RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 63.0		//mm
-#define SIDE_OFFSET 0.0		//mm
+#define FRONT_WALL_DISTANCE 320 //mm distance to front wall (sum of both left and right sensors) to be detected
+#define SIDE_WALL_DISTANCE  110 //mm distance to side wall to be detected
+
+#define LEFT_WALL_DISTANCE_NO_SIDE_ERROR 87.0			//mm distance to left wall when mouse in the middle line
+#define RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 63.0		//mm distance to right wall when mouse in the middle line
+#define SIDE_OFFSET 0.0		//mm distance offset when mouse in the middle line
 
 static uint16_t const id_to_pin[WALL_SENSOR_COUNT] = {
 	IR_LED_DL_Pin, // DL
@@ -40,13 +36,12 @@ static uint16_t const id_to_channel[WALL_SENSOR_COUNT] = {
     ADC_CHANNEL_5  // DR
 };
 
+/* APP private data  ------------------------------------------------------------------*/
+
 typedef struct
 {
 	int32_t raw[WALL_SENSOR_COUNT];
 	float distance[WALL_SENSOR_COUNT];
-
-	int32_t wall_position_min;
-	int32_t wall_position_max;
 } wall_sensor_ctx;
 
 static wall_sensor_ctx ctx;
@@ -85,8 +80,6 @@ void wall_sensor_update_one(uint32_t sensor_id)
 void wall_sensor_init()
 {
 	memset(&ctx,0,sizeof(wall_sensor_ctx));
-	ctx.wall_position_min = WALL_POSITION_MIN_DEFAULT;
-	ctx.wall_position_max = WALL_POSITION_MAX_DEFAULT;
 }
 
 void wall_sensor_update()
@@ -118,24 +111,24 @@ float wall_sensor_get_dist(uint32_t sensor_id)
 
 bool wall_sensor_is_left_wall_detected()
 {
-	return ctx.distance[WALL_SENSOR_LEFT_DIAG] < 110; //mm
+	return ctx.distance[WALL_SENSOR_LEFT_DIAG] < SIDE_WALL_DISTANCE; //mm
 }
 
 bool wall_sensor_is_front_wall_detected()
 {
-	return (ctx.distance[WALL_SENSOR_RIGHT_STRAIGHT]+ctx.distance[WALL_SENSOR_LEFT_STRAIGHT]) < 320; //mm
+	return (ctx.distance[WALL_SENSOR_RIGHT_STRAIGHT]+ctx.distance[WALL_SENSOR_LEFT_STRAIGHT]) < FRONT_WALL_DISTANCE; //mm
 }
 
 bool wall_sensor_is_right_wall_detected()
 {
-	return ctx.distance[WALL_SENSOR_RIGHT_DIAG] < 110; //mm
+	return ctx.distance[WALL_SENSOR_RIGHT_DIAG] < SIDE_WALL_DISTANCE; //mm
 }
 
 float wall_sensor_get_side_error(){
 
 	if(wall_sensor_is_left_wall_detected() && wall_sensor_is_right_wall_detected())
 	{
-		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG];
+		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG] + SIDE_OFFSET;
 	}
 	else if(wall_sensor_is_left_wall_detected())
 	{
@@ -154,86 +147,4 @@ float wall_sensor_get_side_error(){
 	return(0.0);
 }
 
-///////////////////////////////////////////////////////////////////////////////
 
-
-int32_t wall_sensor_get_straight_adc(){
-	return ceil(((float)(ctx.raw[WALL_SENSOR_LEFT_STRAIGHT] + ctx.raw[WALL_SENSOR_RIGHT_STRAIGHT])) / 2.0);
-}
-
-int32_t wall_sensor_get_straight_diff_adc(){
-	return ctx.raw[WALL_SENSOR_LEFT_STRAIGHT] - ctx.raw[WALL_SENSOR_RIGHT_STRAIGHT];
-}
-
-bool wall_sensor_wall_left_presence()
-{
-	if((ctx.raw[WALL_SENSOR_LEFT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < ctx.wall_position_max))
-	{
-		//there is a wall on the left
- 		return true;
-	}
-	else
-	{
-		//there is no wall on the left
-		return false;
-	}
-}
-
-bool wall_sensor_wall_right_presence()
-{
-	if((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < ctx.wall_position_max))
-	{
-		//there is a wall on the right
- 		return true;
-	}
-	else
-	{
-		//there is no wall on the right
-		return false;
-	}
-}
-
-bool wall_sensor_both_wall_presence()
-{
-	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < ctx.wall_position_max)) &&
-	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < ctx.wall_position_max))	   )
-	{
-		//there is at least one wall
-		return true;
-	}
-	else
-	{
-		//there is no wall
-		return false;
-	}
-}
-
-bool wall_sensor_wall_presence()
-{
-	if(((ctx.raw[WALL_SENSOR_LEFT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_LEFT_DIAG] < ctx.wall_position_max)) ||
-	   ((ctx.raw[WALL_SENSOR_RIGHT_DIAG] > ctx.wall_position_min) && (ctx.raw[WALL_SENSOR_RIGHT_DIAG] < ctx.wall_position_max))	   )
-	{
-		//there is at least one wall
-		return true;
-	}
-	else
-	{
-		//there is no wall
-		return false;
-	}
-}
-
-
-bool wall_sensor_left_front_presence()
-{
-	return wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT) < WALL_FRONT_DISTANCE;
-
-}
-
-void wall_sensor_set_wall_position_min(int32_t pos_min){
-	ctx.wall_position_min = pos_min;
-}
-
-void wall_sensor_set_wall_position_max(int32_t pos_max){
-	ctx.wall_position_max = pos_max;
-}

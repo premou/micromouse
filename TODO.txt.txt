@@ -1,11 +1,7 @@
-P1 : Coder ACTION_BRAKE pour faire des essais de position.
+P1 : Tester action STILL
+P1 : Calibrer distance parcourue et ajuster diamètre des roues.
+
 P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
+
 P1 : Calibration longitudinale (quand mur disparait, les posts, faire courbe distance+valeur led diag)
 
-
-
-P2 : Nouvelle API pour les LED / Clean up (maze)
-
-P2 : Calibration gyro dans Flash
-	FIX : ecriture
-	TODO : relecture
