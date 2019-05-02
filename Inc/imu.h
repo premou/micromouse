@@ -29,6 +29,8 @@ void reset_bias(); 	// reset bias
 void set_bias(float bias_dps); 	// set bias
 void gyro_calibrate();
 
+void gyro_flash_factory_setup();
+
 #ifdef __cplusplus
 }
 #endif

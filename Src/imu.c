@@ -10,6 +10,8 @@
 #include "imu.h"
 #include "robot_math.h"
 
+#include <string.h>
+
 // DS : https://www.st.com/resource/en/datasheet/lsm6ds33.pdf
 // AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
 
@@ -107,6 +109,33 @@ void gyro_write_8bit_register(
 }
 
 // public functions ///////////////////////////////////////////////////////////
+
+void gyro_flash_factory_setup()
+{
+	HAL_FLASH_Unlock();
+
+	FLASH_EraseInitTypeDef EraseInit =
+			{
+					.TypeErase = FLASH_TYPEERASE_SECTORS, // efface secteur seulement
+					.Sector = 11U, //FLASH_SECTOR_11, // dernier secteur 7 ->11
+					.NbSectors = 1, // un seul secteur effacé
+					.VoltageRange = FLASH_VOLTAGE_RANGE_3
+			};
+	uint32_t SectorError = 0;
+	uint32_t address = 0x081C0000; //0x080C0000;
+	uint64_t data = 0;
+	ctx.bias = FACTORY_GYRO_BIAS;
+	memcpy(&data,&ctx.bias,sizeof(float));
+	HAL_StatusTypeDef status = 0;
+
+
+	status = HAL_FLASHEx_Erase(&EraseInit, &SectorError);
+	HAL_Serial_Print(&com,"\nHAL_FLASHEx_Erase() status=%d sector_serror=%d\n",(int32_t)status,(int32_t)SectorError);
+	status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
+	HAL_Serial_Print(&com,"\nHAL_FLASH_Program() status=%d\n",(int32_t)status);
+
+	HAL_FLASH_Lock();
+}
 
 uint32_t gyro_init()
 {

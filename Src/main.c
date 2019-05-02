@@ -45,7 +45,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "serial.h"
-#include "tone.h"
 #include "controller.h"
 #include "datalogger.h"
 #include "battery.h"
@@ -55,6 +54,7 @@
 #include "configuration.h"
 #include "robot_math.h"
 #include "WallSensor.h"
+#include "imu.h"
 
 /* USER CODE END Includes */
 
@@ -184,8 +184,11 @@ int main(void)
 	timer_us_init();
 	uint32_t controller_init_result = controller_init();
 
+	// uncomment the first time to initialize flash
+	//gyro_flash_factory_setup();
+
 	// play startup song
-	play_startup_song(&htim9, TIM_CHANNEL_1);
+	//play_startup_song(&htim9, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -225,7 +228,7 @@ int main(void)
 			  }
 
 		  }
-		  if(1)
+		  if(0)
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
@@ -339,8 +342,6 @@ int main(void)
 	  case FINISH :
 	  {
 
-		  play_finishing_song(&htim9, TIM_CHANNEL_1);
-
 		  HAL_Delay(1000);
 
 		  current_state = IDLE;
@@ -366,7 +367,6 @@ int main(void)
 		  HAL_Delay(2000); // wait for button release
 
 		  gyro_calibrate();
-//		  controller_led_calibrate();
 		  current_state = IDLE;
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off

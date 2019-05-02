@@ -41,6 +41,9 @@ extern HAL_Serial_Handler com;
 // constants
 ////////////
 
+#define FIXED_MOVES
+//#define ALGO_MOVES
+
 #define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
 #define X_MAX_ACCELERATION 5.0 		// m/s-2
 #define X_MAX_DECELERATION 3.0		// m/s-2
@@ -450,51 +453,60 @@ bool controller_is_end(){
 	return ctx.current_state == ACTION_IDLE;
 }
 
-#if 0
+#if 1
+
+action_t actions_scenario[] =
+{
+		ACTION_RUN_1,
+		ACTION_STOP,
+		ACTION_IDLE
+};
+
+
 action_t get_next_move()
 {
-	HAL_Serial_Print(&com,"\n%d %d %d %d\n",(int)wall_sensor_get(WALL_SENSOR_LEFT_DIAG), (int)wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT), (int)wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT), (int)wall_sensor_get(WALL_SENSOR_RIGHT_DIAG));
+//	if(actions_scenario[0] == ACTION_IDLE)
+//	{
+//		if(ctx.current_state == ACTION_STOP)
+//		{
+//			return ACTION_IDLE;
+//		}
+//		else
+//		{
+//			if(!wall_sensor_wall_left_presence())
+//			{
+//				HAL_Serial_Print(&com,"turn left");
+//				return ACTION_TURN_LEFT;
+//			}
+//			else
+//			{
+//				if(!wall_sensor_left_front_presence())
+//				{
+//					HAL_Serial_Print(&com,"run 1");
+//					return ACTION_RUN_1;
+//				}
+//				else
+//				{
+//					if(!wall_sensor_wall_right_presence())
+//					{
+//						HAL_Serial_Print(&com,"turn right");
+//						return ACTION_TURN_RIGHT;
+//					}
+//					else
+//					{
+//						HAL_Serial_Print(&com,"stop");
+//						return ACTION_STOP;
+//					}
+//				}
+//			}
+//		}
+//	}
+//	else
+//	{
+	HAL_Serial_Print(&com,"\nget_next_move() returns %d\n", actions_scenario[ctx.actions_index]);
 
-	if(actions_scenario[0] == ACTION_IDLE)
-	{
-		if(ctx.current_state == ACTION_STOP)
-		{
-			return ACTION_IDLE;
-		}
-		else
-		{
-			if(!wall_sensor_wall_left_presence())
-			{
-				HAL_Serial_Print(&com,"turn left");
-				return ACTION_TURN_LEFT;
-			}
-			else
-			{
-				if(!wall_sensor_left_front_presence())
-				{
-					HAL_Serial_Print(&com,"run 1");
-					return ACTION_RUN_1;
-				}
-				else
-				{
-					if(!wall_sensor_wall_right_presence())
-					{
-						HAL_Serial_Print(&com,"turn right");
-						return ACTION_TURN_RIGHT;
-					}
-					else
-					{
-						HAL_Serial_Print(&com,"stop");
-						return ACTION_STOP;
-					}
-				}
-			}
-		}
-	}
-	else
-	{
 		return actions_scenario[ctx.actions_index++];
-	}
+//	}
 }
 #endif
 
@@ -569,7 +581,11 @@ void controller_fsm()
 
 			ctx.sub_action_index = 0;
 
+#ifdef FIXED_MOVES
+			ctx.current_state = get_next_move();
+#else
 			ctx.current_state = update_maze_ctx(&ctx.maze);
+#endif
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -649,7 +665,11 @@ void controller_fsm()
 
 			ctx.sub_action_index = 0;
 
+#ifdef FIXED_MOVES
+			ctx.current_state = get_next_move();
+#else
 			ctx.current_state = update_maze_ctx(&ctx.maze);
+#endif
 			ctx.action_time = HAL_GetTick();
 			ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -710,7 +730,11 @@ void controller_fsm()
 			{
 				ctx.sub_action_index = 0;
 
-				ctx.current_state = update_maze_ctx(&ctx.maze);
+#ifdef FIXED_MOVES
+			ctx.current_state = get_next_move();
+#else
+			ctx.current_state = update_maze_ctx(&ctx.maze);
+#endif
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -777,7 +801,11 @@ void controller_fsm()
 			{
 				ctx.sub_action_index = 0;
 
-				ctx.current_state = update_maze_ctx(&ctx.maze);
+#ifdef FIXED_MOVES
+			ctx.current_state = get_next_move();
+#else
+			ctx.current_state = update_maze_ctx(&ctx.maze);
+#endif
 				ctx.action_time = HAL_GetTick();
 				ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -1065,7 +1093,11 @@ void controller_fsm()
 
 							ctx.sub_action_index = 0;
 
-							ctx.current_state = update_maze_ctx(&ctx.maze);
+#ifdef FIXED_MOVES
+			ctx.current_state = get_next_move();
+#else
+			ctx.current_state = update_maze_ctx(&ctx.maze);
+#endif
 							ctx.action_time = HAL_GetTick();
 							ctx.current_pid_type = PID_TYPE_GYRO;
 
@@ -1105,7 +1137,7 @@ void controller_fsm()
 
 				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
 				{
-					HAL_Serial_Print(&com,"Have to break!!\n");
+					//HAL_Serial_Print(&com,"Have to break!!\n");
 					ctx.sub_action_index++;
 				}
 			}
@@ -1162,6 +1194,11 @@ void controller_fsm()
 				ctx.sub_action_index = 0;
 
 				ctx.current_state = ACTION_IDLE ;
+#ifdef FIXED_MOVES
+			ctx.current_state = get_next_move();
+#else
+			ctx.current_state = ACTION_IDLE ;
+#endif
 				ctx.action_time = HAL_GetTick();
 
 				encoder_reset();
