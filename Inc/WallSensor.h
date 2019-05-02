@@ -28,7 +28,7 @@ void wall_sensor_update();
 
 // accessers
 int32_t wall_sensor_get_raw(uint32_t sensor_id);
-float wall_sensor_get_dist(uint32_t sensor_id);
+float wall_sensor_get_dist(uint32_t sensor_id); // mm
 float wall_sensor_get_side_error(); // wall following in controller
 
 // new API

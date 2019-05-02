@@ -1,7 +1,9 @@
-P1 : Nouvelle API pour les LED
-P1 : U-TURN PID à régler
-P1 : Calibration longitudinale
+P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
+P1 : Calibration longitudinale (quand mur disparait, les posts, faire courbe distance+valeur led diag)
 
+
+
+P2 : Nouvelle API pour les LED / Clean up (maze)
 
 P2 : Calibration gyro dans Flash
 	FIX : ecriture
