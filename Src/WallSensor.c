@@ -1,9 +1,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "WallSensor.h"
-//#include "WallSensorCalibration.h"
+#include "WallSensorCalibration.h"
 #include "timer_us.h"
 #include "main.h"
-#include "controller.h"
 #include <string.h>
 #include <math.h>
 
@@ -41,6 +40,7 @@ static uint16_t const id_to_channel[WALL_SENSOR_COUNT] = {
 typedef struct
 {
 	int32_t raw[WALL_SENSOR_COUNT];
+	float distance[WALL_SENSOR_COUNT];
 
 	int32_t wall_position_min;
 	int32_t wall_position_max;
@@ -48,43 +48,9 @@ typedef struct
 
 static wall_sensor_ctx ctx;
 
-void wall_sensor_init()
-{
-	memset(&ctx,0,sizeof(wall_sensor_ctx));
-	ctx.wall_position_min = WALL_POSITION_MIN_DEFAULT;
-	ctx.wall_position_max = WALL_POSITION_MAX_DEFAULT;
-}
-
-int32_t read_adc(ADC_HandleTypeDef * phadc, uint32_t sensor_id); // forward declaration
+/* APP private functions  ------------------------------------------------------------------*/
 
 extern ADC_HandleTypeDef hadc1;
-
-void wall_sensor_update_one(uint32_t sensor_id)
-{
-	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_SET); // Turn ON IR LED
-	timer_us_delay(100); // Wait for 100us (IR LED warm-up)
-	ctx.raw[sensor_id]= read_adc(&hadc1, sensor_id);
-	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_RESET); // Turn OFF IR LED
-	timer_us_delay(30); // Wait for 50us (IR LED cooling)
-}
-
-void wall_sensor_update()
-{
-	// 1) FL sensor
-	wall_sensor_update_one(WALL_SENSOR_LEFT_STRAIGHT);
-	// 1) FR sensor
-	wall_sensor_update_one(WALL_SENSOR_RIGHT_STRAIGHT);
-	// 1) DL sensor
-	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
-	// 1) DR sensor
-	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
-}
-
-int32_t wall_sensor_get(uint32_t sensor_id)
-{
-	return ctx.raw[sensor_id];
-}
-
 
 int32_t read_adc(ADC_HandleTypeDef * phadc, uint32_t sensor_id)
 {
@@ -101,6 +67,69 @@ int32_t read_adc(ADC_HandleTypeDef * phadc, uint32_t sensor_id)
 		return -1;
     return value;
 }
+
+void wall_sensor_update_one(uint32_t sensor_id)
+{
+	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_SET); // Turn ON IR LED
+	timer_us_delay(100); // Wait for 100us (IR LED warm-up)
+	ctx.raw[sensor_id]= read_adc(&hadc1, sensor_id);
+	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_RESET); // Turn OFF IR LED
+	timer_us_delay(30); // Wait for 50us (IR LED cooling)
+}
+
+/* APP public functions  ------------------------------------------------------------------*/
+
+void wall_sensor_init()
+{
+	memset(&ctx,0,sizeof(wall_sensor_ctx));
+	ctx.wall_position_min = WALL_POSITION_MIN_DEFAULT;
+	ctx.wall_position_max = WALL_POSITION_MAX_DEFAULT;
+}
+
+void wall_sensor_update()
+{
+	// 1) FL sensor
+	wall_sensor_update_one(WALL_SENSOR_LEFT_STRAIGHT);
+	// 1) FR sensor
+	wall_sensor_update_one(WALL_SENSOR_RIGHT_STRAIGHT);
+	// 1) DL sensor
+	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
+	// 1) DR sensor
+	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
+	// convert raw to distance
+	raw_to_distance(ctx.raw,ctx.distance);
+}
+
+int32_t wall_sensor_get_raw(uint32_t sensor_id)
+{
+	return ctx.raw[sensor_id];
+}
+
+
+float wall_sensor_get_dist(uint32_t sensor_id)
+{
+	return ctx.distance[sensor_id];
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+bool wall_sensor_is_left_wall_detected()
+{
+	return ctx.distance[WALL_SENSOR_LEFT_DIAG] < 110; //mm
+}
+
+bool wall_sensor_is_front_wall_detected()
+{
+	return (ctx.distance[WALL_SENSOR_RIGHT_STRAIGHT]+ctx.distance[WALL_SENSOR_LEFT_STRAIGHT]) < 320; //mm
+}
+
+bool wall_sensor_is_right_wall_detected()
+{
+	return ctx.distance[WALL_SENSOR_RIGHT_DIAG] < 110; //mm
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 int32_t wall_sensor_get_side_error(){
 	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
@@ -192,14 +221,8 @@ bool wall_sensor_wall_presence()
 
 bool wall_sensor_left_front_presence()
 {
-	if(controller_get_distance_led(wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT)) < WALL_FRONT_DISTANCE)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT) < WALL_FRONT_DISTANCE;
+
 }
 
 void wall_sensor_set_wall_position_min(int32_t pos_min){

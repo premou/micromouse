@@ -99,16 +99,6 @@ extern HAL_Serial_Handler com;
 #define W_WALL_FRONT_KI 0.0005
 #define W_WALL_FRONT_KD 0.0
 
-
-// led
-#define MEDIAN_SIZE 3
-#define CALIBRATION_SIZE 200 // ((size_t)(-DIST_CALIBRATION*1000))
-#define A_LEFT_STRAIGHT_SLOPE_DEFAULT 2584
-#define B_LEFT_STRAIGHT_SLOPE_DEFAULT 293
-
-#define A_RIGHT_STRAIGHT_SLOPE_DEFAULT 3471
-#define B_RIGHT_STRAIGHT_SLOPE_DEFAULT 402
-
 // ENUM
 typedef enum {
 	PID_TYPE_GYRO,
@@ -168,13 +158,6 @@ typedef struct  {
 	float w_wall_front_pwm;
 	pid_context_t w_wall_front_pid;
 
-	//led IR
-	float a_left_straight_slope;
-	float a_right_straight_slope;
-
-	float b_left_straight_slope;
-	float b_right_straight_slope;
-
 	maze_ctx_t maze;
 } controller_t;
 
@@ -209,80 +192,6 @@ static void led_turn_off(){
 static void led_toggle(){
 	HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
 	HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
-}
-
-static void controller_calibrate_one_led(int32_t* calibration_raw_values, float* a_slope, float* b_slope){
-	int compare (const void * a, const void * b)
-	{
-		return ( *(int*)a - *(int*)b );
-	}
-
-	// calibrate 0) median filter
-	int32_t calibration_median[CALIBRATION_SIZE];
-
-	int32_t median_buf[MEDIAN_SIZE];
-	for(uint32_t index=1;index<CALIBRATION_SIZE-1;index++)
-	{
-		for(int32_t index_sort=0;index_sort<MEDIAN_SIZE;index_sort++)
-		{
-			median_buf[index_sort]=calibration_raw_values[index+index_sort-(size_t)floor((float)MEDIAN_SIZE/2.0)];
-		}
-		qsort(median_buf,MEDIAN_SIZE,sizeof(int32_t),compare);
-
-		calibration_median[index]=median_buf[(size_t)ceil((float)MEDIAN_SIZE/2.0)];
-	}
-
-		float calibration_a[CALIBRATION_SIZE];
-		float calibration_b[CALIBRATION_SIZE];
-
-		uint32_t a_count=0;
-		float a_sum=0;
-
-		//ADC=a/ln(dist)
-		for(uint32_t index=0;index<CALIBRATION_SIZE-5;index++){
-
-			float y1 = (float)(index);
-			float y2 = (float)(index+5);
-
-			float x1 = 1.0/log((float)calibration_median[index]);
-			float x2 = 1.0/log((float)calibration_median[index+5]);
-
-			if((x2-x1) != 0)
-			{
-				//significatives values between 30 and 100
-				calibration_a[index] = (y2 - y1)/(x2 - x1);
-				if((index>=30) && (index<=100))
-				{
-					a_sum += calibration_a[index];
-					++a_count;
-
-				}
-			}
-			else
-			{
-				calibration_a[index]=0.0;
-			}
-
-		}
-		*a_slope = a_sum/(float)a_count;
-
-		uint32_t b_count=0;
-		float b_sum=0;
-
-		for(uint32_t index=0;index<CALIBRATION_SIZE-1;index++){
-
-			float y1 = (float)(index);
-			float x1 = 1.0/log((float)calibration_median[index]);
-
-			calibration_b[index] = *a_slope*x1 - y1;
-			if((index>=30) && (index<=100))
-			{
-				b_sum += calibration_b[index];
-				++b_count;
-			}
-
-		}
-		*b_slope = b_sum/(float)b_count;
 }
 
 ///////////////////
@@ -362,12 +271,6 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 			4 	// size in bytes of each field
 
 	);
-
-	ctx.a_left_straight_slope = A_LEFT_STRAIGHT_SLOPE_DEFAULT;
-	ctx.b_left_straight_slope = B_LEFT_STRAIGHT_SLOPE_DEFAULT;
-
-	ctx.a_right_straight_slope = A_RIGHT_STRAIGHT_SLOPE_DEFAULT;
-	ctx.b_right_straight_slope = B_RIGHT_STRAIGHT_SLOPE_DEFAULT;
 
 	maze_ctx_init(&ctx.maze);
 
@@ -1285,137 +1188,6 @@ void controller_fsm()
 
 	}
 }
-
-
-void controller_led_calibrate(){
-	float dist = DIST_CALIBRATION + 1.0;
-
-	// build raw array on-the-move
-	static int32_t calibration_raw_left_straight[CALIBRATION_SIZE];
-	static int32_t calibration_raw_left_diag[CALIBRATION_SIZE];
-	static int32_t calibration_raw_right_straight[CALIBRATION_SIZE];
-	static int32_t calibration_raw_right_diag[CALIBRATION_SIZE];
-
-	encoder_reset();
-
-	while (dist > DIST_CALIBRATION)
-	{
-		// FIX : Period 1200us
-
-		// sensor update
-		encoder_update();
-		gyro_update();
-		wall_sensor_update();
-
-		// forward speed
-		ctx.x_speed_target = X_SPEED_CALIBRATION;
-		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
-		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
-		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
-
-		// rotation speed
-		ctx.w_speed_target = 0;
-		ctx.w_speed_setpoint = 0;
-		ctx.w_speed_current = gyro_get_dps();
-		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
-		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
-
-		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
-
-		dist = encoder_get_absolute();
-
-		size_t position = (size_t)(-dist*1000);
-		if( (position >= 0) && (position < CALIBRATION_SIZE) )
-		{
-			calibration_raw_left_straight[position] = wall_sensor_get(WALL_SENSOR_LEFT_STRAIGHT);
-			calibration_raw_left_diag[position] = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
-			calibration_raw_right_straight[position] = wall_sensor_get(WALL_SENSOR_RIGHT_STRAIGHT);
-			calibration_raw_right_diag[position] = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
-		}
-	}
-	// forward speed
-	ctx.x_speed_target = 0;
-	ctx.x_speed_setpoint = 0;
-	ctx.x_speed_current = 0;
-	ctx.x_speed_error = 0;
-	ctx.x_speed_pwm = 0;
-
-	// rotation speed
-	ctx.w_speed_target = 0;
-	ctx.w_speed_setpoint = 0;
-	ctx.w_speed_current = 0;
-	ctx.w_speed_error = 0;
-	ctx.w_speed_pwm = 0;
-
-	motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-	motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
-
-	++ctx.actions_index;
-	ctx.sub_action_index = 0;
-	ctx.action_time = HAL_GetTick();
-
-	led_toggle();
-
-	// display raw arrays
-	HAL_Serial_Print(&com,".");
-	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-	{
-		HAL_Delay(1);
-		HAL_Serial_Print(&com,"%d, %d, %d, %d, %d\n",
-				i,
-				calibration_raw_left_straight[i],
-				calibration_raw_right_straight[i],
-				calibration_raw_left_diag[i],
-				calibration_raw_right_diag[i]);
-	}
-
-	controller_calibrate_one_led(calibration_raw_left_straight, &ctx.a_left_straight_slope, &ctx.b_left_straight_slope);
-
-	HAL_Serial_Print(&com,"a_left_straight is :%d\n", (int)ctx.a_left_straight_slope);
-	HAL_Serial_Print(&com,"b_left_straight is :%d\n", (int)ctx.b_left_straight_slope);
-
-	controller_calibrate_one_led(calibration_raw_right_straight, &ctx.a_right_straight_slope, &ctx.b_right_straight_slope);
-
-	HAL_Serial_Print(&com,"a_right_straight is :%d\n", (int)ctx.a_right_straight_slope);
-	HAL_Serial_Print(&com,"b_right_straight is :%d\n", (int)ctx.b_right_straight_slope);
-
-//	float distance_error[CALIBRATION_SIZE];
-//	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-//	{
-//		distance_error[i]=(float)i - ctx.a_left_straight_slope/log(calibration_raw_left_straight[i]) + ctx.b_left_straight_slope;
-//	}
-//	HAL_Serial_Print(&com,".");
-//	for(uint32_t i=0;i<CALIBRATION_SIZE;i++)
-//	{
-//		HAL_Delay(1);
-//		HAL_Serial_Print(&com,"%d,%d\n",
-//				i,
-//				(int)distance_error[i]);
-//	}
-
-	int32_t last_left_diag = wall_sensor_get(WALL_SENSOR_LEFT_DIAG);
-	int32_t last_right_diag = wall_sensor_get(WALL_SENSOR_RIGHT_DIAG);
-
-	HAL_Serial_Print(&com,"right_diag is :%d\n", (int)last_right_diag);
-	HAL_Serial_Print(&com,"left_diag is :%d\n", (int)last_left_diag);
-
-	if(last_right_diag > last_left_diag){
-		wall_sensor_set_wall_position_min(last_left_diag);
-		wall_sensor_set_wall_position_max(last_right_diag);
-	}
-	else{
-		wall_sensor_set_wall_position_min(last_right_diag);
-		wall_sensor_set_wall_position_max(last_left_diag);
-	}
-}
-
-//a mettre dans wall sensor
-float controller_get_distance_led(int32_t adc){
-	return ctx.a_left_straight_slope/log(adc) - ctx.b_left_straight_slope;
-}
-
 
 ///// wall calibration helper
 //enum {
