@@ -1208,11 +1208,6 @@ void controller_fsm()
 
 				if(ctx.maze.mode == SOLVE)
 				{
-					ctx.maze.min_dist = 2147483647;
-					find_shortest_path(&ctx.maze,
-							ctx.maze.start_x, ctx.maze.start_y,
-							ctx.maze.end_x, ctx.maze.end_y,
-							0);
 					display_maze_ctx(&ctx.maze);
 				}
 			}
