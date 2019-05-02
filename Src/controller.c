@@ -416,16 +416,16 @@ void controller_update(){
 		HAL_DataLogger_Record(12, 						 // number of fields
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				(int32_t)(ctx.sub_action_index),		 // integer value of each field
-				(int32_t)(ctx.wall_position_target * 1.0),	 // integer value of each field
-				(int32_t)(ctx.wall_position_setpoint * 1.0),// integer value of each field
-				(int32_t)(ctx.wall_position_current* 1.0),	 // integer value of each field
-				(int32_t)(ctx.wall_position_pwm),				 // integer value of each field
-				(int32_t)(ctx.wall_position_error * 10.0),	 // integer value of each field
-				(int32_t)(ctx.w_speed_target),	 // integer value of each field
-				(int32_t)(ctx.w_speed_setpoint),// integer value of each field
-				(int32_t)(ctx.w_speed_current),	 // integer value of each field
-				(int32_t)(ctx.w_speed_pwm),				 // integer value of each field
-				(int32_t)(ctx.w_speed_error)	 // integer value of each field
+				(int32_t)(ctx.x_wall_front_target * 1.0),	 // target speed
+				(int32_t)(ctx.x_wall_front_setpoint * 1.0),// setpoint speed
+				(int32_t)(ctx.x_wall_front_current* 1.0),	 // current speed
+				(int32_t)(ctx.x_wall_front_pwm),				 // pwm
+				(int32_t)(ctx.x_wall_front_error * 10.0),	 //speed error
+				(int32_t)(ctx.w_wall_front_target),	 // integer value of each field
+				(int32_t)(ctx.w_wall_front_setpoint),// integer value of each field
+				(int32_t)(ctx.w_wall_front_current),	 // integer value of each field
+				(int32_t)(ctx.w_wall_front_pwm),				 // integer value of each field
+				(int32_t)(ctx.w_wall_front_error)	 // integer value of each field
 		);
 		/*
 		static uint32_t counter=0;
@@ -458,7 +458,7 @@ bool controller_is_end(){
 action_t actions_scenario[] =
 {
 		ACTION_RUN_1,
-		ACTION_RUN_1,
+		ACTION_U_TURN_RIGHT,
 		ACTION_RUN_1,
 		ACTION_STOP,
 		ACTION_IDLE
@@ -627,7 +627,7 @@ void controller_fsm()
 		{
 			if(wall_sensor_is_left_wall_detected() || wall_sensor_is_right_wall_detected())
 			{
-				HAL_Serial_Print(&com,"|");
+				//HAL_Serial_Print(&com,"|");
 				pid_reset(&ctx.w_speed_pid);
 				ctx.current_pid_type = PID_TYPE_WALL;
 				//HAL_Serial_Print(&com,"wall: PID_TYPE_GYRO->PID_TYPE_WALL, dist:%d\n",(int) (dist*1000.0));

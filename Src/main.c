@@ -209,6 +209,9 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
+		  gyro_auto_calibrate();
+		  HAL_Delay(20);
+
 		  // IR LED/PHOTO calibration setup ONLY
           // comment all theses line of code when running micromouse
 		  if(0)
@@ -228,7 +231,7 @@ int main(void)
 			  }
 
 		  }
-		  if(1)
+		  if(0)
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
@@ -299,9 +302,7 @@ int main(void)
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
 			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
-			  //current_state = UPLOAD;
-			  controller_init();
-			  current_state = WARMUP;
+			  current_state = UPLOAD;
 		  }
 	  }
 	  break;
@@ -366,7 +367,7 @@ int main(void)
 	  {
 		  HAL_Delay(2000); // wait for button release
 
-		  gyro_calibrate();
+		  //gyro_calibrate();
 		  current_state = IDLE;
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off
