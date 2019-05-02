@@ -13,8 +13,11 @@
 //#define WALL_POSITION_MIN 700
 //#define WALL_POSITION_MAX 2000
 #define WALL_FRONT_DISTANCE 160
-#define W_MIDDLE_LEFT 850			//su
-#define W_MIDDLE_RIGHT 850		//su
+//#define W_MIDDLE_LEFT 850			//su
+//#define W_MIDDLE_RIGHT 850		//su
+#define LEFT_WALL_DISTANCE_NO_SIDE_ERROR 87.0			//mm
+#define RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 63.0		//mm
+#define SIDE_OFFSET 0.0		//mm
 
 static uint16_t const id_to_pin[WALL_SENSOR_COUNT] = {
 	IR_LED_DL_Pin, // DL
@@ -128,29 +131,31 @@ bool wall_sensor_is_right_wall_detected()
 	return ctx.distance[WALL_SENSOR_RIGHT_DIAG] < 110; //mm
 }
 
+float wall_sensor_get_side_error(){
 
-///////////////////////////////////////////////////////////////////////////////
-
-int32_t wall_sensor_get_side_error(){
-	wall_sensor_update_one(WALL_SENSOR_LEFT_DIAG);
-	wall_sensor_update_one(WALL_SENSOR_RIGHT_DIAG);
-
-	if(wall_sensor_both_wall_presence())
+	if(wall_sensor_is_left_wall_detected() && wall_sensor_is_right_wall_detected())
 	{
-		return ctx.raw[WALL_SENSOR_LEFT_DIAG] - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
+		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG];
 	}
-	else if(wall_sensor_wall_left_presence())
+	else if(wall_sensor_is_left_wall_detected())
 	{
-		return ctx.raw[WALL_SENSOR_LEFT_DIAG] - W_MIDDLE_RIGHT;
+		return LEFT_WALL_DISTANCE_NO_SIDE_ERROR - ctx.distance[WALL_SENSOR_LEFT_DIAG] ;
 	}
-	else if(wall_sensor_wall_right_presence())
+	else if(wall_sensor_is_right_wall_detected())
 	{
-		return W_MIDDLE_LEFT - ctx.raw[WALL_SENSOR_RIGHT_DIAG];
+		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - RIGHT_WALL_DISTANCE_NO_SIDE_ERROR;
+	}
+	else
+	{
+		return(0.0);
 	}
 
 	// This part of code should be never reached
-	return(0);
+	return(0.0);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 int32_t wall_sensor_get_straight_adc(){
 	return ceil(((float)(ctx.raw[WALL_SENSOR_LEFT_STRAIGHT] + ctx.raw[WALL_SENSOR_RIGHT_STRAIGHT])) / 2.0);

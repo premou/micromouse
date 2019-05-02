@@ -1,5 +1,8 @@
 P1 : Nouvelle API pour les LED
-P1 : Calibration longitudinale
-P1 : Calibration gyro dans Flash
 P1 : U-TURN PID à régler
+P1 : Calibration longitudinale
 
+
+P2 : Calibration gyro dans Flash
+	FIX : ecriture
+	TODO : relecture

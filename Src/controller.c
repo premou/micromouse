@@ -87,9 +87,9 @@ extern HAL_Serial_Handler com;
 #define W_SPEED_KD 0.0
 
 // wall position
-#define WALL_POSITION_KP 0.01
+#define WALL_POSITION_KP 0.3
 #define WALL_POSITION_KI 0.0
-#define WALL_POSITION_KD 0.0
+#define WALL_POSITION_KD 1.0
 
 
 // wall pos calibration
@@ -458,6 +458,8 @@ bool controller_is_end(){
 action_t actions_scenario[] =
 {
 		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
 		ACTION_STOP,
 		ACTION_IDLE
 };
@@ -562,13 +564,6 @@ void controller_fsm()
 		ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 		ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
 
-		// wall position
-		ctx.wall_position_target = WALL_POSITION_OFFSET;
-		ctx.wall_position_setpoint = WALL_POSITION_OFFSET;
-		ctx.wall_position_current = (float) wall_sensor_get_side_error();
-		ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
-		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
-
 		motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 		motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
@@ -587,7 +582,9 @@ void controller_fsm()
 			ctx.current_state = update_maze_ctx(&ctx.maze);
 #endif
 			ctx.action_time = HAL_GetTick();
+
 			ctx.current_pid_type = PID_TYPE_GYRO;
+			pid_reset(&ctx.wall_position_pid);
 
 			led_toggle();
 		}
@@ -625,10 +622,12 @@ void controller_fsm()
 		ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
 
 		float dist = encoder_get_absolute();
+		// wall side following algorithm
 		if(dist < DIST_RUN_1/2.0 )
 		{
-			if(wall_sensor_wall_presence())
+			if(wall_sensor_is_left_wall_detected() || wall_sensor_is_right_wall_detected())
 			{
+				HAL_Serial_Print(&com,"|");
 				pid_reset(&ctx.w_speed_pid);
 				ctx.current_pid_type = PID_TYPE_WALL;
 				//HAL_Serial_Print(&com,"wall: PID_TYPE_GYRO->PID_TYPE_WALL, dist:%d\n",(int) (dist*1000.0));
@@ -671,7 +670,9 @@ void controller_fsm()
 			ctx.current_state = update_maze_ctx(&ctx.maze);
 #endif
 			ctx.action_time = HAL_GetTick();
+
 			ctx.current_pid_type = PID_TYPE_GYRO;
+			pid_reset(&ctx.wall_position_pid);
 
 			led_toggle();
 		}
@@ -736,7 +737,9 @@ void controller_fsm()
 			ctx.current_state = update_maze_ctx(&ctx.maze);
 #endif
 				ctx.action_time = HAL_GetTick();
+
 				ctx.current_pid_type = PID_TYPE_GYRO;
+				pid_reset(&ctx.wall_position_pid);
 
 				encoder_reset();
 
@@ -807,7 +810,9 @@ void controller_fsm()
 			ctx.current_state = update_maze_ctx(&ctx.maze);
 #endif
 				ctx.action_time = HAL_GetTick();
+
 				ctx.current_pid_type = PID_TYPE_GYRO;
+				pid_reset(&ctx.wall_position_pid);
 
 				encoder_reset();
 
@@ -1099,7 +1104,9 @@ void controller_fsm()
 			ctx.current_state = update_maze_ctx(&ctx.maze);
 #endif
 							ctx.action_time = HAL_GetTick();
+
 							ctx.current_pid_type = PID_TYPE_GYRO;
+							pid_reset(&ctx.wall_position_pid);
 
 							led_toggle();
 						}
