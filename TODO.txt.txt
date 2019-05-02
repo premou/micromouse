@@ -1,3 +1,4 @@
+P1 : Coder ACTION_BRAKE pour faire des essais de position.
 P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
 P1 : Calibration longitudinale (quand mur disparait, les posts, faire courbe distance+valeur led diag)
 
