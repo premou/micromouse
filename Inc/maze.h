@@ -164,7 +164,7 @@ void         display_maze_ctx(maze_ctx_t *pCtx);
 void         display_action_list(maze_ctx_t *pCtx);
 
 action_t     get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor);
-void         upadte_connex_case(maze_ctx_t *pCtx);
+void         update_connex_case(maze_ctx_t *pCtx);
 action_t     update_maze_ctx(maze_ctx_t *pCtx);
 int          is_it_the_end(maze_ctx_t *pCtx);
 maze_case_t  get_wall_state(robot_direction_t current_direction);

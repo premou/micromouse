@@ -30,7 +30,7 @@ extern HAL_Serial_Handler com;
 ////////////
 
 // move debug
-#define FIXED_MOVES
+//#define FIXED_MOVES
 
 // period
 #define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
@@ -511,7 +511,7 @@ bool controller_is_end(){
 	return ctx.current_state == ACTION_IDLE;
 }
 
-#if 1
+#if FIXED_MOVES
 
 action_t actions_scenario[] =
 {
@@ -1511,7 +1511,11 @@ void controller_fsm()
 
 				if(HAL_GetTick() > ctx.action_time + 1000)
 				{
+#if FIXED_MOVES
 					ctx.current_state = get_next_move();
+#else
+					ctx.current_state = ACTION_IDLE;
+#endif
 					ctx.sub_action_index = 0;
 					ctx.action_time = HAL_GetTick();
 					ctx.current_pid_type = PID_TYPE_GYRO;
