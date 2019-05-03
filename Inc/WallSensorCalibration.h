@@ -12,7 +12,7 @@
 
 #include <math.h>
 
-#define __BERNARD__
+#define __PREM__
 
 
 #ifdef __BERNARD__
@@ -40,9 +40,36 @@ float theta2[WALL_SENSOR_COUNT] =
 			2049489.3538577068
 	};
 
-#else
+#endif
+
+#ifdef __PREM__
+
+// DL, FL, FR, DR
+float theta0[WALL_SENSOR_COUNT] =
+	{
+			-38.643731068414603,
+			-38.438670090025028,
+			-31.287718504163188,
+			-28.624272892490396
+	};
+float theta1[WALL_SENSOR_COUNT] =
+	{
+			2712.9795780048316,
+			3612.4530285252222,
+			2923.5317374817873,
+			1958.6399829409258
+	};
+float theta2[WALL_SENSOR_COUNT] =
+	{
+			91098.72716377629,
+			95287.209617226617,
+			456097.61435105314,
+			-182198.20692549637
+	};
+
 
 #endif
+
 
 void raw_to_distance(int32_t const * raw, float * distance)
 {
