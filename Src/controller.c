@@ -454,16 +454,32 @@ void controller_update(){
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				//(int32_t)(ctx.sub_action_index),		 // integer value of each field
 				(int32_t)(encoder_get_absolute()*1000.0),		 // integer value of each field
-				(int32_t)(ctx.x_wall_front_target * 1000.0),	 // target speed
-				(int32_t)(ctx.x_wall_front_setpoint * 1000.0),// setpoint speed
-				(int32_t)(ctx.x_wall_front_current* 1000.0),	 // current speed
-				(int32_t)(ctx.x_wall_front_pwm),				 // pwm
-				(int32_t)(ctx.x_wall_front_error * 1000.0),	 //speed error
-				(int32_t)(ctx.w_wall_front_target),	 // integer value of each field
-				(int32_t)(ctx.w_wall_front_setpoint),// integer value of each field
-				(int32_t)(ctx.w_wall_front_current),	 // integer value of each field
-				(int32_t)(ctx.w_wall_front_pwm),				 // integer value of each field
-				(int32_t)(ctx.w_wall_front_error)	 // integer value of each field
+
+				(int32_t)(ctx.x_speed_target * 1000.0),	 // target speed
+				(int32_t)(ctx.x_speed_setpoint * 1000.0),// setpoint speed
+				(int32_t)(ctx.x_speed_current* 1000.0),	 // current speed
+				(int32_t)(ctx.x_speed_pwm),				 // pwm
+				(int32_t)(ctx.x_speed_error * 1000.0),	 //speed error
+
+				(int32_t)(ctx.w_speed_target * 1.0),	 // target speed
+				(int32_t)(ctx.w_speed_setpoint * 1.0),// setpoint speed
+				(int32_t)(ctx.w_speed_current* 1.0),	 // current speed
+				(int32_t)(ctx.w_speed_pwm),				 // pwm
+				(int32_t)(ctx.w_speed_error * 1.0)	 //speed error
+
+
+//				(int32_t)(ctx.x_wall_front_target * 1000.0),	 // target speed
+//				(int32_t)(ctx.x_wall_front_setpoint * 1000.0),// setpoint speed
+//				(int32_t)(ctx.x_wall_front_current* 1000.0),	 // current speed
+//				(int32_t)(ctx.x_wall_front_pwm),				 // pwm
+//				(int32_t)(ctx.x_wall_front_error * 1000.0),	 //speed error
+
+
+//				(int32_t)(ctx.w_wall_front_target),	 // integer value of each field
+//				(int32_t)(ctx.w_wall_front_setpoint),// integer value of each field
+//				(int32_t)(ctx.w_wall_front_current),	 // integer value of each field
+//				(int32_t)(ctx.w_wall_front_pwm),				 // integer value of each field
+//				(int32_t)(ctx.w_wall_front_error)	 // integer value of each field
 		);
 		/*
 		static uint32_t counter=0;
@@ -495,12 +511,60 @@ bool controller_is_end(){
 
 action_t actions_scenario[] =
 {
+//		// TEST DU CARRE 3x3
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT, // 1 tour
+//
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,	 // 2 tours
+//		ACTION_STOP,
+
+// TEST du RECTANGLE 5x3
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+
+		ACTION_STOP,
+
 //		ACTION_RUN_1,
 //		ACTION_RUN_1,
 //		ACTION_RUN_1,
-		ACTION_U_TURN_RIGHT,
-		ACTION_STILL,
-		//ACTION_TURN_RIGHT,
+		//ACTION_U_TURN_RIGHT,
+
+//		ACTION_TURN_RIGHT,
+//		ACTION_STILL,
 		//ACTION_RUN_1,
 //		ACTION_STOP,
 		ACTION_IDLE
