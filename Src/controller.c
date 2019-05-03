@@ -19,6 +19,8 @@
 #include "maze.h"
 
 #include <math.h>
+#include <time.h>
+#include <stdlib.h>
 
 // globals
 extern HAL_Serial_Handler com;
@@ -212,6 +214,8 @@ static void led_toggle(){
 
 uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 {
+	srand(gyro_get_dps());
+
 	// reset controller fsm
 	ctx.time_us = 0;
 	ctx.current_state = ACTION_START;
@@ -511,6 +515,54 @@ bool controller_is_end(){
 
 action_t actions_scenario[] =
 {
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_RAND,
+		ACTION_STOP,
+
 //		// TEST DU CARRE 3x3
 //		ACTION_TURN_RIGHT,
 //		ACTION_RUN_1,
@@ -531,32 +583,32 @@ action_t actions_scenario[] =
 //		ACTION_STOP,
 
 // TEST du RECTANGLE 5x3
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-		ACTION_RUN_1,
-		ACTION_TURN_RIGHT,
-
-		ACTION_STOP,
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//		ACTION_RUN_1,
+//		ACTION_TURN_RIGHT,
+//
+//		ACTION_STOP,
 
 //		ACTION_RUN_1,
 //		ACTION_RUN_1,
@@ -573,8 +625,94 @@ action_t actions_scenario[] =
 
 action_t get_next_move()
 {
-	HAL_Serial_Print(&com,"\nget_next_move() returns %d\n", actions_scenario[ctx.actions_index]);
-	return actions_scenario[ctx.actions_index++];
+
+	action_t next = actions_scenario[ctx.actions_index++];
+
+	//HAL_Serial_Print(&com,"\nget_next_move() returns %d\n", actions_scenario[ctx.actions_index]);
+	if(next==ACTION_RAND)
+	{
+		float r = (float)(rand())/(float)RAND_MAX;
+
+		if(!wall_sensor_is_front_wall_detected() &&
+			!wall_sensor_is_left_wall_detected() &&
+			 !wall_sensor_is_right_wall_detected() )
+		{
+			if(r<0.25)
+			{
+				next = ACTION_TURN_LEFT;
+			}
+			else if(r<0.75)
+			{
+				next = ACTION_RUN_1;
+			}
+			else
+			{
+				next = ACTION_TURN_RIGHT;
+			}
+		}
+		else if(wall_sensor_is_front_wall_detected() &&
+				!wall_sensor_is_left_wall_detected() &&
+				!wall_sensor_is_right_wall_detected() )
+		{
+			if(r<0.5)
+			{
+				next = ACTION_TURN_LEFT;
+			}
+			else
+			{
+				next = ACTION_TURN_RIGHT;
+			}
+		}
+		else if(!wall_sensor_is_front_wall_detected() &&
+				wall_sensor_is_left_wall_detected() &&
+				!wall_sensor_is_right_wall_detected() )
+		{
+			if(r<0.6)
+			{
+				next = ACTION_RUN_1;
+			}
+			else
+			{
+				next = ACTION_TURN_RIGHT;
+			}
+		}
+		else if(!wall_sensor_is_front_wall_detected() &&
+				!wall_sensor_is_left_wall_detected() &&
+				wall_sensor_is_right_wall_detected() )
+		{
+			if(r<0.6)
+			{
+				next = ACTION_RUN_1;
+			}
+			else
+			{
+				next = ACTION_TURN_LEFT;
+			}
+		}
+		else if(!wall_sensor_is_front_wall_detected() &&
+				wall_sensor_is_left_wall_detected() &&
+				wall_sensor_is_right_wall_detected() )
+		{
+			next = ACTION_RUN_1;
+		}
+		else if(wall_sensor_is_front_wall_detected() &&
+				!wall_sensor_is_left_wall_detected() &&
+				wall_sensor_is_right_wall_detected() )
+		{
+			next = ACTION_TURN_LEFT;
+		}
+		else if(wall_sensor_is_front_wall_detected() &&
+				wall_sensor_is_left_wall_detected() &&
+				!wall_sensor_is_right_wall_detected() )
+		{
+			next = ACTION_TURN_RIGHT;
+		}
+		else
+		{
+			next = ACTION_IDLE;
+		}
+	}
+	return next;
 }
 #endif
 
@@ -587,6 +725,7 @@ void controller_fsm()
 	switch(ctx.current_state)
 	{
 	case ACTION_IDLE :
+	case ACTION_RAND :
 	{
 		HAL_Serial_Print(&com,"CONTROLLER ACTION_IDLE\n");
 		// forward speed

@@ -23,6 +23,7 @@ typedef enum {
 	ACTION_U_TURN_RIGHT,
 	ACTION_STOP,
 	ACTION_STILL,
+	ACTION_RAND,
 	ACTION_CTR
 } action_t;
 
