@@ -1,7 +1,10 @@
 P1 : Tester action STILL
-P1 : Calibrer distance parcourue et ajuster diamètre des roues.
-
+P1 : Calibrer distance parcourue et ajuster diamètre des roues (encoder.h)
+P1 : Tester calibration longitudinale avec mur ou post, mur et post
 P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
 
-P1 : Calibration longitudinale (quand mur disparait, les posts, faire courbe distance+valeur led diag)
+P2 : Recoder L curve et calibration front wall position (voir article PDF)
+
+P3 : Clean Up configuration (inutile)
+
 

@@ -27,11 +27,11 @@ void wall_sensor_init();
 void wall_sensor_update();
 
 // accessers
-int32_t wall_sensor_get_raw(uint32_t sensor_id);
-float wall_sensor_get_dist(uint32_t sensor_id); // mm
-float wall_sensor_get_side_error(); // wall following in controller
+int32_t wall_sensor_get_raw(uint32_t sensor_id); // 12-bit value reflectance
+float wall_sensor_get_dist(uint32_t sensor_id); // mm distance to wall based on reflectance (e.g. wall incidence not corrected)
+float wall_sensor_get_side_error(); // used for wall following position PID in controller.c
 
-// new API
+// walls detection
 bool wall_sensor_is_left_wall_detected();
 bool wall_sensor_is_front_wall_detected();
 bool wall_sensor_is_right_wall_detected();
