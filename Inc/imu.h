@@ -25,9 +25,12 @@ uint32_t gyro_init(); 	// initialise and configure gyro through I2C, return GYRO
 void gyro_update(); 	// retreive gyro measures thourgh I2C and do some calculation
 float gyro_get_dps(); 	// get the current rotation speed in degrees per second, ccw : positive dps, cw : negative dps
 
-void reset_bias(); 	// reset bias
-void set_bias(float bias_dps); 	// set bias
-void gyro_calibrate();
+//void reset_bias(); 	// reset bias
+//void set_bias(float bias_dps); 	// set bias
+//void gyro_calibrate();
+
+//void gyro_flash_factory_setup();
+void gyro_auto_calibrate();
 
 #ifdef __cplusplus
 }

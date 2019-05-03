@@ -45,7 +45,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "serial.h"
-#include "tone.h"
 #include "controller.h"
 #include "datalogger.h"
 #include "battery.h"
@@ -55,6 +54,9 @@
 #include "configuration.h"
 #include "robot_math.h"
 #include "WallSensor.h"
+#include "imu.h"
+#include "motor.h"
+#include "encoder.h"
 
 /* USER CODE END Includes */
 
@@ -175,6 +177,7 @@ int main(void)
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // LED LEFT OFF
 
 	HAL_Battery_Init();
+
 	HAL_Serial_Init(&huart1, &com);
 	HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
@@ -183,9 +186,6 @@ int main(void)
 	configuration_load();
 	timer_us_init();
 	uint32_t controller_init_result = controller_init();
-
-	// play startup song
-	play_startup_song(&htim9, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -206,12 +206,32 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
+			motor_speed_left(0);
+			motor_speed_right(0);
+
+		  gyro_auto_calibrate();
+		  HAL_Delay(20);
+
 		  // IR LED/PHOTO calibration setup ONLY
           // comment all theses line of code when running micromouse
 		  if(0)
 		  {
 			  static uint32_t time = 0;
-			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
+			  if( HAL_GetTick() >= time + 500) // every 0.1 sec
+			  {
+					encoder_update();
+				  time = HAL_GetTick(); // update time
+				  HAL_Serial_Print(&com,"%d\r\n",
+						  (int32_t)(encoder_get_absolute()*1000.0)
+						  );
+				  HAL_Delay(10);
+			  }
+
+		  }
+		  if(0)
+		  {
+			  static uint32_t time = 0;
+			  if( HAL_GetTick() >= time + 200)
 			  {
 				  time = HAL_GetTick(); // update time
 				  wall_sensor_update();
@@ -225,7 +245,7 @@ int main(void)
 			  }
 
 		  }
-		  if(1)
+		  if(0)
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
@@ -296,15 +316,16 @@ int main(void)
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
 			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
-			  //current_state = UPLOAD;
-			  controller_init();
-			  current_state = WARMUP;
+			  current_state = UPLOAD;
 		  }
 	  }
 	  break;
 
 	  case WARMUP :
 	  {
+			motor_speed_left(0);
+			motor_speed_right(0);
+
 		  // wait for 1.4s before running
 		  if (tim_start + 1400 < HAL_GetTick() ){
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
@@ -323,6 +344,8 @@ int main(void)
 		  controller_update();
 
 		  if(controller_is_end()){
+				motor_speed_left(0);
+				motor_speed_right(0);
 			  current_state = FINISH;
 			  HAL_Serial_Print(&com,"RUNNING->FINISH\r\n");
 		  }
@@ -338,8 +361,8 @@ int main(void)
 
 	  case FINISH :
 	  {
-
-		  play_finishing_song(&htim9, TIM_CHANNEL_1);
+			motor_speed_left(0);
+			motor_speed_right(0);
 
 		  HAL_Delay(1000);
 
@@ -350,6 +373,9 @@ int main(void)
 
 	  case UPLOAD :
 	  {
+			motor_speed_left(0);
+			motor_speed_right(0);
+
 		  HAL_DataLogger_Send();
 
 		  current_state = IDLE;
@@ -363,10 +389,12 @@ int main(void)
 
 	  case CALIBRATION :
 	  {
+			motor_speed_left(0);
+			motor_speed_right(0);
+
 		  HAL_Delay(2000); // wait for button release
 
-		  gyro_calibrate();
-//		  controller_led_calibrate();
+		  //gyro_calibrate();
 		  current_state = IDLE;
 
 		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite Off

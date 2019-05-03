@@ -10,6 +10,9 @@
 #include "imu.h"
 #include "robot_math.h"
 
+#include <string.h>
+#include <math.h>
+
 // DS : https://www.st.com/resource/en/datasheet/lsm6ds33.pdf
 // AN : https://www.pololu.com/file/0J1088/LSM6DS33-AN4682.pdf
 
@@ -107,6 +110,33 @@ void gyro_write_8bit_register(
 }
 
 // public functions ///////////////////////////////////////////////////////////
+//
+//void gyro_flash_factory_setup()
+//{
+//	HAL_FLASH_Unlock();
+//
+//	FLASH_EraseInitTypeDef EraseInit =
+//			{
+//					.TypeErase = FLASH_TYPEERASE_SECTORS, // efface secteur seulement
+//					.Sector = 11U, //FLASH_SECTOR_11, // dernier secteur 7 ->11
+//					.NbSectors = 1, // un seul secteur effacé
+//					.VoltageRange = FLASH_VOLTAGE_RANGE_3
+//			};
+//	uint32_t SectorError = 0;
+//	uint32_t address = 0x081C0000; //0x080C0000;
+//	uint64_t data = 0;
+//	ctx.bias = FACTORY_GYRO_BIAS;
+//	memcpy(&data,&ctx.bias,sizeof(float));
+//	HAL_StatusTypeDef status = 0;
+//
+//
+//	status = HAL_FLASHEx_Erase(&EraseInit, &SectorError);
+//	HAL_Serial_Print(&com,"\nHAL_FLASHEx_Erase() status=%d sector_serror=%d\n",(int32_t)status,(int32_t)SectorError);
+//	status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, data);
+//	HAL_Serial_Print(&com,"\nHAL_FLASH_Program() status=%d\n",(int32_t)status);
+//
+//	HAL_FLASH_Lock();
+//}
 
 uint32_t gyro_init()
 {
@@ -163,37 +193,61 @@ float gyro_get_dps()
 
 // calibration functions
 
-void reset_bias() 	// reset bias
+//void reset_bias() 	// reset bias
+//{
+//	ctx.bias = 0.0;
+//}
+//
+//void set_bias(float bias_dps) 	// set bias
+//{
+//	ctx.bias = bias_dps;
+//}
+
+//void gyro_calibrate(){
+//	// 1) reset gyro bias
+//	reset_bias();
+//
+//	// 2) init mean
+//	filter_ctx_t filter;
+//	filter_init(&filter,0.002);
+//
+//	// 3) read gyro for 10 seconds
+//	for(uint32_t it=0; it<10000; ++it)
+//	{
+//		HAL_Delay(1); // wait for 1ms between each acquisition
+//		gyro_update(); // read gyro
+//		filter_output(&filter, gyro_get_dps()); // update mean
+//		if(it%1000==0)
+//		{
+//			HAL_Serial_Print(&com,"%d mdps\r bias:%d\n",(int32_t)(gyro_get_dps()*1000.0), (int32_t)(filter.mean*1000.0));
+//		}
+//	}
+//	// 4) store mean as bias
+//	set_bias(filter.mean); 	// set bias
+//
+//	HAL_Serial_Print(&com,"bias: %d mdps\r\n",(int32_t)(filter.mean*1000.0));
+//}
+
+float mean = 0.0;
+float variance = 0.0;
+float alpha_mean_update = 0.01;
+float alpha_variance_update = 0.05;
+float alpha_bias_update = 0.01;
+
+void gyro_auto_calibrate()
 {
-	ctx.bias = 0.0;
-}
-
-void set_bias(float bias_dps) 	// set bias
-{
-	ctx.bias = bias_dps;
-}
-
-void gyro_calibrate(){
-	// 1) reset gyro bias
-	reset_bias();
-
-	// 2) init mean
-	filter_ctx_t filter;
-	filter_init(&filter,0.002);
-
-	// 3) read gyro for 10 seconds
-	for(uint32_t it=0; it<10000; ++it)
-	{
-		HAL_Delay(1); // wait for 1ms between each acquisition
-		gyro_update(); // read gyro
-		filter_output(&filter, gyro_get_dps()); // update mean
-		if(it%1000==0)
-		{
-			HAL_Serial_Print(&com,"%d mdps\r bias:%d\n",(int32_t)(gyro_get_dps()*1000.0), (int32_t)(filter.mean*1000.0));
-		}
-	}
-	// 4) store mean as bias
-	set_bias(filter.mean); 	// set bias
-
-	HAL_Serial_Print(&com,"bias: %d mdps\r\n",(int32_t)(filter.mean*1000.0));
+	gyro_update();
+	// update mean and variance
+	mean = alpha_mean_update * gyro_get_dps() + (1.0-alpha_mean_update) * mean;
+	variance = alpha_variance_update * pow( gyro_get_dps()-mean,2)  + (1.0-alpha_variance_update) * variance;
+	// if mean stable, update bias
+	if(variance<0.04)
+		ctx.bias = alpha_bias_update*mean + (1.0-alpha_bias_update)* ctx.bias;
+//
+//	HAL_Serial_Print(&com,"dps=%d m=%d v=%d b=%d\r\n",
+//			(int32_t)(gyro_get_dps()*1000.0),
+//			(int32_t)(mean*1000.0),
+//			(int32_t)(variance*1000.0),
+//			(int32_t)(ctx.bias*1000.0)
+//							  );
 }

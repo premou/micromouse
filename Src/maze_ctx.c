@@ -609,7 +609,7 @@ maze_case_t get_wall_state(robot_direction_t current_direction)
 
 	walls = 0;
 
-	if(wall_sensor_wall_left_presence())
+	if(wall_sensor_is_left_wall_detected())
 	{
 		switch(current_direction)
 		{
@@ -628,7 +628,7 @@ maze_case_t get_wall_state(robot_direction_t current_direction)
 		}
 	}
 
-	if(wall_sensor_wall_right_presence())
+	if(wall_sensor_is_right_wall_detected())
 	{
 		switch(current_direction)
 		{
@@ -647,7 +647,7 @@ maze_case_t get_wall_state(robot_direction_t current_direction)
 		}
 	}
 
-	if(wall_sensor_left_front_presence())
+	if(wall_sensor_is_front_wall_detected())
 	{
 		switch(current_direction)
 		{

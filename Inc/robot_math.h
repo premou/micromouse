@@ -19,7 +19,7 @@ bool have_to_break(float speed_target, float speed_current, float distance_remai
 typedef struct {
 	float mean;
 	float alpha;
-}filter_ctx_t;
+} filter_ctx_t;
 
 void filter_init(filter_ctx_t *ctx, float alpha);
 
