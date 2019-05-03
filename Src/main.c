@@ -177,6 +177,7 @@ int main(void)
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // LED LEFT OFF
 
 	HAL_Battery_Init();
+
 	HAL_Serial_Init(&huart1, &com);
 	HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
@@ -185,12 +186,6 @@ int main(void)
 	configuration_load();
 	timer_us_init();
 	uint32_t controller_init_result = controller_init();
-
-	// uncomment the first time to initialize flash
-	//gyro_flash_factory_setup();
-
-	// play startup song
-	//play_startup_song(&htim9, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -236,7 +231,7 @@ int main(void)
 		  if(0)
 		  {
 			  static uint32_t time = 0;
-			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
+			  if( HAL_GetTick() >= time + 200)
 			  {
 				  time = HAL_GetTick(); // update time
 				  wall_sensor_update();

@@ -22,6 +22,8 @@ typedef enum {
 	ACTION_TURN_LEFT,
 	ACTION_U_TURN_RIGHT,
 	ACTION_STOP,
+	ACTION_STILL,
+	ACTION_RAND,
 	ACTION_CTR
 } action_t;
 
@@ -34,7 +36,5 @@ void controller_start();
 void controller_update();
 bool controller_is_end();
 void controller_stop();
-void controller_led_calibrate();
-float controller_get_distance_led(int32_t adc);
 
 #endif /* CONTROLLER_H_ */
