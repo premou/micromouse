@@ -117,12 +117,13 @@ def main():
   sampleCtx     = {}
   sampleCtx[0]  = { "title": "time",            "unit": "[ms]",    "color": "w",    "enable": 0, "factor": 1}  
   sampleCtx[1]  = { "title": "action number",   "unit": "",        "color": "--k",  "enable": 1, "factor": 10}
-  sampleCtx[2]  = { "title": "phase",           "unit": "",        "color": "m",    "enable": 1, "factor": 100}
+  sampleCtx[2]  = { "title": "dist",            "unit": "[mm]",    "color": "m",    "enable": 1, "factor": 100}
   sampleCtx[3]  = { "title": "target speed",    "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
   sampleCtx[4]  = { "title": "set point speed", "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
   sampleCtx[5]  = { "title": "real speed",      "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}
   sampleCtx[6]  = { "title": "pwm speed",       "unit": "",        "color": ":c",   "enable": 1, "factor": 1}
   sampleCtx[7]  = { "title": "speed error",     "unit": "[mm/ms]", "color": ":y",   "enable": 1, "factor": 1}
+
   sampleCtx[8]  = { "title": "target giro",     "unit": "[mm/ms]", "color": "-b",   "enable": 1, "factor": 1}
   sampleCtx[9]  = { "title": "set point giro",  "unit": "[mm/ms]", "color": "--r",  "enable": 1, "factor": 1}
   sampleCtx[10] = { "title": "real giro",       "unit": "[mm/ms]", "color": ":g",   "enable": 1, "factor": 1}

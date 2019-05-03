@@ -1056,7 +1056,8 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
                         next_action = ACTION_RUN_1;
                         break;
                     case DIR_S:
-                    	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+                        next_dir = DIR_S;
+                        next_action = ACTION_U_TURN_RIGHT;
                         break;
                     case DIR_E:
                         next_dir = DIR_E;
@@ -1073,7 +1074,8 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
                     switch(next_next_dir)
                 {
                     case DIR_N:
-                    	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+                        next_dir = DIR_N;
+                        next_action = ACTION_U_TURN_RIGHT;
                         break;
                     case DIR_S:
                         next_dir = dir;
@@ -1106,7 +1108,8 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
                         next_action = ACTION_RUN_1;
                         break;
                     case DIR_W:
-                    	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+                        next_dir = DIR_W;
+                        next_action = ACTION_U_TURN_RIGHT;
                         break;
                 }
                     break;
@@ -1123,7 +1126,8 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
                         next_action = ACTION_TURN_LEFT;
                         break;
                     case DIR_E:
-                    	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+                        next_dir = DIR_E;
+                        next_action = ACTION_U_TURN_RIGHT;
                         break;
                     case DIR_W:
                         next_dir = dir;
