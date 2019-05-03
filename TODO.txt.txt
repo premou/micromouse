@@ -1,17 +1,19 @@
 P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
-P1 : Recoder L curve et calibration front wall position (voir article PDF)
+P1 : Faire un fichier dédié pour toute la configuration du robot avec les directives de précompilation par robot
 
 P2 : Augmenter légèrement la longueur d'application du PID position wall following (couper le PID juste avant la fin des éventuels murs)
-P2 : Calibrer distance parcourue et ajuster diamètre des roues (encoder.h)
 
 P3 : Clean Up configuration (inutile)
 P3 : Monitor Heading and Distance
 
 
 DONE
+Calibrer distance parcourue et ajuster diamètre des roues (encoder.h)
 Tester action STILL
 Tester calibration longitudinale avec mur ou post, mur et post
 Tester speed fast run avec fixed moves
 Coder RAND MOVES with fence detection
 TEST DU CARRE 3x3 (dérive gyro/ erreur distance/rotation PID)
 STRESS TEST 5x5 avec seulement des POSTS et une bordure (RAND MOVE)
+Recoder L curve et calibration front wall position (voir article PDF)
+
