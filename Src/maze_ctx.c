@@ -1,23 +1,17 @@
 #include "stdio.h"
-#include "assert.h"
-
-// For unitary test purpose
-//#define _MAZE_STANDALONE
-
-// Maze header
 #include "controller.h"
 #include "serial.h"
 #include "WallSensor.h"
 #include "maze.h"
 
-// globals
+// Extern
 extern HAL_Serial_Handler com;
 
 // Const
 ////////
 const algo_update_t algo_update_maze_ctx_RUN_1[4] =
 {
-    // new x, new y,  new dir
+    // new x, new y,  new direction
     {      0,     1,  DIR_N}, // DIR_N
     {      0,    -1,  DIR_S}, // DIR_S
     {      1,     0,  DIR_E}, // DIR_E
@@ -26,7 +20,7 @@ const algo_update_t algo_update_maze_ctx_RUN_1[4] =
 
 const algo_update_t algo_update_maze_ctx_TURN_RIGHT[4] =
 {
-    // new x, new y,  new dir
+    // new x, new y,  new direction
     {     0,     1,   DIR_E}, // DIR_N
     {     0,    -1,   DIR_W}, // DIR_S
     {     1,     0,   DIR_S}, // DIR_E
@@ -35,7 +29,7 @@ const algo_update_t algo_update_maze_ctx_TURN_RIGHT[4] =
 
 const algo_update_t algo_update_maze_ctx_TURN_LEFT[4] =
 {
-    // new x, new y,  new dir
+    // new x, new y,  new direction
     {      0,     1,  DIR_W}, // DIR_N
     {      0,    -1,  DIR_E}, // DIR_S
     {      1,     0,  DIR_N}, // DIR_E
@@ -44,14 +38,14 @@ const algo_update_t algo_update_maze_ctx_TURN_LEFT[4] =
 
 const algo_update_t algo_update_maze_ctx_U_TURN_RIGHT[4] =
 {
-    // new x, new y,  new dir
+    // new x, new y,  new direction
     {      0,     1,  DIR_S}, // DIR_N
     {      0,    -1,  DIR_N}, // DIR_S
     {      1,     0,  DIR_W}, // DIR_E
     {     -1,     0,  DIR_E}  // DIR_W
 } ;
 
-// Left hand algo
+// Left hand algorithm
 const algo_next_action_ctx_t algo_next_action_left_hand[4] =
 {
     // DIR_N
@@ -87,7 +81,7 @@ const algo_next_action_ctx_t algo_next_action_left_hand[4] =
     }
 };
 
-// Right hand algo
+// Right hand algorithm
 const algo_next_action_ctx_t algo_next_action_right_hand[4] =
 {
     // DIR_N
@@ -169,14 +163,65 @@ const char *direction_txt[4] =
 		"W"
 };
 
-
 // DISPLAY
 //////////
 
+// ugly patch for debug purpose
+static int one_display_only = 0;
+
+// Display the maze context
+void display_maze_ctx(maze_ctx_t *pCtx)
+{
+	int xx, yy;
+
+	if(one_display_only != 0)
+		return;
+
+	one_display_only = 1;
+
+	for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
+	{
+		HAL_Serial_Print(&com,"\t");
+		HAL_Delay(10);
+		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
+		{
+			// case state
+			HAL_Serial_Print(&com,"%s ", wall_state_txt[GET_WALL_STATE(pCtx->maze_array[xx][yy])] ) ;
+			HAL_Delay(10);
+		}
+		HAL_Serial_Print(&com,"\t");
+		HAL_Delay(10);
+		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
+		{
+			// case state
+			HAL_Serial_Print(&com,"%d ",pCtx->shortest_array[xx][yy]) ;
+			HAL_Delay(10);
+		}
+		HAL_Serial_Print(&com,"\n");
+		HAL_Delay(10);
+	}
+	HAL_Serial_Print(&com,"\n");
+	HAL_Delay(10);
+
+	display_action_list(pCtx);
+
+	HAL_Serial_Print(&com, "Number of intersection:%d ", pCtx->nb_inter);
+	HAL_Delay(10);
+	for(yy=0;yy<MAX_INTER;yy++)
+	{
+		if(pCtx->inter_array[yy].enable != 0)
+		{
+			HAL_Serial_Print(&com, "[%d](%d,%d) ", yy, pCtx->inter_array[yy].x, pCtx->inter_array[yy].y);
+			HAL_Delay(10);
+		}
+	}
+	HAL_Serial_Print(&com, "\n");
+	HAL_Delay(10);
+
+}// end of display_maze_ctx
+
 void display_action_list(maze_ctx_t *pCtx)
 {
-    int x;
-
     // Action list
     HAL_Serial_Print(&com, "[nb_action:%d from(%d,%d) d:%s to(%d,%d) d:%s]\n",
            pCtx->nb_action,
@@ -185,7 +230,8 @@ void display_action_list(maze_ctx_t *pCtx)
            (char*)direction_txt[pCtx->action_array[pCtx->nb_action - 1].dir]);
     HAL_Delay(10);
 
-    for(x=0; x < pCtx->nb_action ; x++)
+#if defined(VERBOSE)
+    for(int x=0; x < pCtx->nb_action ; x++)
     {
     	HAL_Serial_Print(&com, "#>\ta[%d]=%s (%d,%d) %s\n",
                x,
@@ -197,18 +243,20 @@ void display_action_list(maze_ctx_t *pCtx)
     }
     HAL_Serial_Print(&com, "\n");
     HAL_Delay(10);
+#endif
 }// end of display_action_array
 
 
 // INIT and START
 /////////////////
 
+// Clean the action list
 void init_action_array(maze_ctx_t *pCtx)
 {
 	int x;
 
 	// Action list
-	pCtx->nb_action = 0;
+	pCtx->nb_action            =  0;
 	pCtx->current_action_index = -1;
 	for(x=0; x<MAX_ACTION; x++)
 	{
@@ -219,11 +267,12 @@ void init_action_array(maze_ctx_t *pCtx)
 	}
 }// end of init_action_array
 
+// Clean the intersection list
 void init_inter_array(maze_ctx_t *pCtx)
 {
 	int x;
 
-	// Inter list
+	// Intersection list
 	pCtx->nb_inter = 0;
 	for(x=0; x<MAX_INTER; x++)
 	{
@@ -241,29 +290,34 @@ void init_shortest_array(maze_ctx_t *pCtx)
         for(y=0; y<MAX_MAZE_DEPTH; y++)
         {
             pCtx->solve_array[x][y]    = CASE_UNKNOWN;
-            pCtx->shortest_array[x][y] = 0;
+            pCtx->shortest_array[x][y] = CASE_UNKNOWN;
         }
     }
+
+    // Init the min distance and copy flag
+    pCtx->min_dist  = MAX_INT;
+    pCtx->copy_flag = 0;
 }
 
 // Fill the array maze with case unknown pattern
 void maze_ctx_init(maze_ctx_t *pCtx)
 {
 	uint32_t x, y;
+
 	for(x=0; x<MAX_MAZE_DEPTH; x++)
 	{
 		for(y=0; y<MAX_MAZE_DEPTH; y++)
 		{
 			pCtx->maze_array[x][y]     = CASE_UNKNOWN;
 			pCtx->solve_array[x][y]    = CASE_UNKNOWN;
-			pCtx->shortest_array[x][y] = 0;
+			pCtx->shortest_array[x][y] = CASE_UNKNOWN;
 		}
 	}
 
-	// Init action list
+	// Initialization action list
 	init_action_array(pCtx);
 
-	// Init intersection list
+	// Initialization intersection list
 	init_inter_array(pCtx);
 
 	// Start in LEARN mode
@@ -287,10 +341,10 @@ void maze_ctx_init(maze_ctx_t *pCtx)
 			CASE_WALL_E  |
 			CASE_WALL_S  ;
 
-	// Default algo is left hand
+	// Default algorithm is left hand
 	pCtx->algo = LEFT_HAND;
 
-	update_connex_case(pCtx);
+	update_related_case(pCtx);
 
 }// end of maze_ctx_init
 
@@ -309,6 +363,7 @@ void maze_ctx_start(maze_ctx_t *pCtx)
 // MISCELLANEOUS
 ////////////////
 
+// Speed up function, return the next/next action
 action_t get_next_next_action(maze_ctx_t *pCtx)
 {
 	if(pCtx->mode == LEARN)
@@ -353,7 +408,7 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
         pAlgo = (algo_next_action_ctx_t *) algo_next_action_right_hand ;
     }
 
-    // Init
+    // Initialization
     dir         = pCtx->current_direction ;
     x           = pCtx->current_x ;
     y           = pCtx->current_y ;
@@ -394,20 +449,24 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
             {
                 if(pCtx->inter_array[xx].enable)
                 {
-                    pCtx->min_dist = MAX_INT;
+                	// Clean the place (solve and shortest arrays + min_dist and copy_flag)
                     init_shortest_array(pCtx);
+
+                    // Compute the shortest path to the current intersection
                     find_shortest_path(pCtx,
                                        pCtx->current_x, pCtx->current_y,
                                        pCtx->inter_array[xx].x, pCtx->inter_array[xx].y,
-                                       0,
-                                       0); // do not build solve array
+                                       0);
                     if(pCtx->min_dist < min_dist)
                     {
+                    	// Keep in mind the shortest distance i.e. nearest intersection
                         min_dist       = pCtx->min_dist ;
                         min_dist_index = xx ;
                     }
                 }
             }
+
+            // Now build the action list to the nearest intersection
             build_action_list(pCtx,
                               pCtx->current_direction,
                               pCtx->current_x,
@@ -419,6 +478,8 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
             		pCtx->current_x, pCtx->current_y,
 					pCtx->inter_array[min_dist_index].x, pCtx->inter_array[min_dist_index].y);
 
+            // Return IDLE in order to switch from LEARN/discover the maze to LEARN/apply action to
+            // go to the nearest intersection
             return(ACTION_IDLE);
         }
         else
@@ -432,8 +493,8 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
     return(next_action);
 }// end of get_next_action
 
-// Update connxex case
-void update_connex_case(maze_ctx_t *pCtx)
+// Update related case
+void update_related_case(maze_ctx_t *pCtx)
 {
 	maze_case_t current_case;
 
@@ -448,7 +509,7 @@ void update_connex_case(maze_ctx_t *pCtx)
 		}
 	}
 
-	// Upadte N case
+	// Update N case
 	if((pCtx->current_y + 1) < MAX_MAZE_DEPTH)
 	{
 		if( IS_SET(current_case, CASE_WALL_N, MAZE_CASE_STATE_MASK) )
@@ -466,7 +527,7 @@ void update_connex_case(maze_ctx_t *pCtx)
 		}
 	}
 
-	// Upadte E case
+	// Update E case
 	if((pCtx->current_x + 1) < MAX_MAZE_DEPTH)
 	{
 		if(IS_SET(current_case, CASE_WALL_E, MAZE_CASE_STATE_MASK))
@@ -474,7 +535,7 @@ void update_connex_case(maze_ctx_t *pCtx)
 			pCtx->maze_array[pCtx->current_x + 1][pCtx->current_y] |= CASE_WALL_W;
 		}
 	}
-}// end of upadte_connex_case
+}// end of upadte_related_case
 
 // check if the end pattern is reached
 int is_it_the_end(maze_ctx_t *pCtx)
@@ -486,15 +547,14 @@ int is_it_the_end(maze_ctx_t *pCtx)
 	x = pCtx->current_x;
 	y = pCtx->current_y;
 
-#if 0
 	// Upper W 2x2 pattern
 	if( ((x-1)>=0) && ((y+1)<MAX_MAZE_DEPTH))
 	{
 		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y],    CASE_TO_VISIT,  MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x][y+1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y+1],  CASE_TO_VISIT , MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x-1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x-1][y],  CASE_TO_VISIT , MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x-1][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x-1][y+1],CASE_TO_VISIT , MAZE_CASE_STATE_MASK)))
+		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x][y+1],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x-1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x-1][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK) ))
 		{
 			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_W|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
 					IS_NOT_SET(pCtx->maze_array[x][y+1],   CASE_WALL_W|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
@@ -519,10 +579,10 @@ int is_it_the_end(maze_ctx_t *pCtx)
 	if( ((x+1)<MAX_MAZE_DEPTH) && ((y+1)<MAX_MAZE_DEPTH))
 	{
 		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y],     CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x][y+1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y+1],   CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x+1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x+1][y],   CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x+1][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x+1][y+1], CASE_TO_VISIT, MAZE_CASE_STATE_MASK)))
+		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x][y+1],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x+1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x+1][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK) ))
 		{
 			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_E|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
 					IS_NOT_SET(pCtx->maze_array[x][y+1],   CASE_WALL_E|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
@@ -547,10 +607,10 @@ int is_it_the_end(maze_ctx_t *pCtx)
 	if( ((x-1)>=0) && ((y-1)>=0))
 	{
 		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y],     CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x][y-1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y-1],   CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x-1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x-1][y],   CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x-1][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x-1][y-1], CASE_TO_VISIT, MAZE_CASE_STATE_MASK)))
+		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x][y-1],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x-1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x-1][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK) ))
 		{
 			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_W|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
 					IS_NOT_SET(pCtx->maze_array[x][y-1],   CASE_WALL_W|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
@@ -575,10 +635,10 @@ int is_it_the_end(maze_ctx_t *pCtx)
 	if( ((x+1)<MAX_MAZE_DEPTH) && ((y-1)>=0))
 	{
 		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y],     CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x][y-1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x][y-1],   CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x+1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x+1][y],   CASE_TO_VISIT, MAZE_CASE_STATE_MASK)) &&
-				(IS_SET(pCtx->maze_array[x+1][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK) || IS_SET(pCtx->maze_array[x+1][y-1], CASE_TO_VISIT, MAZE_CASE_STATE_MASK)))
+		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x][y-1],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x+1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) ) &&
+				(IS_SET(pCtx->maze_array[x+1][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK) ))
 		{
 			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_E|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
 					IS_NOT_SET(pCtx->maze_array[x][y-1],   CASE_WALL_E|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
@@ -598,119 +658,6 @@ int is_it_the_end(maze_ctx_t *pCtx)
 			}
 		}
 	}
-#else
-	// Upper W 2x2 pattern
-	if( ((x-1)>=0) && ((y+1)<MAX_MAZE_DEPTH))
-	{
-		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x][y+1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x-1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x-1][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ))
-		{
-			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_W|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x][y+1],   CASE_WALL_W|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x-1][y],   CASE_WALL_E|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x-1][y+1], CASE_WALL_E|CASE_WALL_S, MAZE_CASE_STATE_MASK))
-			{
-				// End reached, quick exit
-				pCtx->end_x = x;
-				pCtx->end_y = y;
-
-				// Update end pattern
-				pCtx->maze_array[x][y]     |= CASE_END;
-				pCtx->maze_array[x][y+1]   |= CASE_END;
-				pCtx->maze_array[x-1][y]   |= CASE_END;
-				pCtx->maze_array[x-1][y+1] |= CASE_END;
-				return(1) ;
-			}
-		}
-	}
-
-	// Upper E 2x2 pattern
-	if( ((x+1)<MAX_MAZE_DEPTH) && ((y+1)<MAX_MAZE_DEPTH))
-	{
-		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x][y+1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x+1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x+1][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ))
-		{
-			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_E|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x][y+1],   CASE_WALL_E|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x+1][y],   CASE_WALL_W|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x+1][y+1], CASE_WALL_W|CASE_WALL_S, MAZE_CASE_STATE_MASK))
-			{
-				// End reached, quick exit
-				pCtx->end_x = x;
-				pCtx->end_y = y;
-
-				// Update end pattern
-				pCtx->maze_array[x][y]     |= CASE_END;
-				pCtx->maze_array[x][y+1]   |= CASE_END;
-				pCtx->maze_array[x+1][y]   |= CASE_END;
-				pCtx->maze_array[x+1][y+1] |= CASE_END;
-				return(1) ;
-			}
-		}
-	}
-
-	// Lower W 2x2 pattern
-	if( ((x-1)>=0) && ((y-1)>=0))
-	{
-		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x][y-1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x-1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x-1][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ))
-		{
-			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_W|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x][y-1],   CASE_WALL_W|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x-1][y],   CASE_WALL_E|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x-1][y-1], CASE_WALL_E|CASE_WALL_N, MAZE_CASE_STATE_MASK))
-			{
-				// End reached, quick exit
-				pCtx->end_x = x;
-				pCtx->end_y = y;
-
-				// Update end pattern
-				pCtx->maze_array[x][y]     |= CASE_END;
-				pCtx->maze_array[x][y-1]   |= CASE_END;
-				pCtx->maze_array[x-1][y]   |= CASE_END;
-				pCtx->maze_array[x-1][y-1] |= CASE_END;
-				return(1) ;
-			}
-		}
-	}
-
-	// Lower E 2x2 pattern
-	if( ((x+1)<MAX_MAZE_DEPTH) && ((y-1)>=0))
-	{
-		// Check if all the 2*2 case has been visited
-		if(     (IS_SET(pCtx->maze_array[x][y],     CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x][y-1],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x+1][y],   CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ) &&
-				(IS_SET(pCtx->maze_array[x+1][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK) || 0 ))
-		{
-			if(     IS_NOT_SET(pCtx->maze_array[x][y],     CASE_WALL_E|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x][y-1],   CASE_WALL_E|CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x+1][y],   CASE_WALL_W|CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-					IS_NOT_SET(pCtx->maze_array[x+1][y-1], CASE_WALL_W|CASE_WALL_N, MAZE_CASE_STATE_MASK))
-			{
-				// End reached, quick exit
-				pCtx->end_x = x;
-				pCtx->end_y = y;
-
-				// Update end pattern
-				pCtx->maze_array[x][y]     |= CASE_END;
-				pCtx->maze_array[x][y-1]   |= CASE_END;
-				pCtx->maze_array[x+1][y]   |= CASE_END;
-				pCtx->maze_array[x+1][y-1] |= CASE_END;
-				return(1) ;
-			}
-		}
-	}
-#endif
 
 	// End not found...
 	return(0) ;
@@ -816,7 +763,7 @@ void add_intersection(maze_ctx_t *pCtx, int x, int y)
 	}
 }
 
-// check depending on the position if a new intresection is present
+// check depending on the position if a new intersection is present
 void update_intersection(maze_ctx_t *pCtx)
 {
 	int x,y;
@@ -841,25 +788,25 @@ void update_intersection(maze_ctx_t *pCtx)
 	case DIR_N:
 	case DIR_S:
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_W, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x-1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x-1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x-1, y);
 			pCtx->maze_array[x-1][y] |= CASE_TO_VISIT;
 		}
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_E, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x+1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x+1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x+1, y);
 			pCtx->maze_array[x+1][y] |= CASE_TO_VISIT;
 		}
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x, y+1);
 			pCtx->maze_array[x][y+1] |= CASE_TO_VISIT;
 		}
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x, y-1);
 			pCtx->maze_array[x][y-1] |= CASE_TO_VISIT;
@@ -868,25 +815,25 @@ void update_intersection(maze_ctx_t *pCtx)
 	case DIR_E:
 	case DIR_W:
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_N, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x][y+1], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x, y+1);
 			pCtx->maze_array[x][y+1] |= CASE_TO_VISIT;
 		}
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_S, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK))
+	       IS_NOT_SET(pCtx->maze_array[x][y-1], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x, y-1);
 			pCtx->maze_array[x][y-1] |= CASE_TO_VISIT;
 		}
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_E, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x+1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x+1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x+1, y);
 			pCtx->maze_array[x+1][y] |= CASE_TO_VISIT;
 		}
 		if(IS_NOT_SET(pCtx->maze_array[x][y], CASE_WALL_W, MAZE_CASE_STATE_MASK) &&
-				IS_NOT_SET(pCtx->maze_array[x-1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
+		   IS_NOT_SET(pCtx->maze_array[x-1][y], CASE_VISITED, MAZE_CASE_STATE_MASK))
 		{
 			add_intersection(pCtx, x-1, y);
 			pCtx->maze_array[x-1][y] |= CASE_TO_VISIT;
@@ -912,7 +859,7 @@ int is_safe(maze_ctx_t *pCtx, int x, int y)
     return 0;
 }
 
-// Return 1 if the case is valid, in the usage domaine
+// Return 1 if the case is valid, in the usage domain
 int is_valid(int x, int y)
 {
     if ( (x<MAX_MAZE_DEPTH) && (y<MAX_MAZE_DEPTH) && (x>=0) && (y>=0) )
@@ -929,8 +876,7 @@ int is_valid(int x, int y)
 void find_shortest_path(maze_ctx_t *pCtx,
                         int i, int j, // current position
                         int x, int y, // exit
-                        int dist,
-                        int build_array)
+                        int dist)
 {
     int xx;
     int yy;
@@ -938,7 +884,8 @@ void find_shortest_path(maze_ctx_t *pCtx,
     // if destination is found, update min_dist
     if (i == x && j == y)
     {
-        if(build_array == 1)
+    	// Update the final shortest array
+        if(pCtx->copy_flag == 1)
         {
             for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
             {
@@ -952,7 +899,12 @@ void find_shortest_path(maze_ctx_t *pCtx,
         if(dist < pCtx->min_dist)
         {
             pCtx->min_dist = dist ;
-            pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
+            if(pCtx->copy_flag == 1)
+            {
+            	// Flag the last position
+                pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
+                pCtx->copy_flag = 0;
+            }
         }
         return;
     }
@@ -963,22 +915,22 @@ void find_shortest_path(maze_ctx_t *pCtx,
     // go to bottom cell
     if (is_no_wall(pCtx, i, j, CASE_WALL_E) && is_valid(i + 1, j) && is_safe(pCtx, i + 1, j))
     {
-        find_shortest_path(pCtx, i + 1, j, x, y, dist + 1, build_array);
+        find_shortest_path(pCtx, i + 1, j, x, y, dist + 1);
     }
     // go to right cell
     if (is_no_wall(pCtx, i, j, CASE_WALL_N) && is_valid(i, j + 1) && is_safe(pCtx, i, j + 1))
     {
-        find_shortest_path(pCtx, i, j + 1, x, y, dist + 1, build_array);
+        find_shortest_path(pCtx, i, j + 1, x, y, dist + 1);
     }
     // go to top cell
     if (is_no_wall(pCtx, i, j, CASE_WALL_W) && is_valid(i - 1, j) && is_safe(pCtx, i - 1, j))
     {
-        find_shortest_path(pCtx, i - 1, j, x, y, dist + 1, build_array);
+        find_shortest_path(pCtx, i - 1, j, x, y, dist + 1);
     }
     // go to left cell
     if ( is_no_wall(pCtx, i, j, CASE_WALL_S) && is_valid(i, j - 1) && is_safe(pCtx, i, j - 1))
     {
-        find_shortest_path(pCtx, i, j - 1, x, y, dist + 1, build_array);
+        find_shortest_path(pCtx, i, j - 1, x, y, dist + 1);
     }
 
     // RewindRemove (i, j) from visited matrix
@@ -986,7 +938,11 @@ void find_shortest_path(maze_ctx_t *pCtx,
 }
 
 // Build action list from a case to another case, path must be the shortest
-void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x, int from_y, int to_x, int to_y)
+void build_action_list(
+		maze_ctx_t *pCtx,
+		robot_direction_t from_dir,
+		int from_x, int from_y,
+		int to_x, int to_y)
 {
     int               a, x, y       ;
     int               id_current    ;
@@ -1001,15 +957,16 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
 
     // Clean the place
     init_action_array(pCtx);
+
+    // Clean the context but request shortest array creation, mandatory to build the action list
     init_shortest_array(pCtx);
+    pCtx->copy_flag = 1;
 
     // Find the nearest case
-    pCtx->min_dist = MAX_INT;
     find_shortest_path(pCtx,
                        from_x, from_y,
                        to_x, to_y,
-                       0,
-                       1); // build solve array
+                       0);
     if(pCtx->min_dist > MAX_ACTION)
     {
     	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
@@ -1019,12 +976,12 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
     pCtx->nb_action            = pCtx->min_dist ;
     pCtx->current_action_index = 0 ;
 
-    // Init the firt case position
+    // Initialization the first case position
     x           = from_x;
     y           = from_y;
     dir         = from_dir;
 
-    // Warning erraduication
+    // Warning eradication
     next_action = ACTION_STOP;
     step_x      = 0;
     step_y      = 0;
@@ -1282,14 +1239,9 @@ void build_action_list(maze_ctx_t *pCtx, robot_direction_t from_dir, int from_x,
             break;
         }
     }
-
-#if 0
-    display_action_list(pCtx);
-#endif
-
 }// end of build_action_list
 
-// Upadte the maze context depending on the action and the current direction
+// Update the maze context depending on the action and the current direction
 action_t update_maze_ctx(maze_ctx_t *pCtx)
 {
     int32_t            step_x;
@@ -1300,6 +1252,9 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
     algo_update_t     *pAlgo = NULL;
     int                action_flag;
     maze_case_t        wall_sensor;
+    int                restore_x;
+    int                restore_y;
+    robot_direction_t  restore_dir;
 
 	// Get wall state
 	wall_sensor =  get_wall_state(pCtx->current_direction);
@@ -1329,12 +1284,19 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
         }
         else
         {
-            // Learn mode but action to perform in order to go to the nearest insersection
+            // Learn mode but action to perform in order to go to the nearest intersection
             if(pCtx->current_action_index != -1)
             {
             	HAL_Serial_Print(&com, ">[id action:%d/%d]>", pCtx->current_action_index, pCtx->nb_action -1);
 
-                action_flag             = 1;
+            	// Set the action flag
+                action_flag = 1;
+
+                // If the last action point to a non visited yet case, we restore do not perform
+                // the last action but we use the wall sensor to find the next direction
+                restore_x   = pCtx->current_x;
+                restore_y   = pCtx->current_y;
+                restore_dir = pCtx->current_direction;
 
                 pCtx->current_x         = pCtx->action_array[pCtx->current_action_index].x;
                 pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
@@ -1349,7 +1311,28 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
                 pCtx->current_action_index++;
                 if(pCtx->current_action_index >= pCtx->nb_action)
                 {
+                	// Reset the action list
                     pCtx->current_action_index = -1 ;
+
+                    // Check if the last action is done in an unknown case ?
+                    if((pCtx->maze_array[pCtx->current_x][pCtx->current_y] & CASE_VISITED) != CASE_VISITED)
+                    {
+                    	// Revert the current action
+                    	action_flag = 0;
+                    	pCtx->current_x         = restore_x;
+                    	pCtx->current_y         = restore_y;
+                    	pCtx->current_direction = restore_dir;
+                    	// Get the action depending on the wall sensor
+                    	action = get_next_action(pCtx, wall_sensor);
+                    }
+                }
+
+                // Update case state if action has to be applied
+                if(action_flag==1)
+                {
+                    // Update case state
+                    pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
+                    pCtx->maze_array[pCtx->current_x][pCtx->current_y] &= ~CASE_TO_VISIT;
                 }
             }
             else
@@ -1372,48 +1355,52 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             default:
             case ACTION_START:
             case ACTION_STOP:
-                pAlgo = NULL;
-                break;
+            	pAlgo = NULL;
+            break;
 
             case ACTION_RUN_1:
                 pAlgo = (algo_update_t *) algo_update_maze_ctx_RUN_1;
-                break;
+            break;
 
             case ACTION_TURN_RIGHT:
                 pAlgo = (algo_update_t *) algo_update_maze_ctx_TURN_RIGHT;
-                break;
+            break;
 
             case ACTION_TURN_LEFT:
                 pAlgo = (algo_update_t *) algo_update_maze_ctx_TURN_LEFT;
-                break;
+            break;
 
             case ACTION_U_TURN_RIGHT:
                 pAlgo = (algo_update_t *) algo_update_maze_ctx_U_TURN_RIGHT;
-                break;
+            break;
 
             case ACTION_IDLE:
-                // If action list has to be run, the function get_next_action returns ACTION_IDLE
-                pAlgo = NULL;
+            {
+            	// If action list has to be run, the function get_next_action returns ACTION_IDLE
+            	pAlgo = NULL;
 
-                printf( ">[id action:%d/%d]>",pCtx->current_action_index, pCtx->nb_action -1);
+            	printf( ">[id action:%d/%d]>",pCtx->current_action_index, pCtx->nb_action -1);
 
-                action_flag             = 1;
+            	// Set the action flag
+            	action_flag = 1;
 
-                pCtx->current_x         = pCtx->action_array[pCtx->current_action_index].x;
-                pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
-                pCtx->current_direction = pCtx->action_array[pCtx->current_action_index].dir;
-                action                  = pCtx->action_array[pCtx->current_action_index].action;
+            	pCtx->current_x         = pCtx->action_array[pCtx->current_action_index].x;
+            	pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
+            	pCtx->current_direction = pCtx->action_array[pCtx->current_action_index].dir;
+            	action                  = pCtx->action_array[pCtx->current_action_index].action;
 
-                pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
-                pCtx->maze_array[pCtx->current_x][pCtx->current_y] &= ~CASE_TO_VISIT;
+            	pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
+            	pCtx->maze_array[pCtx->current_x][pCtx->current_y] &= ~CASE_TO_VISIT;
 
-                // Next action and check if the action list is empty
-                pCtx->current_action_index++;
-                if(pCtx->current_action_index >= pCtx->nb_action)
-                {
-                    pCtx->current_action_index = -1 ;
-                }
-                break;
+            	// Next action and check if the action list is empty
+            	pCtx->current_action_index++;
+            	if(pCtx->current_action_index >= pCtx->nb_action)
+            	{
+            		// Reset the action list
+            		pCtx->current_action_index = -1 ;
+            	}
+            }
+            break;
         }
 
         // According to the action, change the position and direction
@@ -1424,7 +1411,8 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             new_direction = pAlgo[pCtx->current_direction].direction;
         }
 
-        // Apply modification
+        // Apply modification only if action flag is not set, otherwise when action list is in
+        // progress, the modifications have been already set
         if(1 != action_flag)
         {
             pCtx->current_x         += step_x;
@@ -1481,14 +1469,15 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             	pCtx->current_action_index++;
             	if(pCtx->current_action_index >= pCtx->nb_action)
             	{
+            		// Reset the action list
             		pCtx->current_action_index = -1 ;
             	}
             }
         }
     }
 
-    // Populate the case state for the connex cases
-    update_connex_case(pCtx);
+    // Populate the case state for the related cases
+    update_related_case(pCtx);
 
     // find case to check
     update_intersection(pCtx);
@@ -1502,59 +1491,5 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
 
     return(action);
 }// end of update_maze_ctx
-
-// ugly patch
-static int one_display_only = 0;
-
-// Display the maze context
-void display_maze_ctx(maze_ctx_t *pCtx)
-{
-	int xx, yy;
-
-	if(one_display_only != 0)
-		return;
-
-	one_display_only = 1;
-
-	for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
-	{
-		HAL_Serial_Print(&com,"\t");
-		HAL_Delay(10);
-		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
-		{
-			// case state
-			HAL_Serial_Print(&com,"%s ", wall_state_txt[GET_WALL_STATE(pCtx->maze_array[xx][yy])] ) ;
-			HAL_Delay(10);
-		}
-		HAL_Serial_Print(&com,"\t");
-		HAL_Delay(10);
-		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
-		{
-			// case state
-			HAL_Serial_Print(&com,"%d ",pCtx->shortest_array[xx][yy]) ;
-			HAL_Delay(10);
-		}
-		HAL_Serial_Print(&com,"\n");
-		HAL_Delay(10);
-	}
-	HAL_Serial_Print(&com,"\n");
-	HAL_Delay(10);
-
-	display_action_list(pCtx);
-
-	HAL_Serial_Print(&com, "Nb inter:%d ", pCtx->nb_inter);
-	HAL_Delay(10);
-	for(yy=0;yy<MAX_INTER;yy++)
-	{
-		if(pCtx->inter_array[yy].enable != 0)
-		{
-			HAL_Serial_Print(&com, "[%d](%d,%d) ", yy, pCtx->inter_array[yy].x, pCtx->inter_array[yy].y);
-			HAL_Delay(10);
-		}
-	}
-	HAL_Serial_Print(&com, "\n");
-	HAL_Delay(10);
-
-}// end of display_maze_ctx
 
 // end of file maze.c

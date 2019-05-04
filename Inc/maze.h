@@ -10,13 +10,10 @@
 
 #define IS_SET(value, flag, mask)       ( (value) & ((mask) & (flag)) )
 #define IS_NOT_SET(value, flag, mask)  !( IS_SET( (value),(flag),(mask) ) )
-#define GET_CASE_NUMBER(case)           ( (MAZE_CASE_NUMBER_MASK & (case)) >>  MAZE_CASE_NUMBER_OFFSET)
 #define GET_WALL_STATE(case)            ( MAZE_CASE_WALL_MASK & (case) )
 
 #define MAZE_CASE_STATE_MASK    0x00FF
 #define MAZE_CASE_WALL_MASK     0x000F
-#define MAZE_CASE_NUMBER_MASK   0xFF00
-#define MAZE_CASE_NUMBER_OFFSET 8
 
 // Enum
 ///////
@@ -125,6 +122,8 @@ typedef struct {
 
 	// Min distance for shortest way
 	int min_dist;
+	// Copy flag to get shortest path
+    int copy_flag;
 
 	// Number max of action
 	int nb_action;
@@ -164,15 +163,14 @@ void         display_maze_ctx(maze_ctx_t *pCtx);
 void         display_action_list(maze_ctx_t *pCtx);
 
 action_t     get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor);
-void         update_connex_case(maze_ctx_t *pCtx);
+void         update_related_case(maze_ctx_t *pCtx);
 action_t     update_maze_ctx(maze_ctx_t *pCtx);
 int          is_it_the_end(maze_ctx_t *pCtx);
 maze_case_t  get_wall_state(robot_direction_t current_direction);
 void         find_shortest_path(maze_ctx_t *pCtx,
 		int i, int j, // from
 		int x, int y, // to
-		int dist,
-		int build_array);
+		int dist);
 int          is_valid(int x, int y);
 int          is_safe(maze_ctx_t *pCtx, int x, int y);
 int          is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall);

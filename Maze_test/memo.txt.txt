@@ -1,0 +1,19 @@
+Outil permettant de générer un tableau C contenant les informations de la présence
+des murs dans chaque case.
+
+python3 convert_xls_to_array.py [ficher au format xls 2017 et non au format xlsx].xsl
+
+python3 convert_xls_to_array.py maze_6.xls
+
+    test_array_t test_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH] =
+    {
+        { ____,____,____,____,____,____,____,____ },
+        { ____,___N,W_SN,W_SN,W_S_,W___,W__N,____ },
+        { ____,___N,__S_,_E_N,_ES_,_E_N,__SN,____ },
+        { ____,___N,__S_,W___,W___,WE_N,__SN,____ },
+        { ____,_E_N,__SN,__SN,_ESN,W_S_,_E_N,____ },
+        { ___N,WES_,_E_N,_ES_,WE__,_E__,WE_N,____ },
+        { ____,W___,W___,W___,W___,W___,W___,____ }
+    };
+
+# EOF
