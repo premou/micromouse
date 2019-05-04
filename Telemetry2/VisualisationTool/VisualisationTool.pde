@@ -49,7 +49,7 @@ void draw()
   strokeWeight(1);
   line (0, offset_x, 0, 1600, offset_x, 0);
   line (0, offset_w, 0, 1600, offset_w, 0);
-  if(iteration>=1000)
+  if(iteration>=1600)
   {
     for (int i = 0; i < 1600; i++) 
     {
@@ -187,16 +187,9 @@ void serialEvent(Serial p)
       {
         xspeed_target = float(list[4])/1000.0f;
         xspeed_actual = float(list[5])/1000.0f;
-
         wspeed_target = float(list[6])/1.0f;
         wspeed_actual = float(list[7])/1.0f;
 
-
-       
-       
-       
-       
-       
         xspeed_target_history[iteration%1600] = xspeed_target;
         xspeed_actual_history[iteration%1600] = xspeed_actual;
 

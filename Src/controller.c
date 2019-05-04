@@ -32,6 +32,8 @@ extern HAL_Serial_Handler com;
 
 // period
 #define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
+#define CONTROLLER_FREQ_F 833.0F // us microseconds (= 833Hz ODR GYRO)
+#define CONTROLLER_PERDIO_F 0.0012F // us microseconds (= 833Hz ODR GYRO)
 
 // distance
 #define DIST_START 0.09 			// m
@@ -838,8 +840,8 @@ void controller_fsm()
 	{
 		// forward speed
 		ctx.x_speed_target = X_SPEED;
-		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -889,8 +891,8 @@ void controller_fsm()
 		{
 			ctx.x_speed_target = X_SPEED;
 		}
-		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+		ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+		ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 		ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 		ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -971,14 +973,14 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = X_SPEED;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 				// rotation speed
 				ctx.w_speed_target = 0;
-				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 				ctx.w_speed_current = gyro_get_dps();
 				ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 				ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1005,14 +1007,14 @@ void controller_fsm()
 		case 1 :
 			// forward speed
 			ctx.x_speed_target = X_SPEED;
-			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 			ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 			ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 			// rotation speed
 			ctx.w_speed_target = -W_SPEED;
-			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 			ctx.w_speed_current = gyro_get_dps();
 			ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 			ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1029,15 +1031,15 @@ void controller_fsm()
 		case 2 :
 			// forward speed
 			ctx.x_speed_target = X_SPEED;
-			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 			ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 			ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 
 			// rotation speed
 			ctx.w_speed_target = 0;
-			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 			ctx.w_speed_current = gyro_get_dps();
 			ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 			ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1056,14 +1058,14 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = X_SPEED;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 				// rotation speed
 				ctx.w_speed_target = 0;
-				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 				ctx.w_speed_current = gyro_get_dps();
 				ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 				ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1177,14 +1179,14 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = X_SPEED;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 				// rotation speed
 				ctx.w_speed_target = 0;
-				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 				ctx.w_speed_current = gyro_get_dps();
 				ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 				ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1211,14 +1213,14 @@ void controller_fsm()
 		case 1 :
 			// forward speed
 			ctx.x_speed_target = X_SPEED;
-			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 			ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 			ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 			// rotation speed
 			ctx.w_speed_target = W_SPEED;
-			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 			ctx.w_speed_current = gyro_get_dps();
 			ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 			ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1235,15 +1237,15 @@ void controller_fsm()
 		case 2 :
 			// forward speed
 			ctx.x_speed_target = X_SPEED;
-			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+			ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+			ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 			ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 			ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 
 			// rotation speed
 			ctx.w_speed_target = 0;
-			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+			ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 			ctx.w_speed_current = gyro_get_dps();
 			ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 			ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1262,14 +1264,14 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = X_SPEED;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 				// rotation speed
 				ctx.w_speed_target = 0;
-				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+				ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 				ctx.w_speed_current = gyro_get_dps();
 				ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 				ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1381,8 +1383,8 @@ void controller_fsm()
 				{
 					// forward speed
 					ctx.x_speed_target = X_SPEED;
-					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1407,8 +1409,8 @@ void controller_fsm()
 				{
 					// forward speed
 					ctx.x_speed_target = 0.1;
-					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1475,14 +1477,14 @@ void controller_fsm()
 				{
 					// forward speed
 					ctx.x_speed_target = 0;
-					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 					// rotation speed
 					ctx.w_speed_target = -W_SPEED;
-					ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+					ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 					ctx.w_speed_current = gyro_get_dps();
 					ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 					ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1501,15 +1503,15 @@ void controller_fsm()
 					{
 						// forward speed
 						ctx.x_speed_target = 0.0;
-						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 						ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 						ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 
 						// rotation speed
 						ctx.w_speed_target = 0.0;
-						ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+						ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 						ctx.w_speed_current = gyro_get_dps();
 						ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 						ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1570,14 +1572,14 @@ void controller_fsm()
 				{
 					// forward speed
 					ctx.x_speed_target = 0;
-					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+					ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 					ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 					ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 					// rotation speed
 					ctx.w_speed_target = -W_SPEED;
-					ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+					ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 					ctx.w_speed_current = gyro_get_dps();
 					ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 					ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1596,14 +1598,14 @@ void controller_fsm()
 					{
 						// forward speed
 						ctx.x_speed_target = 0.0;
-						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 						ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 						ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 						// rotation speed
 						ctx.w_speed_target = 0.0;
-						ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+						ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 						ctx.w_speed_current = gyro_get_dps();
 						ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 						ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1623,14 +1625,14 @@ void controller_fsm()
 					{
 						// forward speed
 						ctx.x_speed_target = 0.0;
-						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 						ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 						ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
 						// rotation speed
 						ctx.w_speed_target = 0.0;
-						ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, 0.001, ctx.w_speed_setpoint);
+						ctx.w_speed_setpoint = next_speed(ctx.w_speed_target, W_MAX_ACCELERATION, W_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.w_speed_setpoint);
 						ctx.w_speed_current = gyro_get_dps();
 						ctx.w_speed_error = ctx.w_speed_setpoint - ctx.w_speed_current;
 						ctx.w_speed_pwm = pid_output(&ctx.w_speed_pid, ctx.w_speed_error);
@@ -1652,8 +1654,8 @@ void controller_fsm()
 				{
 						// forward speed
 						ctx.x_speed_target = X_SPEED;
-						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+						ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+						ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 						ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 						ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1704,8 +1706,8 @@ void controller_fsm()
 
 				// forward speed
 				ctx.x_speed_target = X_SPEED;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1731,8 +1733,8 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = 0.1;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1760,8 +1762,8 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = 0.0;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1823,8 +1825,8 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = 0.0;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
@@ -1847,8 +1849,8 @@ void controller_fsm()
 			{
 				// forward speed
 				ctx.x_speed_target = 0.0;
-				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, 0.001, ctx.x_speed_setpoint);
-				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) / 0.001;
+				ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
+				ctx.x_speed_current = ((encoder_get_delta_left() + encoder_get_delta_right()) / 2.0) * CONTROLLER_FREQ_F;
 				ctx.x_speed_error = ctx.x_speed_setpoint - ctx.x_speed_current;
 				ctx.x_speed_pwm = pid_output(&ctx.x_speed_pid, ctx.x_speed_error);
 
