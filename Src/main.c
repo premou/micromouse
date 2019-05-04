@@ -245,7 +245,7 @@ int main(void)
 			  }
 
 		  }
-		  if(1)
+		  if(0)
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 200) // every 0.1 sec

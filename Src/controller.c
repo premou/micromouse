@@ -17,6 +17,7 @@
 #include "timer_us.h"
 #include "WallSensor.h"
 #include "maze.h"
+#include "personnalisation.h"
 
 #include <math.h>
 #include <time.h>
@@ -29,29 +30,30 @@ extern HAL_Serial_Handler com;
 // constants
 ////////////
 
-// move debug
-#define FIXED_MOVES
-
 // period
 #define CONTROLLER_PERIOD 1200U // us microseconds (= 833Hz ODR GYRO)
-
-// accelerations
-#define X_MAX_ACCELERATION 5.0 		// m/s-2
-#define X_MAX_DECELERATION 3.0		// m/s-2
-#define W_MAX_ACCELERATION 5000		// °/s-2
-#define W_MAX_DECELERATION 5000		// °/s-2
-
-// speed
-#define X_SPEED 0.34 	// m/s
-//#define W_SPEED 205.0 	// dps
-#define W_SPEED 330.0 	// dps
-#define X_SPEED_FAST_RUN 0.5 // m/s
-#define X_SPEED_FAST_RUN_IMPROVED 0.7 // m/s
 
 // distance
 #define DIST_START 0.09 			// m
 #define DIST_RUN_1 0.18 			// m
 #define DIST_STOP 0.09 				// m
+
+////////////
+// settings (To Be Deleted)
+////////////
+
+// accelerations
+#define W_MAX_ACCELERATION 5000		// °/s-2
+#define W_MAX_DECELERATION 5000		// °/s-2
+
+// speed
+#define W_SPEED 330.0 	// dps
+#define X_SPEED_FAST_RUN 0.5 // m/s
+#define X_SPEED_FAST_RUN_IMPROVED 0.7 // m/s
+
+
+
+
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 // m
 #define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 // m
 
@@ -66,16 +68,6 @@ extern HAL_Serial_Handler com;
 #define W_U_T1 445 					//in ms
 //#define W_U_T2 930					//in ms
 #define W_U_T2 465					//in ms
-
-// speed PID
-#define X_SPEED_KP 600.0
-#define X_SPEED_KI 10.0
-#define X_SPEED_KD 0.0
-
-// rotation speed  PID
-#define W_SPEED_KP 0.1
-#define W_SPEED_KI 0.004
-#define W_SPEED_KD 0.0
 
 // wall following position  PID
 #define WALL_POSITION_KP 0.3
@@ -94,6 +86,10 @@ extern HAL_Serial_Handler com;
 #define W_WALL_FRONT_KI 0.0001
 #define W_WALL_FRONT_KD 0.0
 #define WALL_FRONT_ANGLE_mm 0.0 // mm
+
+////////////
+// end of settings (To Be Deleted)
+////////////
 
 // ENUM
 typedef enum {
@@ -283,19 +279,31 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	motor_speed_left(0);
 	motor_speed_right(0);
 
-	HAL_DataLogger_Init(12, // number of fields
+	HAL_DataLogger_Init(17, // number of fields
 			1,  // size in bytes of each field
 			4, 	// size in bytes of each field
+
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
+
 			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+
+			4, 	// size in bytes of each field
+			4, 	// size in bytes of each field
+
 			1, 	// size in bytes of each field
-			4, 	// size in bytes of each field
-			4, 	// size in bytes of each field
-			4, 	// size in bytes of each field
-			4, 	// size in bytes of each field
 			1, 	// size in bytes of each field
-			4 	// size in bytes of each field
+			1, 	// size in bytes of each field
+			1, 	// size in bytes of each field
+
+			1 	// size in bytes of each field
 
 	);
 
@@ -457,22 +465,47 @@ void controller_update(){
 		controller_fsm();
 
 		// data logger
-		HAL_DataLogger_Record(12, 						 // number of fields
+		HAL_DataLogger_Record(17, 						 // number of fields
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				//(int32_t)(ctx.sub_action_index),		 // integer value of each field
 				(int32_t)(encoder_get_absolute()*1000.0),		 // integer value of each field
 
-				(int32_t)(ctx.x_speed_target * 1000.0),	 // target speed
 				(int32_t)(ctx.x_speed_setpoint * 1000.0),// setpoint speed
 				(int32_t)(ctx.x_speed_current* 1000.0),	 // current speed
-				(int32_t)(ctx.x_speed_pwm),				 // pwm
-				(int32_t)(ctx.x_speed_error * 1000.0),	 //speed error
 
-				(int32_t)(ctx.w_speed_target * 1.0),	 // target speed
 				(int32_t)(ctx.w_speed_setpoint * 1.0),// setpoint speed
 				(int32_t)(ctx.w_speed_current* 1.0),	 // current speed
-				(int32_t)(ctx.w_speed_pwm),				 // pwm
-				(int32_t)(ctx.w_speed_error * 1.0)	 //speed error
+
+				(int32_t)(ctx.wall_position_setpoint * 1000.0),// setpoint speed
+				(int32_t)(ctx.wall_position_current* 1000.0),	 // current speed
+
+				(int32_t)(ctx.x_wall_front_setpoint * 1000.0),// setpoint speed
+				(int32_t)(ctx.x_wall_front_current* 1000.0),	 // current speed
+
+				(int32_t)(ctx.w_wall_front_setpoint),// integer value of each field
+				(int32_t)(ctx.w_wall_front_current),	 // integer value of each field
+
+				  (int32_t)wall_sensor_get_dist(WALL_SENSOR_LEFT_DIAG),
+				  (int32_t)wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT),
+				  (int32_t)wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT),
+				  (int32_t)wall_sensor_get_dist(WALL_SENSOR_RIGHT_DIAG),
+
+				  ((int32_t)wall_sensor_is_left_wall_detected()<<0) |
+				  ((int32_t)wall_sensor_is_front_wall_detected()<<1) |
+				  ((int32_t)wall_sensor_is_right_wall_detected()<<2)
+
+
+//				(int32_t)(ctx.x_speed_target * 1000.0),	 // target speed
+//				(int32_t)(ctx.x_speed_setpoint * 1000.0),// setpoint speed
+//				(int32_t)(ctx.x_speed_current* 1000.0),	 // current speed
+//				(int32_t)(ctx.x_speed_pwm),				 // pwm
+//				(int32_t)(ctx.x_speed_error * 1000.0),	 //speed error
+
+//				(int32_t)(ctx.w_speed_target * 1.0),	 // target speed
+//				(int32_t)(ctx.w_speed_setpoint * 1.0),// setpoint speed
+//				(int32_t)(ctx.w_speed_current* 1.0),	 // current speed
+//				(int32_t)(ctx.w_speed_pwm),				 // pwm
+//				(int32_t)(ctx.w_speed_error * 1.0)	 //speed error
 
 
 //				(int32_t)(ctx.x_wall_front_target * 1000.0),	 // target speed
@@ -518,9 +551,9 @@ bool controller_is_end(){
 
 action_t actions_scenario[] =
 {
-// SCENARIO #0
+#ifdef SC1_START_STOP
 		ACTION_STOP,
-// END of SCENARIO #0
+#endif
 
 
 
@@ -668,6 +701,10 @@ action_t actions_scenario[] =
 //		ACTION_STILL,
 		//ACTION_RUN_1,
 //		ACTION_STOP,
+
+
+
+// ALWAY HERE at the end
 		ACTION_IDLE
 };
 
