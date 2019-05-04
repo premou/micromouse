@@ -2,14 +2,10 @@ P0 : Rédiger TUTO pour régler le robot
 P0 : Coder les scénarios de réglage
 
 P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
-P1 : Faire un fichier dédié pour toute la configuration du robot avec les directives de précompilation par robot
 
 P2 : Augmenter légèrement la longueur d'application du PID position wall following (couper le PID juste avant la fin des éventuels murs)
 
 P3 : Clean Up configuration (inutile)
-P3 : Monitor Heading and Distance
-P3 : Passer à 0.5m/s
-
 
 P4 : ..\Src\maze_ctx.c:411:13: warning: 'min_dist_index' may be used uninitialized in this function [-Wmaybe-uninitialized]
 

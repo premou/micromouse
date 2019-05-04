@@ -44,24 +44,13 @@ extern HAL_Serial_Handler com;
 // settings (To Be Deleted)
 ////////////
 
-// accelerations
-#define W_MAX_ACCELERATION 5000		// °/s-2
-#define W_MAX_DECELERATION 5000		// °/s-2
-
 // speed
-#define W_SPEED 330.0 	// dps
 #define X_SPEED_FAST_RUN 0.5 // m/s
 #define X_SPEED_FAST_RUN_IMPROVED 0.7 // m/s
 
 
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 // m
 #define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 // m
-
-// L curve
-//#define W_T1 439 					//in ms
-//#define W_T2 480					//in ms
-#define W_T1 280 					//in ms
-#define W_T2 345					//in ms
 
 // U turn
 //#define W_U_T1 890 					//in ms
@@ -561,14 +550,22 @@ action_t actions_scenario[] =
 #ifdef SC1_START_STOP
 		ACTION_STOP,
 #endif
-
-
-
-
-//		ACTION_RUN_1,
-//		ACTION_RUN_1,
-//		ACTION_RUN_1,
-//		ACTION_STOP,
+#ifdef SC1_START_RUN3_STOP
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
+#ifdef SC2_SQUARE_TEST_1_TURN
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_STOP,
+#endif
 
 //		ACTION_RUN_1,
 //		ACTION_TURN_RIGHT,

@@ -18,8 +18,8 @@ Float distance_zoom = 1000.0f;
 Float heading_zoom = 1.0f;
 Float xspeed_target_zoom = 250.0f;
 Float xspeed_actual_zoom = 250.0f;
-Float wspeed_target_zoom = 5.5f;
-Float wspeed_actual_zoom = 5.5f;
+Float wspeed_target_zoom = 0.33f;
+Float wspeed_actual_zoom = 0.33f;
 
 int iteration  = 0;
 Float[] distance_history = new Float[1600];

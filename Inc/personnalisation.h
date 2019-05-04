@@ -47,7 +47,11 @@
 #define 	INIT_GYRO_BIAS 						-1.530F	// unit : dps
 #define 	GYRO_AUTOCAL_VARIANCE_THRESHOLD 	0.040F	// unit : dps^2 (don't change this)
 #define 	GYRO_SENSITIVITY_CORRECTION 		1.000F	// unit : %
-
+#define 	W_SPEED 			330.0		// unit : dps
+#define 	W_T1 				280 		// unit : ms
+#define 	W_T2 				345			// unit : ms
+#define 	W_MAX_ACCELERATION 	5000		// unit : dps^2
+#define		W_MAX_DECELERATION 	5000		// unit : dpz^2
 
 #endif
 
@@ -58,17 +62,14 @@
 // 1.00. Define FIXED_MOVES for the following tests and configuration
 #define FIXED_MOVES // disable AI
 
-// 1.01. Define SC1_START_STOP
-#define SC1_START_STOP
+// 1.01. Set forward speed of learning run and turns
+#define 	X_SPEED 			0.450F 		// unit : m/s
 
-// 1.02. Set forward speed of learning run and turns
-#define 	X_SPEED 			0.5F 		// unit : m/s
-
-// 1.03. Set forward acceleration
+// 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
 #define 	X_MAX_DECELERATION 	3.0F		// unit : m/s^2
 
-// 1.04. Set PID parameters (Kp,Ki) for X SPEED PID and W SPEED PID
+// 1.03. Set PID parameters (Kp,Ki) for X SPEED PID and W SPEED PID
 #define 	X_SPEED_KP 			600.0F		// this is a speed parameter
 #define 	X_SPEED_KI 			10.0F		// this is a position parameter
 #define 	X_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
@@ -76,15 +77,17 @@
 #define 	W_SPEED_KI 			0.004F 		// this is a position parameter
 #define 	W_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
 
-// 1.05. Set wheel diameter and micro gear ratio
+// 1.04. Set wheel diameter and micro gear ratio
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
 #define 	WHEEL_DIAMETER      0.026000F	// unit : mm
 
-// NOW, use visualization and physics to adjust all these parameters in order to :
-// >>> physics : distance traveled must be equal to 180 cm
+// 1.05, use visualization and physics to adjust all these parameters in order to :
+// >>> physics : distance traveled must be equal to 180 mm
 // >>> visualization : actual forward speed must follow current forward speed
+//#define SC1_START_STOP // 180mm
+//#define SC1_START_RUN3_STOP // 720mm
 
-// 1.06. Undefine SC1_START_STOP (comment) and continue tests and configuration
+// 1.06. Undefine SC1_xxx (comment) and continue tests and configuration
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
 
@@ -98,8 +101,27 @@
 #define 	GYRO_SENSITIVITY_CORRECTION 		1.025F	// unit : %
 // define IMU_TRACE to see heading when IDLE, or upload datalogger and watch telemetry
 
+// 2.02 Set rotation speed of curve turn
+// >>> use Trapezoidal-Curve-Turn-Profile-Generator
+//     forward speed = X_SPEED
+//     angle = 90
+//     radius = 70
+//     acceleration = W_MAX_ACCELERATION
+//     deceleration = W_MAX_DECELERATION
+//     max angular vel = W_SPEED
+//     mouse width = 70
+#define 	W_SPEED 			450.0F		// unit : dps
+#define 	W_T1 				200 		// unit : ms
+#define 	W_T2 				256			// unit : ms
 
+// 2.03. Set rotation acceleration
+#define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
+#define		W_MAX_DECELERATION 	8000		// unit : dpz^2
 
+// 2.04, use visualization and physics to adjust all these parameters in order to :
+// >>> physics : return to home exactly after each turn
+// >>> visualization : actual forward and rotation speeds must follow current speeds
+#define SC2_SQUARE_TEST_1_TURN
 
 
 
