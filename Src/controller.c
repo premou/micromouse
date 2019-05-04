@@ -279,8 +279,9 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	motor_speed_left(0);
 	motor_speed_right(0);
 
-	HAL_DataLogger_Init(17, // number of fields
+	HAL_DataLogger_Init(18, // number of fields
 			1,  // size in bytes of each field
+			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 
 			4, 	// size in bytes of each field
@@ -304,6 +305,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 			1, 	// size in bytes of each field
 
 			1 	// size in bytes of each field
+
 
 	);
 
@@ -458,17 +460,18 @@ void controller_update(){
 
 		// sensor update
 		encoder_update();
-		gyro_update();
+		gyro_update(CONTROLLER_PERDIO_F);
 		wall_sensor_update();
 
 		// motor control update
 		controller_fsm();
 
 		// data logger
-		HAL_DataLogger_Record(17, 						 // number of fields
+		HAL_DataLogger_Record(18, 						 // number of fields
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				//(int32_t)(ctx.sub_action_index),		 // integer value of each field
 				(int32_t)(encoder_get_absolute()*1000.0),		 // integer value of each field
+				(int32_t)(gyro_get_heading()),
 
 				(int32_t)(ctx.x_speed_setpoint * 1000.0),// setpoint speed
 				(int32_t)(ctx.x_speed_current* 1000.0),	 // current speed

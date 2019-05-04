@@ -7,25 +7,35 @@ import g4p_controls.*;
 
 int MAX_ITERATION = 1600;
 
+Float distance = 0.0f;
+Float heading = 0.0f;
 Float xspeed_target = 0.0f;
 Float xspeed_actual = 0.0f;
 Float wspeed_target = 0.0f;
 Float wspeed_actual = 0.0f;
 
+Float distance_zoom = 1000.0f;
+Float heading_zoom = 1.0f;
 Float xspeed_target_zoom = 250.0f;
 Float xspeed_actual_zoom = 250.0f;
 Float wspeed_target_zoom = 5.5f;
 Float wspeed_actual_zoom = 5.5f;
 
 int iteration  = 0;
+Float[] distance_history = new Float[1600];
+Float[] heading_history = new Float[1600];
 Float[] xspeed_target_history = new Float[1600];
 Float[] xspeed_actual_history = new Float[1600];
 Float[] wspeed_target_history = new Float[1600];
 Float[] wspeed_actual_history = new Float[1600];
 
 Float zoom = 1.0f;
-Float offset_x = 250.0f;
-Float offset_w = 750.0f;
+Float distance_offset = 200.0f;
+Float heading_offset = 200.0f;
+Float xspeed_target_offset = 500.0f;
+Float xspeed_actual_offset = 500.0f;
+Float wspeed_target_offset = 800.0f;
+Float wspeed_actual_offset = 800.0f;
 
 PFont font;
 
@@ -47,52 +57,72 @@ void draw()
   background(255);
   stroke(0,0,0);
   strokeWeight(1);
-  line (0, offset_x, 0, 1600, offset_x, 0);
-  line (0, offset_w, 0, 1600, offset_w, 0);
+  line (0, 200, 0, 1600, 200, 0);
+  line (0, 500, 0, 1600, 500, 0);
+  line (0, 800, 0, 1600, 800, 0);
   if(iteration>=1600)
   {
     for (int i = 0; i < 1600; i++) 
     {
+      // distance
+      stroke(0,0,0);
+      strokeWeight(2);
+      point(i,distance_offset-distance_history[i]*distance_zoom,0); 
+      // heading
+      stroke(0,0,0);
+      strokeWeight(2);
+      point(i,heading_offset-heading_history[i]*heading_zoom,0); 
+
       // xspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_x-xspeed_target_history[i]*xspeed_target_zoom,0); 
+      point(i,xspeed_target_offset-xspeed_target_history[i]*xspeed_target_zoom,0); 
       // xspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_x-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
+      point(i,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
       
       // wspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_w-wspeed_target_history[i]*wspeed_target_zoom,0); 
+      point(i,wspeed_target_offset-wspeed_target_history[i]*wspeed_target_zoom,0); 
       // wspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_w-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+      point(i,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+
     }
   }
   else
   {
     for (int i = 0; i < iteration; i++) 
     {
+      // distance
+      stroke(0,0,0);
+      strokeWeight(2);
+      point(i,distance_offset-distance_history[i]*distance_zoom,0); 
+      // heading
+      stroke(0,0,0);
+      strokeWeight(2);
+      point(i,heading_offset-heading_history[i]*heading_zoom,0); 
+
       // xspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_x-xspeed_target_history[i]*xspeed_target_zoom,0); 
+      point(i,xspeed_target_offset-xspeed_target_history[i]*xspeed_target_zoom,0); 
       // xspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_x-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
+      point(i,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
       
       // wspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_w-wspeed_target_history[i]*wspeed_target_zoom,0); 
+      point(i,wspeed_target_offset-wspeed_target_history[i]*wspeed_target_zoom,0); 
       // wspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_w-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+      point(i,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
 
     }
   }
@@ -183,16 +213,19 @@ void serialEvent(Serial p)
   if ((incoming.length() > 8))
   {
     String[] list = split(incoming, " ");
-      if ( list.length >= 19  ) 
+      if ( list.length >= 20  ) 
       {
-        xspeed_target = float(list[4])/1000.0f;
-        xspeed_actual = float(list[5])/1000.0f;
-        wspeed_target = float(list[6])/1.0f;
-        wspeed_actual = float(list[7])/1.0f;
+        distance = float(list[3])/1000.0f;
+        heading = float(list[4])/1.0f;
+        xspeed_target = float(list[5])/1000.0f;
+        xspeed_actual = float(list[6])/1000.0f;
+        wspeed_target = float(list[7])/1.0f;
+        wspeed_actual = float(list[8])/1.0f;
 
+        distance_history[iteration%1600] = distance;
+        heading_history[iteration%1600] = heading;
         xspeed_target_history[iteration%1600] = xspeed_target;
         xspeed_actual_history[iteration%1600] = xspeed_actual;
-
         wspeed_target_history[iteration%1600] = wspeed_target;
         wspeed_actual_history[iteration%1600] = wspeed_actual;
 

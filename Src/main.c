@@ -210,7 +210,6 @@ int main(void)
 			motor_speed_right(0);
 
 		  gyro_auto_calibrate();
-		  HAL_Delay(20);
 
 		  // IR LED/PHOTO calibration setup ONLY
           // comment all theses line of code when running micromouse
