@@ -9,14 +9,65 @@
 #define WALLSENSORCALIBRATION_H_
 
 #include "WallSensor.h"
+#include "personnalisation.h"
 
 #include <math.h>
 
-#define __BERNARD__
-//#define __PREM__
+#ifdef __ALICE__
 
+// DL, FL, FR, DR
+float theta0[WALL_SENSOR_COUNT] =
+	{
+			-31.451667230000375,
+			-31.214148588750962,
+			-37.514381300859526,
+			-27.383779201410519
+	};
+float theta1[WALL_SENSOR_COUNT] =
+	{
+			2491.3772726321713,
+			2943.9480100218689,
+			3355.7825797504011,
+			2152.7356524911202
+	};
+float theta2[WALL_SENSOR_COUNT] =
+	{
+			5091840.6972101126,
+			-241993.74478182383,
+			289366.73746078881,
+			2049489.3538577068
+	};
 
-#ifdef __BERNARD__
+#endif
+
+#ifdef __FRANCOIS__
+
+// DL, FL, FR, DR
+float theta0[WALL_SENSOR_COUNT] =
+	{
+			-31.451667230000375,
+			-31.214148588750962,
+			-37.514381300859526,
+			-27.383779201410519
+	};
+float theta1[WALL_SENSOR_COUNT] =
+	{
+			2491.3772726321713,
+			2943.9480100218689,
+			3355.7825797504011,
+			2152.7356524911202
+	};
+float theta2[WALL_SENSOR_COUNT] =
+	{
+			5091840.6972101126,
+			-241993.74478182383,
+			289366.73746078881,
+			2049489.3538577068
+	};
+
+#endif
+
+#ifdef __PATRICK__
 
 // DL, FL, FR, DR
 float theta0[WALL_SENSOR_COUNT] =
@@ -71,6 +122,32 @@ float theta2[WALL_SENSOR_COUNT] =
 
 #endif
 
+#ifdef __REMI__
+
+// DL, FL, FR, DR
+float theta0[WALL_SENSOR_COUNT] =
+	{
+			-31.451667230000375,
+			-31.214148588750962,
+			-37.514381300859526,
+			-27.383779201410519
+	};
+float theta1[WALL_SENSOR_COUNT] =
+	{
+			2491.3772726321713,
+			2943.9480100218689,
+			3355.7825797504011,
+			2152.7356524911202
+	};
+float theta2[WALL_SENSOR_COUNT] =
+	{
+			5091840.6972101126,
+			-241993.74478182383,
+			289366.73746078881,
+			2049489.3538577068
+	};
+
+#endif
 
 void raw_to_distance(int32_t const * raw, float * distance)
 {

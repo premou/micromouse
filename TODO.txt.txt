@@ -1,3 +1,6 @@
+P0 : Rédiger TUTO pour régler le robot
+P0 : Coder les scénarios de réglage
+
 P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
 P1 : Faire un fichier dédié pour toute la configuration du robot avec les directives de précompilation par robot
 
@@ -5,15 +8,19 @@ P2 : Augmenter légèrement la longueur d'application du PID position wall followi
 
 P3 : Clean Up configuration (inutile)
 P3 : Monitor Heading and Distance
+P3 : Passer à 0.5m/s
 
 
-DONE
-Calibrer distance parcourue et ajuster diamètre des roues (encoder.h)
-Tester action STILL
-Tester calibration longitudinale avec mur ou post, mur et post
-Tester speed fast run avec fixed moves
-Coder RAND MOVES with fence detection
-TEST DU CARRE 3x3 (dérive gyro/ erreur distance/rotation PID)
-STRESS TEST 5x5 avec seulement des POSTS et une bordure (RAND MOVE)
-Recoder L curve et calibration front wall position (voir article PDF)
+P4 : ..\Src\maze_ctx.c:411:13: warning: 'min_dist_index' may be used uninitialized in this function [-Wmaybe-uninitialized]
+
+
+DONE :
+* Calibrer distance parcourue et ajuster diamètre des roues (encoder.h)
+* Tester action STILL
+* Tester calibration longitudinale avec mur ou post, mur et post
+* Tester speed fast run avec fixed moves
+* Coder RAND MOVES with fence detection
+* TEST DU CARRE 3x3 (dérive gyro/ erreur distance/rotation PID)
+* STRESS TEST 5x5 avec seulement des POSTS et une bordure (RAND MOVE)
+* Recoder L curve et calibration front wall position (voir article PDF)
 

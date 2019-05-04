@@ -5,8 +5,9 @@
  *      Author: Invite
  */
 
-#include <robot_math.h>
 #include "main.h"
+#include "personnalisation.h"
+#include "robot_math.h"
 #include "motor.h"
 
 extern TIM_HandleTypeDef htim1;
@@ -29,8 +30,6 @@ void motor_speed_right(float pwm){
 		HAL_GPIO_WritePin(RIGHT_DIR1_GPIO_Port,RIGHT_DIR1_Pin,GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(RIGHT_DIR2_GPIO_Port,RIGHT_DIR2_Pin,GPIO_PIN_SET);
 		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,speed_right);
-		//HAL_GPIO_WritePin(RIGHT_PWM_GPIO_Port,RIGHT_PWM_Pin,GPIO_PIN_SET); //GPIO
-
 	}
 	else if(speed_right<0)
 	{
@@ -41,8 +40,6 @@ void motor_speed_right(float pwm){
 		HAL_GPIO_WritePin(RIGHT_DIR1_GPIO_Port,RIGHT_DIR1_Pin,GPIO_PIN_SET);
 		HAL_GPIO_WritePin(RIGHT_DIR2_GPIO_Port,RIGHT_DIR2_Pin,GPIO_PIN_RESET);
 		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,(-speed_right));
-		// HAL_GPIO_WritePin(RIGHT_PWM_GPIO_Port,RIGHT_PWM_Pin,GPIO_PIN_SET); //GPIO
-
 	}
 	else if(speed_right==0)
 	{
@@ -50,11 +47,7 @@ void motor_speed_right(float pwm){
 		HAL_GPIO_WritePin(RIGHT_DIR1_GPIO_Port,RIGHT_DIR1_Pin,GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(RIGHT_DIR2_GPIO_Port,RIGHT_DIR2_Pin,GPIO_PIN_RESET);
 		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,0);
-		//HAL_GPIO_WritePin(RIGHT_PWM_GPIO_Port,RIGHT_PWM_Pin,GPIO_PIN_SET); //GPIO
-
 	}
-
-
 }
 
 void motor_speed_left(float pwm){
@@ -67,24 +60,32 @@ void motor_speed_left(float pwm){
 		if(speed_left > 100){
 			speed_left = 100;
 		}
+#ifdef __PATRICK__
+		//moteur allume GAUCHE avant
+		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_SET);
+		HAL_GPIO_WritePin(LEFT_DIR2_GPIO_Port,LEFT_DIR2_Pin,GPIO_PIN_RESET);
+#else
 		//moteur allume GAUCHE avant
 		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LEFT_DIR2_GPIO_Port,LEFT_DIR2_Pin,GPIO_PIN_SET);
+#endif
 		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,speed_left);
-		//HAL_GPIO_WritePin(LEFT_PWM_GPIO_Port,LEFT_PWM_Pin,GPIO_PIN_SET); //GPIO
-
 	}
 	else if(speed_left<0)
 	{
 		if(speed_left < -100){
 			speed_left = -100;
 		}
+#ifdef __PATRICK__
+		//moteur allume GAUCHE marche arriere
+		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LEFT_DIR2_GPIO_Port,LEFT_DIR2_Pin,GPIO_PIN_SET);
+#else
 		//moteur allume GAUCHE marche arriere
 		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_SET);
 		HAL_GPIO_WritePin(LEFT_DIR2_GPIO_Port,LEFT_DIR2_Pin,GPIO_PIN_RESET);
+#endif
 		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,(-speed_left));
-		// HAL_GPIO_WritePin(LEFT_PWM_GPIO_Port,LEFT_PWM_Pin,GPIO_PIN_SET); //GPIO
-
 	}
 	else if(speed_left==0)
 	{
@@ -92,7 +93,5 @@ void motor_speed_left(float pwm){
 		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LEFT_DIR2_GPIO_Port,LEFT_DIR2_Pin,GPIO_PIN_RESET);
 		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,0);
-		//HAL_GPIO_WritePin(LEFT_PWM_GPIO_Port,LEFT_PWM_Pin,GPIO_PIN_SET); //GPIO
-
 	}
 }
