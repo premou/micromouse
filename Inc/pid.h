@@ -18,12 +18,14 @@ typedef struct{
 	float Kp;
 	float Ki;
 	float Kd;
+	float alpha;
 
+	float err_filtered;
 	float err_previous;
 	float err_sum;
 }pid_context_t;
 
-void pid_init(pid_context_t *ctx, float Kp, float Ki, float Kd);
+void pid_init(pid_context_t *ctx, float Kp, float Ki, float Kd, float alpha);
 
 void pid_reset(pid_context_t *ctx);
 

@@ -54,8 +54,6 @@ extern HAL_Serial_Handler com;
 #define X_SPEED_FAST_RUN_IMPROVED 0.7 // m/s
 
 
-
-
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 // m
 #define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 // m
 
@@ -232,7 +230,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.x_speed_setpoint = 0;
 	ctx.x_speed_error = 0;
 	ctx.x_speed_pwm = 0;
-	pid_init(&ctx.x_speed_pid, X_SPEED_KP, X_SPEED_KI, X_SPEED_KD);
+	pid_init(&ctx.x_speed_pid, X_SPEED_KP, X_SPEED_KI, X_SPEED_KD, 0.5);
 
 	// rotation speed PID
 	ctx.w_speed_target = 0;
@@ -240,7 +238,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.w_speed_setpoint = 0;
 	ctx.w_speed_error = 0;
 	ctx.w_speed_pwm = 0;
-	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD);
+	pid_init(&ctx.w_speed_pid, W_SPEED_KP, W_SPEED_KI, W_SPEED_KD, 0.5);
 
 	// wall following position PID
 	ctx.wall_position_target = 0;
@@ -248,7 +246,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.wall_position_current = 0;
 	ctx.wall_position_error = 0;
 	ctx.wall_position_pwm = 0;
-	pid_init(&ctx.wall_position_pid, WALL_POSITION_KP, WALL_POSITION_KI, WALL_POSITION_KD);
+	pid_init(&ctx.wall_position_pid, WALL_POSITION_KP, WALL_POSITION_KI, WALL_POSITION_KD, 0.9);
 
 	// front wall distance position PID
 	ctx.x_wall_front_target = 0;
@@ -256,7 +254,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.x_wall_front_current = 0;
 	ctx.x_wall_front_error = 0;
 	ctx.x_wall_front_pwm = 0;
-	pid_init(&ctx.x_wall_front_pid, X_WALL_FRONT_KP, X_WALL_FRONT_KI, X_WALL_FRONT_KD);
+	pid_init(&ctx.x_wall_front_pid, X_WALL_FRONT_KP, X_WALL_FRONT_KI, X_WALL_FRONT_KD, 0.9);
 
 	// front wall angle position PID
 	ctx.w_wall_front_target = 0;
@@ -264,7 +262,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.w_wall_front_current = 0;
 	ctx.w_wall_front_error = 0;
 	ctx.w_wall_front_pwm = 0;
-	pid_init(&ctx.w_wall_front_pid, W_WALL_FRONT_KP, W_WALL_FRONT_KI, W_WALL_FRONT_KD);
+	pid_init(&ctx.w_wall_front_pid, W_WALL_FRONT_KP, W_WALL_FRONT_KI, W_WALL_FRONT_KD, 0.9);
 
 	// longitudinal calibration (wall-to-no-wall, post-to-no-post)
 	ctx.calibration_state = CALIBRATION_IDLE;
@@ -474,9 +472,13 @@ void controller_update(){
 
 				(int32_t)(ctx.x_speed_setpoint * 1000.0),// setpoint speed
 				(int32_t)(ctx.x_speed_current* 1000.0),	 // current speed
+				//(int32_t)(ctx.x_speed_pid.err_filtered* 1000.0),	 // current speed
+				//(int32_t)(ctx.x_speed_pwm * 10.0),	 // current speed
 
 				(int32_t)(ctx.w_speed_setpoint * 1.0),// setpoint speed
 				(int32_t)(ctx.w_speed_current* 1.0),	 // current speed
+				//(int32_t)(ctx.w_speed_pid.err_filtered* 1.0),	 // current speed
+				//(int32_t)(ctx.w_speed_pwm * 10.0),	 // current speed
 
 				(int32_t)(ctx.wall_position_setpoint * 1000.0),// setpoint speed
 				(int32_t)(ctx.wall_position_current* 1000.0),	 // current speed
