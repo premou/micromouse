@@ -5,24 +5,23 @@ import processing.opengl.*;
 import saito.objloader.*;
 import g4p_controls.*;
 
+int MAX_ITERATION = 1600;
+
 Float xspeed_target = 0.0f;
 Float xspeed_actual = 0.0f;
-Float xpwm = 0.0f;
 Float wspeed_target = 0.0f;
 Float wspeed_actual = 0.0f;
-Float wpwm = 0.0f;
-Float wspeed_gyro = 0.0f;
-Float heading_gyro = 0.0f;
+
+Float xspeed_target_zoom = 250.0f;
+Float xspeed_actual_zoom = 250.0f;
+Float wspeed_target_zoom = 5.5f;
+Float wspeed_actual_zoom = 5.5f;
 
 int iteration  = 0;
-Float[] xspeed_target_history = new Float[1000];
-Float[] xspeed_actual_history = new Float[1000];
-Float[] xpwm_history = new Float[1000];
-Float[] wspeed_target_history = new Float[1000];
-Float[] wspeed_actual_history = new Float[1000];
-Float[] wpwm_history = new Float[1000];
-Float[] wspeed_gyro_history = new Float[1000];
-Float[] heading_gyro_history = new Float[1000];
+Float[] xspeed_target_history = new Float[1600];
+Float[] xspeed_actual_history = new Float[1600];
+Float[] wspeed_target_history = new Float[1600];
+Float[] wspeed_actual_history = new Float[1600];
 
 Float zoom = 1.0f;
 Float offset_x = 250.0f;
@@ -35,7 +34,7 @@ Serial       port;
 
 void setup()
 {
-  size(1000, 1000, OPENGL);
+  size(1600, 1000, OPENGL);
   frameRate(30);
   font = createFont("ArialMT", 48, true);
   // Open port.
@@ -48,42 +47,29 @@ void draw()
   background(255);
   stroke(0,0,0);
   strokeWeight(1);
-  line (0, offset_x, 0, 1000, offset_x, 0);
-  line (0, offset_w, 0, 1000, offset_w, 0);
+  line (0, offset_x, 0, 1600, offset_x, 0);
+  line (0, offset_w, 0, 1600, offset_w, 0);
   if(iteration>=1000)
   {
-    for (int i = 0; i < 1000; i++) 
+    for (int i = 0; i < 1600; i++) 
     {
       // xspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_x-xspeed_target_history[i]*250.0,0); 
+      point(i,offset_x-xspeed_target_history[i]*xspeed_target_zoom,0); 
       // xspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_x-xspeed_actual_history[i]*250.0,0); 
-      // xPWM
-      stroke(255,0,0);
-      strokeWeight(2);
-      point(i,offset_x-xpwm_history[i]*0.5,0); 
+      point(i,offset_x-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
       
       // wspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_w-wspeed_target_history[i]*5.0,0); 
+      point(i,offset_w-wspeed_target_history[i]*wspeed_target_zoom,0); 
       // wspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_w-wspeed_actual_history[i]*5.0,0); 
-      // wspeed gyro
-      stroke(0,255,0);
-      strokeWeight(3);
-      point(i,offset_w-wspeed_gyro_history[i]*5.0,0);       
-      // wPWM
-      stroke(255,0,0);
-      strokeWeight(2);
-      point(i,offset_w-wpwm_history[i]*0.5,0); 
-
+      point(i,offset_w-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
     }
   }
   else
@@ -93,32 +79,21 @@ void draw()
       // xspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_x-xspeed_target_history[i]*250.0,0); 
+      point(i,offset_x-xspeed_target_history[i]*xspeed_target_zoom,0); 
       // xspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_x-xspeed_actual_history[i]*250.0,0); 
-      // xPWM
-      //stroke(255,0,0);
-      //strokeWeight(2);
-      //point(i,offset_x-xpwm_history[i]*0.5,0); 
+      point(i,offset_x-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
       
       // wspeed
       stroke(0,0,0);
       strokeWeight(2);
-      point(i,offset_w-wspeed_target_history[i]*5.0,0); 
+      point(i,offset_w-wspeed_target_history[i]*wspeed_target_zoom,0); 
       // wspeed
       stroke(0,0,255);
       strokeWeight(3);
-      point(i,offset_w-wspeed_actual_history[i]*5.0,0); 
-      // wspeed gyro
-      //stroke(0,255,0);
-      //strokeWeight(3);
-      //point(i,offset_w-wspeed_gyro_history[i]*5.0,0);       
-      // wPWM
-      //stroke(255,0,0);
-      //strokeWeight(2);
-      //point(i,offset_w-wpwm_history[i]*0.5,0); 
+      point(i,offset_w-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+
     }
   }
   
@@ -213,15 +188,20 @@ void serialEvent(Serial p)
         xspeed_target = float(list[4])/1000.0f;
         xspeed_actual = float(list[5])/1000.0f;
 
-        wspeed_target = float(list[6])/10.0f;
-        wspeed_actual = float(list[7])/10.0f;
+        wspeed_target = float(list[6])/1.0f;
+        wspeed_actual = float(list[7])/1.0f;
+
 
        
-        xspeed_target_history[iteration%1000] = xspeed_target;
-        xspeed_actual_history[iteration%1000] = xspeed_actual;
+       
+       
+       
+       
+        xspeed_target_history[iteration%1600] = xspeed_target;
+        xspeed_actual_history[iteration%1600] = xspeed_actual;
 
-        wspeed_target_history[iteration%1000] = wspeed_target;
-        wspeed_actual_history[iteration%1000] = wspeed_actual;
+        wspeed_target_history[iteration%1600] = wspeed_target;
+        wspeed_actual_history[iteration%1600] = wspeed_actual;
 
        ++iteration;
     }

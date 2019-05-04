@@ -66,10 +66,11 @@
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
 #define 	WHEEL_DIAMETER      0.026000F	// 26mm
 
-// NOW, use visualization to adjust all these parameters in order to :
-// >>> distance traveled must be equal to 180 cm
+// NOW, use visualization and physics to adjust all these parameters in order to :
+// >>> physics : distance traveled must be equal to 180 cm
+// >>> visualization : actual forward speed must follow current forward speed
 
-// 006. Undefine SC1_START_STOP (comment) and continue tests and configutation
+// 006. Undefine SC1_START_STOP (comment) and continue tests and configuration
 
 
 
