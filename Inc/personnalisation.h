@@ -57,6 +57,8 @@
 
 #ifdef __PATRICK__
 
+// Recommendation : Always charge up battery to maximum capacity/voltage (8.4V)
+
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
@@ -110,13 +112,13 @@
 //     deceleration = W_MAX_DECELERATION
 //     max angular vel = W_SPEED
 //     mouse width = 70
-#define 	W_SPEED 			450.0F		// unit : dps
+#define 	W_SPEED 			460.0F		// unit : dps
 #define 	W_T1 				200 		// unit : ms
 #define 	W_T2 				256			// unit : ms
 
 // 2.03. Set rotation acceleration
 #define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
-#define		W_MAX_DECELERATION 	8000		// unit : dpz^2
+#define		W_MAX_DECELERATION 	8000		// unit : dps^2
 
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
