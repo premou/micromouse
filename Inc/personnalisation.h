@@ -33,6 +33,7 @@
 
 #ifdef __FRANCOIS__
 
+#define 	VOLTAGE_RATIO 		0.092F 		// unit : ratio
 #define 	X_SPEED 			0.34F 		// unit : m/s
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
 #define 	X_MAX_DECELERATION 	3.0F		// unit : m/s^2
@@ -58,6 +59,14 @@
 #ifdef __PATRICK__
 
 // Recommendation : Always charge up battery to maximum capacity/voltage (8.4V)
+
+// 0.01. Adjust voltage divider ration
+#define 	VOLTAGE_RATIO 			0.178F 		// unit : ratio
+//#define VOLTAGE_TRACE //to see voltage when IDLE
+
+// 0.02. Use "banc micromouse" to calibrate wall IR sensors (see. WallSensorCallibration.h)
+#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
+//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
@@ -101,7 +110,7 @@
 // 2.01 Set the sensitivity correction
 // >>> physics using turn table : one turn gives 360° heading exactly (display heading)
 #define 	GYRO_SENSITIVITY_CORRECTION 		1.025F	// unit : %
-// define IMU_TRACE to see heading when IDLE, or upload datalogger and watch telemetry
+// #define IMU_TRACE //to see heading when IDLE, or upload datalogger and watch telemetry
 
 // 2.02 Set rotation speed of curve turn
 // >>> use Trapezoidal-Curve-Turn-Profile-Generator
@@ -112,7 +121,7 @@
 //     deceleration = W_MAX_DECELERATION
 //     max angular vel = W_SPEED
 //     mouse width = 70
-#define 	W_SPEED 			460.0F		// unit : dps
+#define 	W_SPEED 			455.0F		// unit : dps
 #define 	W_T1 				200 		// unit : ms
 #define 	W_T2 				256			// unit : ms
 
@@ -123,8 +132,10 @@
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
-#define SC2_SQUARE_TEST_1_TURN
+//#define SC2_SQUARE_TEST_1_TURN
+//#define SC2_SQUARE_TEST_2_TURN
 
+// 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
 
 
 

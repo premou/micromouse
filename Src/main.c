@@ -206,45 +206,47 @@ int main(void)
 	  {
 	  case IDLE :
 	  {
-			motor_speed_left(0);
-			motor_speed_right(0);
+		motor_speed_left(0);
+		motor_speed_right(0);
 
-		  gyro_auto_calibrate();
+		gyro_auto_calibrate();
 
-		  // IR LED/PHOTO calibration setup ONLY
-          // comment all theses line of code when running micromouse
-		  if(0)
-		  {
-			  static uint32_t time = 0;
-			  if( HAL_GetTick() >= time + 500) // every 0.1 sec
-			  {
-					encoder_update();
-				  time = HAL_GetTick(); // update time
-				  HAL_Serial_Print(&com,"%d\r\n",
-						  (int32_t)(encoder_get_absolute()*1000.0)
-						  );
-				  HAL_Delay(10);
-			  }
-
-		  }
-		  if(0)
-		  {
-			  static uint32_t time = 0;
-			  if( HAL_GetTick() >= time + 200)
-			  {
-				  time = HAL_GetTick(); // update time
-				  wall_sensor_update();
-				  HAL_Serial_Print(&com,"%d %d %d %d\r\n",
-						  wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG),
-						  wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT),
-						  wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT),
-						  wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
-						  );
-				  HAL_Delay(10);
-			  }
-
-		  }
-		  if(0)
+#ifdef VOLTAGE_TRACE
+		  HAL_Serial_Print(&com,"voltage=%d mV\r\n",(int)(HAL_Battery_Get(0)*1000.0f));
+		  HAL_Delay(1000);
+#endif
+#ifdef ENCODER_TRACE
+	{
+		static uint32_t time = 0;
+		if( HAL_GetTick() >= time + 500)
+		{
+			encoder_update();
+			time = HAL_GetTick(); // update time
+			HAL_Serial_Print(&com,"%d\r\n",
+					(int32_t)(encoder_get_absolute()*1000.0)
+				);
+			HAL_Delay(10);
+		}
+	}
+#endif
+#ifdef RAW_IR_TRACE
+	{
+		static uint32_t time = 0;
+		if( HAL_GetTick() >= time + 200)
+		{
+			time = HAL_GetTick(); // update time
+			wall_sensor_update();
+			HAL_Serial_Print(&com,"%d %d %d %d\r\n",
+				  wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG),
+				  wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT),
+				  wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT),
+				  wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
+				  );
+			HAL_Delay(10);
+		}
+	}
+#endif
+#ifdef CALIBRATED_IR_TRACE
 		  {
 			  static uint32_t time = 0;
 			  if( HAL_GetTick() >= time + 200) // every 0.1 sec
@@ -264,7 +266,7 @@ int main(void)
 			  }
 
 		  }
-
+#endif
 		  // decode CLI
 		  while(HAL_Serial_Available(&com)>0)
 		  {
@@ -325,8 +327,8 @@ int main(void)
 			motor_speed_left(0);
 			motor_speed_right(0);
 
-		  // wait for 1.4s before running
-		  if (tim_start + 1400 < HAL_GetTick() ){
+		  // wait for 1.0s before running
+		  if (tim_start + 1000 < HAL_GetTick() ){
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
 			  current_state = RUNNING;

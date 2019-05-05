@@ -11,6 +11,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "personnalisation.h"
+
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -27,8 +29,8 @@ enum VBATT_ID
 };
 
 static float const hal_battery_voltage_hw_ration[VBATT_COUNT] = {
-	0.092f, // calibrated, measured on board
-	0.092f
+		VOLTAGE_RATIO, // calibrated, measured on board
+		VOLTAGE_RATIO
 };
 
 static float const hal_battery_voltage_low_threshold[VBATT_COUNT] = {
