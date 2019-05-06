@@ -45,16 +45,14 @@ extern HAL_Serial_Handler com;
 ////////////
 
 // speed
-#define X_SPEED_FAST_RUN 0.5 // m/s
-#define X_SPEED_FAST_RUN_IMPROVED 0.7 // m/s
+#define X_SPEED_FAST_RUN 0.7 // m/s
+#define X_SPEED_FAST_RUN_IMPROVED 1.0 // m/s
 
 // U turn
 //#define W_U_T1 890 					//in ms
 #define W_U_T1 280 					//in ms
 //#define W_U_T2 930					//in ms
 //#define W_U_T2 465					//in ms
-
-// wall following position  PID
 
 // front wall distance position  PID
 #define X_WALL_FRONT_KP 1.0
