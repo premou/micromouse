@@ -50,9 +50,9 @@ extern HAL_Serial_Handler com;
 
 // U turn
 //#define W_U_T1 890 					//in ms
-#define W_U_T1 445 					//in ms
+#define W_U_T1 280 					//in ms
 //#define W_U_T2 930					//in ms
-#define W_U_T2 465					//in ms
+//#define W_U_T2 465					//in ms
 
 // wall following position  PID
 #define WALL_POSITION_KP 0.3
@@ -579,6 +579,13 @@ action_t actions_scenario[] =
 		ACTION_TURN_RIGHT,
 		ACTION_STOP,
 #endif
+#ifdef SC3_U_TURN
+		ACTION_RUN_1,
+		ACTION_U_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
+
 //		ACTION_RUN_1,
 //		ACTION_TURN_RIGHT,
 //		ACTION_RUN_1,

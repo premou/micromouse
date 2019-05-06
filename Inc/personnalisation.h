@@ -14,8 +14,8 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-//#define __FRANCOIS__
-#define __PATRICK__ 	// Patrick has the prototype HW
+#define __FRANCOIS__
+//#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
 
@@ -32,6 +32,7 @@
 #endif
 
 #ifdef __FRANCOIS__
+
 
 #define 	VOLTAGE_RATIO 		0.092F 		// unit : ratio
 #define 	FRONT_WALL_DISTANCE 				320		// unit : mm
@@ -63,6 +64,10 @@
 #define 	W_MAX_ACCELERATION 	5000		// unit : dps^2
 #define		W_MAX_DECELERATION 	5000		// unit : dpz^2
 
+// 1.00. Define FIXED_MOVES for the following tests and configuration
+//#define FIXED_MOVES // disable AI
+//#define SC2_SQUARE_TEST_1_TURN
+//#define SC3_U_TURN
 #endif
 
 #ifdef __PATRICK__
@@ -169,7 +174,7 @@
 
 
 
-
+//#define SC3_U_TURN
 
 #endif
 
