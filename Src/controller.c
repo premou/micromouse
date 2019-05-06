@@ -55,10 +55,6 @@ extern HAL_Serial_Handler com;
 //#define W_U_T2 465					//in ms
 
 // wall following position  PID
-#define WALL_POSITION_KP 0.3
-#define WALL_POSITION_KI 0.0
-#define WALL_POSITION_KD 1.0
-#define WALL_POSITION_OFFSET 0
 
 // front wall distance position  PID
 #define X_WALL_FRONT_KP 1.0
@@ -279,7 +275,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 			4, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 
-			4, 	// size in bytes of each field
+			1, 	// size in bytes of each field
 			4, 	// size in bytes of each field
 
 			4, 	// size in bytes of each field
@@ -389,14 +385,14 @@ void controller_update(){
 				//(int32_t)(ctx.w_speed_pid.err_filtered* 1.0),	 // current speed
 				//(int32_t)(ctx.w_speed_pwm * 10.0),	 // current speed
 
-				(int32_t)(ctx.wall_position_setpoint * 1000.0),// setpoint speed
+				(int32_t)(ctx.current_pid_type * 1.0),// setpoint speed
 				(int32_t)(ctx.wall_position_current* 1000.0),	 // current speed
 
-				(int32_t)(ctx.x_wall_front_setpoint * 1000.0),// setpoint speed
-				(int32_t)(ctx.x_wall_front_current* 1000.0),	 // current speed
+				(int32_t)(ctx.x_wall_front_setpoint * 1.0),// setpoint speed
+				(int32_t)(ctx.x_wall_front_current* 1.0),	 // current speed
 
-				(int32_t)(ctx.w_wall_front_setpoint),// integer value of each field
-				(int32_t)(ctx.w_wall_front_current),	 // integer value of each field
+				(int32_t)(ctx.w_wall_front_setpoint * 1.0F),// integer value of each field
+				(int32_t)(ctx.w_wall_front_current * 1.0F),	 // integer value of each field
 
 				  (int32_t)wall_sensor_get_dist(WALL_SENSOR_LEFT_DIAG),
 				  (int32_t)wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT),

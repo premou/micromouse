@@ -39,7 +39,7 @@
 #define 	SIDE_WALL_DISTANCE 					110		// unit : mm
 #define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	87.0	// unit : mm
 #define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	63.0	// unit : mm
-#define 	SIDE_OFFSET 						0.0		// unit : mm
+#define 	WALL_POSITION_OFFSET				0.0		// unit : mm
 #define 	REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
 #define 	REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 #define 	WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
@@ -64,6 +64,9 @@
 #define 	W_T2 				345			// unit : ms
 #define 	W_MAX_ACCELERATION 	5000		// unit : dps^2
 #define		W_MAX_DECELERATION 	5000		// unit : dpz^2
+#define 	WALL_POSITION_KP 	0.3		// this is a position parameter
+#define 	WALL_POSITION_KI 	0.0
+#define 	WALL_POSITION_KD 	1.0		// this is a speed parameter
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
 //#define FIXED_MOVES // disable AI
@@ -86,7 +89,7 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
@@ -98,7 +101,7 @@
 // distance to right wall when mouse in middle
 #define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	60.0	// unit : mm
 // distance offset betwwen right and left wall when mouse in middle
-#define 	SIDE_OFFSET 						0.0		// unit : mm
+#define 	WALL_POSITION_OFFSET				0.0		// unit : mm
 // position of micromouse when wall fades (140mm)
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
 // position of micromouse when post fades (140mm)
@@ -179,9 +182,33 @@
 
 // 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
 
-// wall following test
+// Next, we set the parameters for wall following
+
+// 3.01. Set PID parameters (Kp,Kd) for WALL POSITION PID
+#define 	WALL_POSITION_KP 	0.5		// this is a position parameter
+#define 	WALL_POSITION_KI 	0.0
+#define 	WALL_POSITION_KD 	0.0		// this is a speed parameter
+
+// 3.02. use visualization and physics to adjust all these parameters in order to :
+// >>> physics : mouse moves forward in the middle of celle and avoids walls
+#define SC3_START_RUN3_STOP
+// adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
+// adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
+// adjust distances WALL_POSITION_OFFSET
+// to get smooth transition between one or two wall following.
+#define WALL_FOLLOWING_TRACE  //to see wall position when IDLE, or upload datalogger and watch telemetry
+
+// 3.02. Undefine SC3_xxx (comment) and continue tests and configuration
+
+
+
+
 
 // wall calibration test
+
+// carré wih front wall calibration test
+
+// U TURN Test & code.
 
 //#define SC3_U_TURN
 

@@ -123,7 +123,7 @@ float wall_sensor_get_side_error(){
 
 	if(wall_sensor_is_left_wall_detected() && wall_sensor_is_right_wall_detected())
 	{
-		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG] + SIDE_OFFSET;
+		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG] + WALL_POSITION_OFFSET;
 	}
 	else if(wall_sensor_is_left_wall_detected())
 	{

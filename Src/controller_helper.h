@@ -98,8 +98,8 @@ void speed_control_with_wall_following(float x_speed_target)
 	pid_reset(&ctx.w_speed_pid);
 
 	// wall following position PID
-	ctx.wall_position_target = WALL_POSITION_OFFSET;
-	ctx.wall_position_setpoint = WALL_POSITION_OFFSET;
+	ctx.wall_position_target = 0.0F;
+	ctx.wall_position_setpoint = 0.0F;
 	ctx.wall_position_current = wall_sensor_get_side_error();
 	ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
 	ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
@@ -335,7 +335,12 @@ action_t actions_scenario[] =
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
-
+#ifdef SC3_START_RUN3_STOP
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
 //		ACTION_RAND,
 //		ACTION_RAND,
 //		ACTION_RAND,
