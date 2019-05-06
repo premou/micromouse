@@ -179,7 +179,9 @@
 
 // 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
 
+// wall following test
 
+// wall calibration test
 
 //#define SC3_U_TURN
 
