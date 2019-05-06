@@ -1684,7 +1684,8 @@ void controller_fsm()
 #else
 					if(ctx.maze.mode == SOLVE)
 					{
-						display_maze_ctx(&ctx.maze);
+						// For debug purpose
+						//display_maze_ctx(&ctx.maze);
 					}
 #endif
 				}

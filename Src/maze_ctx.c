@@ -1317,6 +1317,8 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
                     // Check if the last action is done in an unknown case ?
                     if((pCtx->maze_array[pCtx->current_x][pCtx->current_y] & CASE_VISITED) != CASE_VISITED)
                     {
+                    	HAL_Serial_Print(&com, ">[cancel last action list]>");
+
                     	// Revert the current action
                     	action_flag = 0;
                     	pCtx->current_x         = restore_x;
