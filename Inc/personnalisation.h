@@ -34,6 +34,15 @@
 #ifdef __FRANCOIS__
 
 #define 	VOLTAGE_RATIO 		0.092F 		// unit : ratio
+#define 	FRONT_WALL_DISTANCE 				320		// unit : mm
+#define 	SIDE_WALL_DISTANCE 					110		// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	87.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	63.0	// unit : mm
+#define 	SIDE_OFFSET 						0.0		// unit : mm
+#define 	REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
+#define 	REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
+#define 	WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
+#define 	WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 #define 	X_SPEED 			0.34F 		// unit : m/s
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
 #define 	X_MAX_DECELERATION 	3.0F		// unit : m/s^2
@@ -61,6 +70,7 @@
 // Recommendation : Always charge up battery to maximum capacity/voltage (8.4V)
 
 // 0.01. Adjust voltage divider ration
+// >>> use a power supply with voltage output settings to 8.00V
 #define 	VOLTAGE_RATIO 			0.178F 		// unit : ratio
 //#define VOLTAGE_TRACE //to see voltage when IDLE
 
@@ -68,9 +78,25 @@
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
 #define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
-// TODO faire un banc pour positionner les capteurs
-// TODO : relever distance to post-to-no-post; wall to no wall; side error, wall distance detected, wallf font distance and angle for U turn
-
+// 0.03. Use "banc micromouse " to set the distance to walls
+// maximal distance to front wall (sum of both sensors)
+#define 	FRONT_WALL_DISTANCE 				320		// unit : mm
+// maximal distance to left or right wall
+#define 	SIDE_WALL_DISTANCE 					110		// unit : mm
+// distance to left wall when mouse in middle
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	87.0	// unit : mm
+// distance to right wall when mouse in middle
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	63.0	// unit : mm
+// distance offset betwwen right and left wall when mouse in middle
+#define 	SIDE_OFFSET 						0.0		// unit : mm
+// position of micromouse when wall fades (140mm)
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
+// position of micromouse when post fades (140mm)
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
+// distance to front wall when micromouse doint dead end turn back
+#define WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
+// distance offset to front wall when micromouse doint dead end turn back
+#define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 

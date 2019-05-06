@@ -3,18 +3,12 @@
 #include "WallSensorCalibration.h"
 #include "timer_us.h"
 #include "main.h"
+#include "personnalisation.h"
 
 #include <string.h>
 #include <math.h>
 
 /* APP settings ------------------------------------------------------------------*/
-
-#define FRONT_WALL_DISTANCE 320 //mm distance to front wall (sum of both left and right sensors) to be detected
-#define SIDE_WALL_DISTANCE  110 //mm distance to side wall to be detected
-
-#define LEFT_WALL_DISTANCE_NO_SIDE_ERROR 87.0			//mm distance to left wall when mouse in the middle line
-#define RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 63.0		//mm distance to right wall when mouse in the middle line
-#define SIDE_OFFSET 0.0		//mm distance offset when mouse in the middle line
 
 static uint16_t const id_to_pin[WALL_SENSOR_COUNT] = {
 	IR_LED_DL_Pin, // DL

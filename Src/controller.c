@@ -48,10 +48,6 @@ extern HAL_Serial_Handler com;
 #define X_SPEED_FAST_RUN 0.5 // m/s
 #define X_SPEED_FAST_RUN_IMPROVED 0.7 // m/s
 
-
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 // m
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 // m
-
 // U turn
 //#define W_U_T1 890 					//in ms
 #define W_U_T1 445 					//in ms
@@ -68,13 +64,11 @@ extern HAL_Serial_Handler com;
 #define X_WALL_FRONT_KP 1.0
 #define X_WALL_FRONT_KI 0.0001
 #define X_WALL_FRONT_KD 0.0
-#define WALL_FRONT_DISTANCE_mm 32.0 // mm
 
 // front wall angle position  PID
 #define W_WALL_FRONT_KP 1.0
 #define W_WALL_FRONT_KI 0.0001
 #define W_WALL_FRONT_KD 0.0
-#define WALL_FRONT_ANGLE_mm 0.0 // mm
 
 ////////////
 // end of settings (To Be Deleted)
