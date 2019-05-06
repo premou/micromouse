@@ -65,8 +65,12 @@
 //#define VOLTAGE_TRACE //to see voltage when IDLE
 
 // 0.02. Use "banc micromouse" to calibrate wall IR sensors (see. WallSensorCallibration.h)
-#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+//#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
+#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+
+// TODO faire un banc pour positionner les capteurs
+// TODO : relever distance to post-to-no-post; wall to no wall; side error, wall distance detected, wallf font distance and angle for U turn
+
 
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 

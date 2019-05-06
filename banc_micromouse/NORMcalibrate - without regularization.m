@@ -25,11 +25,7 @@ for sensor = 1:4
   %X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX) ];
 
   %% theta
-  regul = eye(3,3);
-  regul(1,1) = 0;
-  regul(2,2) = 0.0;
-  regul(3,3) = 0.0;
-  theta = pinv(X'*X + regul)*X'*y
+  theta = pinv(X'*X)*X'*y
 
   #error over distance
   error = X*theta - y;
