@@ -14,8 +14,8 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-#define __FRANCOIS__
-//#define __PATRICK__ 	// Patrick has the prototype HW
+//#define __FRANCOIS__
+#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
 
@@ -44,6 +44,7 @@
 #define 	REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 #define 	WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
 #define 	WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
+#define		 WALL_FRONT_ANGLE_TURNING_mm 			170.0 	// unit : mm
 #define 	X_SPEED 			0.34F 		// unit : m/s
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
 #define 	X_MAX_DECELERATION 	3.0F		// unit : m/s^2
@@ -102,6 +103,8 @@
 #define WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
+// distance to front wall when micromouse doing curve turn
+#define WALL_FRONT_ANGLE_TURNING_mm 			170.0 	// unit : mm
 
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
