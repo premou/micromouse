@@ -81,6 +81,10 @@
 //#define VOLTAGE_TRACE //to see voltage when IDLE
 
 // 0.02. Use "banc micromouse" to calibrate wall IR sensors (see. WallSensorCallibration.h)
+// >> first check IR sensor orientation
+// 		>> front wall sensor open 5°
+// 		>> diagonal sensor point to middle of side walls when mouse placed before cell
+// >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
 #define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
@@ -88,11 +92,11 @@
 // maximal distance to front wall (sum of both sensors)
 #define 	FRONT_WALL_DISTANCE 				320		// unit : mm
 // maximal distance to left or right wall
-#define 	SIDE_WALL_DISTANCE 					110		// unit : mm
+#define 	SIDE_WALL_DISTANCE 					120		// unit : mm
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	87.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	65.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	63.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	60.0	// unit : mm
 // distance offset betwwen right and left wall when mouse in middle
 #define 	SIDE_OFFSET 						0.0		// unit : mm
 // position of micromouse when wall fades (140mm)
@@ -100,7 +104,7 @@
 // position of micromouse when post fades (140mm)
 #define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
-#define WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
+#define WALL_FRONT_DISTANCE_mm 					26.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 // distance to front wall when micromouse doing curve turn
