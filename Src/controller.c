@@ -467,7 +467,10 @@ void controller_fsm()
 		}
 
 		// move forward and use side walls
-		if( (encoder_get_absolute() <= DIST_RUN_1/2.0) && (wall_sensor_is_left_wall_detected() || wall_sensor_is_right_wall_detected()) )
+		// middle cell alignement (abandonned)
+		//if( (encoder_get_absolute() <= DIST_RUN_1/2.0) && (wall_sensor_is_left_wall_detected() || wall_sensor_is_right_wall_detected()) )
+		// wall collision avoidance
+		if( wall_sensor_get_side_error() != 0.0F )
 		{
 			ctx.current_pid_type = PID_TYPE_WALL;
 			speed_control_with_wall_following(x_speed_target);
