@@ -120,23 +120,32 @@ bool wall_sensor_is_right_wall_detected()
 }
 
 float wall_sensor_get_side_error(){
-
-	if(wall_sensor_is_left_wall_detected() && wall_sensor_is_right_wall_detected())
-	{
-		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG] + WALL_POSITION_OFFSET;
-	}
-	else if(wall_sensor_is_left_wall_detected())
+	if(ctx.distance[WALL_SENSOR_LEFT_DIAG]<LEFT_WALL_DISTANCE_NO_SIDE_ERROR)
 	{
 		return LEFT_WALL_DISTANCE_NO_SIDE_ERROR - ctx.distance[WALL_SENSOR_LEFT_DIAG] ;
 	}
-	else if(wall_sensor_is_right_wall_detected())
+	else if(ctx.distance[WALL_SENSOR_RIGHT_DIAG]<RIGHT_WALL_DISTANCE_NO_SIDE_ERROR)
 	{
 		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - RIGHT_WALL_DISTANCE_NO_SIDE_ERROR;
 	}
-	else
-	{
-		return(0.0);
-	}
+
+//
+//	if(wall_sensor_is_left_wall_detected() && wall_sensor_is_right_wall_detected())
+//	{
+//		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - ctx.distance[WALL_SENSOR_LEFT_DIAG] + WALL_POSITION_OFFSET;
+//	}
+//	else if(wall_sensor_is_left_wall_detected())
+//	{
+//		return LEFT_WALL_DISTANCE_NO_SIDE_ERROR - ctx.distance[WALL_SENSOR_LEFT_DIAG] ;
+//	}
+//	else if(wall_sensor_is_right_wall_detected())
+//	{
+//		return ctx.distance[WALL_SENSOR_RIGHT_DIAG] - RIGHT_WALL_DISTANCE_NO_SIDE_ERROR;
+//	}
+//	else
+//	{
+//		return(0.0);
+//	}
 
 	// This part of code should be never reached
 	return(0.0);

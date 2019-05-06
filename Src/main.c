@@ -270,24 +270,11 @@ int main(void)
 #ifdef WALL_FOLLOWING_TRACE
 		  {
 			  static uint32_t time = 0;
-			  float side_error = 0.0F;
 			  if( HAL_GetTick() >= time + 500) // every 0.1 sec
 			  {
 				  time = HAL_GetTick(); // update time
 				  wall_sensor_update();
-				if(wall_sensor_is_left_wall_detected() && wall_sensor_is_right_wall_detected())
-				{
-					side_error = wall_sensor_get_dist(WALL_SENSOR_RIGHT_DIAG) - wall_sensor_get_dist(WALL_SENSOR_LEFT_DIAG) + WALL_POSITION_OFFSET;
-				}
-				else if(wall_sensor_is_left_wall_detected())
-				{
-					side_error = LEFT_WALL_DISTANCE_NO_SIDE_ERROR - wall_sensor_get_dist(WALL_SENSOR_LEFT_DIAG) ;
-				}
-				else if(wall_sensor_is_right_wall_detected())
-				{
-					side_error =  wall_sensor_get_dist(WALL_SENSOR_RIGHT_DIAG) - RIGHT_WALL_DISTANCE_NO_SIDE_ERROR;
-				}
-				HAL_Serial_Print(&com,"%d\r\n",	  (int)side_error);
+				HAL_Serial_Print(&com,"%d\r\n",	  (int)wall_sensor_get_side_error());
 			  }
 		  }
 #endif

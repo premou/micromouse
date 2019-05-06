@@ -97,11 +97,9 @@
 // maximal distance to left or right wall
 #define 	SIDE_WALL_DISTANCE 					120		// unit : mm
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	65.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	70.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	60.0	// unit : mm
-// distance offset betwwen right and left wall when mouse in middle
-#define 	WALL_POSITION_OFFSET				0.0		// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	55.0	// unit : mm
 // position of micromouse when wall fades (140mm)
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
 // position of micromouse when post fades (140mm)
@@ -112,6 +110,10 @@
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 // distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_mm 			170.0 	// unit : mm
+// adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
+// adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
+// to get smooth transition between one or two wall following.
+//#define WALL_FOLLOWING_TRACE  //to see wall position when IDLE, or upload datalogger and watch telemetry
 
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
@@ -187,24 +189,20 @@
 // 3.01. Set PID parameters (Kp,Kd) for WALL POSITION PID
 #define 	WALL_POSITION_KP 	0.5		// this is a position parameter
 #define 	WALL_POSITION_KI 	0.0
-#define 	WALL_POSITION_KD 	0.0		// this is a speed parameter
+#define 	WALL_POSITION_KD 	10.0	// this is a speed parameter
 
 // 3.02. use visualization and physics to adjust all these parameters in order to :
-// >>> physics : mouse moves forward in the middle of celle and avoids walls
+// >>> physics : mouse moves forward in the middle of cell and avoids walls
 #define SC3_START_RUN3_STOP
-// adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
-// adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
-// adjust distances WALL_POSITION_OFFSET
-// to get smooth transition between one or two wall following.
-#define WALL_FOLLOWING_TRACE  //to see wall position when IDLE, or upload datalogger and watch telemetry
 
 // 3.02. Undefine SC3_xxx (comment) and continue tests and configuration
 
 
 
 
-
 // wall calibration test
+
+// front wall calibration test
 
 // carré wih front wall calibration test
 
