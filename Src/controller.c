@@ -75,6 +75,15 @@ typedef enum {
 	PID_TYPE_CTR
 } pid_type_t;
 
+typedef enum {
+	UTURN_NO_WALL,
+	UTURN_FRONT_WALL,
+	UTURN_FRONT_RIGHT_WALLS,
+	UTURN_RIGHT_WALL,
+	UTURN_FRONT_LEFT_WALLS,
+	UTURN_LEFT_WALL
+} uturn_type_t;
+
 enum {
 	CALIBRATION_IDLE,
 	CALIBRATION_NO_WALL,
@@ -100,6 +109,7 @@ typedef struct  {
 	uint32_t sub_action_index;
 	uint32_t gyro_state;
 	pid_type_t current_pid_type;
+	uturn_type_t current_uturn_type;
 
 	// forward speed PID
 	float x_speed_target;
@@ -206,6 +216,7 @@ uint32_t controller_init () // return GYRO ERROR (ZERO is GYRO OK)
 	ctx.sub_action_index = 0;
 	ctx.gyro_state = gyro_init();
 	ctx.current_pid_type = PID_TYPE_GYRO;
+	ctx.current_uturn_type = UTURN_NO_WALL;
 
 	// forward speed PID
 	ctx.x_speed_target = 0;
@@ -302,6 +313,7 @@ void controller_start()
 	ctx.action_time = HAL_GetTick();
 	ctx.sub_action_index = 0;
 	ctx.current_pid_type = PID_TYPE_GYRO;
+	ctx.current_uturn_type = UTURN_NO_WALL;
 
 	// reset all PID and setpoint
 	reset_speed_control();
@@ -331,6 +343,7 @@ void controller_stop()
 	ctx.action_time = HAL_GetTick();
 	ctx.sub_action_index = 0;
 	ctx.current_pid_type = PID_TYPE_GYRO;
+	ctx.current_uturn_type = UTURN_NO_WALL;
 
 	// reset all PID and setpoint
 	reset_speed_control();
@@ -613,6 +626,34 @@ void controller_fsm()
 				// CRUISE
 				case 0 :
 				{
+					// check wall and decide wich kind of dead end turn to do
+					if( wall_sensor_is_front_wall_detected() &&
+							wall_sensor_is_right_wall_detected() ) 	// 111 + 011
+					{
+						ctx.current_uturn_type = UTURN_FRONT_RIGHT_WALLS;
+					}
+					else if( wall_sensor_is_front_wall_detected() &&
+							wall_sensor_is_left_wall_detected() ) 	// 110
+					{
+						ctx.current_uturn_type = UTURN_FRONT_LEFT_WALLS;
+					}
+					else if(wall_sensor_is_front_wall_detected() ) 	// 010
+					{
+						ctx.current_uturn_type = UTURN_FRONT_WALL;
+					}
+					else if( wall_sensor_is_right_wall_detected() ) // 001 + 101
+					{
+						ctx.current_uturn_type = UTURN_RIGHT_WALL;
+					}
+					else if( wall_sensor_is_left_wall_detected() ) // 100
+					{
+						ctx.current_uturn_type = UTURN_LEFT_WALL;
+					}
+					else // 000
+					{
+						ctx.current_uturn_type = UTURN_NO_WALL;
+					}
+
 					// forward speed
 					ctx.x_speed_target = X_SPEED;
 					ctx.x_speed_setpoint = next_speed(ctx.x_speed_target, X_MAX_ACCELERATION, X_MAX_DECELERATION, CONTROLLER_PERDIO_F, ctx.x_speed_setpoint);
