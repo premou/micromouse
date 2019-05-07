@@ -54,6 +54,7 @@
 #define 	W_SPEED_KP 			0.1F 		// this is a speed parameter
 #define 	W_SPEED_KI 			0.004F 		// this is a position parameter
 #define 	W_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
+#define 	W_SPEED_KF 			0.02F 		// this is a feed forward speed input
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
 #define 	WHEEL_DIAMETER      0.026000F	// unit : mm
 #define 	INIT_GYRO_BIAS 						-1.530F	// unit : dps
@@ -67,10 +68,11 @@
 #define 	WALL_POSITION_KP 	0.3		// this is a position parameter
 #define 	WALL_POSITION_KI 	0.0
 #define 	WALL_POSITION_KD 	1.0		// this is a speed parameter
-#define 	W_U_T1_90			280 		// unit : ms
-#define 	W_U_T2_90			345			// unit : ms
-#define 	W_U_T1_180			560 		// unit : ms
-#define 	W_U_T2_180			625			// unit : ms
+#define 	W_U_SPEED 			360.0F		// unit : dps
+#define 	W_U_T1_90			260 		// unit : ms
+#define 	W_U_T2_90			310			// unit : ms
+#define 	W_U_T1_180			510 		// unit : ms
+#define 	W_U_T2_180			560			// unit : ms
 #define 	X_WALL_FRONT_KP 	1.0
 #define 	X_WALL_FRONT_KI 	0.0001
 #define 	X_WALL_FRONT_KD 	0.0
@@ -136,7 +138,7 @@
 #define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
-#define 	X_SPEED 			0.15 //0.450F 		// unit : m/s
+#define 	X_SPEED 			0.45 //0.450F 		// unit : m/s
 
 // 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
@@ -149,6 +151,7 @@
 #define 	W_SPEED_KP 			0.1F 		// this is a speed parameter
 #define 	W_SPEED_KI 			0.004F 		// this is a position parameter
 #define 	W_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
+#define 	W_SPEED_KF 			0.02F 		// this is a feed forward speed input
 
 // 1.04. Set wheel diameter and micro gear ratio
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
@@ -231,10 +234,11 @@
 // Next, we set the parameters for uturn
 
 // 6.01 Set timing for dead end rotation
-#define 	W_U_T1_90			200 		// unit : ms
-#define 	W_U_T2_90			256			// unit : ms
-#define 	W_U_T1_180			400 		// unit : ms
-#define 	W_U_T2_180			456			// unit : ms
+#define 	W_U_SPEED 			360.0F		// unit : dps
+#define 	W_U_T1_90			260 		// unit : ms
+#define 	W_U_T2_90			310			// unit : ms
+#define 	W_U_T1_180			510 		// unit : ms
+#define 	W_U_T2_180			560			// unit : ms
 
 // 6.02. Set front wall distance position  PID
 #define X_WALL_FRONT_KP 1.0

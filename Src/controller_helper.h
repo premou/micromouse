@@ -92,8 +92,8 @@ void speed_control(float x_speed_target, float w_speed_target)
 	ctx.w_wall_front_pwm = 0;
 	pid_reset(&ctx.w_wall_front_pid);
 
-	motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
-	motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
+	motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm - W_SPEED_KF*w_speed_target);
+	motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm + W_SPEED_KF*w_speed_target);
 }
 
 void speed_control_with_wall_following(float x_speed_target)
@@ -180,8 +180,9 @@ void speed_control_with_front_wall_calibration()
 	ctx.w_wall_front_error = ctx.w_wall_front_setpoint - ctx.w_wall_front_current;
 	ctx.w_wall_front_pwm = pid_output(&ctx.w_wall_front_pid, ctx.w_wall_front_error);
 
-	motor_speed_left(-ctx.x_wall_front_pwm - ctx.w_wall_front_pwm);
-	motor_speed_right(-ctx.x_wall_front_pwm + ctx.w_wall_front_pwm);
+
+	motor_speed_left(constraint(-ctx.x_wall_front_pwm - ctx.w_wall_front_pwm,-30,30));
+	motor_speed_right(constraint(-ctx.x_wall_front_pwm + ctx.w_wall_front_pwm,-30,30));
 }
 
 
