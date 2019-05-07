@@ -267,6 +267,18 @@ int main(void)
 
 		  }
 #endif
+#ifdef WALL_FOLLOWING_TRACE
+		  {
+			  static uint32_t time = 0;
+			  if( HAL_GetTick() >= time + 500) // every 0.1 sec
+			  {
+				  time = HAL_GetTick(); // update time
+				  wall_sensor_update();
+				HAL_Serial_Print(&com,"%d\r\n",	  (int)wall_sensor_get_side_error());
+			  }
+		  }
+#endif
+
 		  // decode CLI
 		  while(HAL_Serial_Available(&com)>0)
 		  {

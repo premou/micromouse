@@ -13,6 +13,8 @@ Float xspeed_target = 0.0f;
 Float xspeed_actual = 0.0f;
 Float wspeed_target = 0.0f;
 Float wspeed_actual = 0.0f;
+Float wall_pid = 0.0f;
+Float wall_actual = 0.0f;
 
 Float distance_zoom = 1000.0f;
 Float heading_zoom = 1.0f;
@@ -20,6 +22,8 @@ Float xspeed_target_zoom = 250.0f;
 Float xspeed_actual_zoom = 250.0f;
 Float wspeed_target_zoom = 0.33f;
 Float wspeed_actual_zoom = 0.33f;
+Float wall_pid_zoom = 20.0f;
+Float wall_actual_zoom = 1.0f;
 
 int iteration  = 0;
 Float[] distance_history = new Float[1600];
@@ -28,6 +32,8 @@ Float[] xspeed_target_history = new Float[1600];
 Float[] xspeed_actual_history = new Float[1600];
 Float[] wspeed_target_history = new Float[1600];
 Float[] wspeed_actual_history = new Float[1600];
+Float[] wall_pid_history = new Float[1600];
+Float[] wall_actual_history = new Float[1600];
 
 Float zoom = 1.0f;
 Float distance_offset = 200.0f;
@@ -36,6 +42,8 @@ Float xspeed_target_offset = 500.0f;
 Float xspeed_actual_offset = 500.0f;
 Float wspeed_target_offset = 800.0f;
 Float wspeed_actual_offset = 800.0f;
+Float wall_pid_offset = 650.0f;
+Float wall_actual_offset = 800.0f;
 
 PFont font;
 
@@ -65,9 +73,24 @@ void draw()
     for (int i = 0; i < 1600; i++) 
     {
       // distance
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,distance_offset-distance_history[i]*distance_zoom,0); 
+      if((i%20)==0)
+      {  
+        stroke(255,0,0);
+        strokeWeight(3);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+        String dist =  (int)(distance_history[i]*1000.0)+" ";
+        stroke(255,0,0);
+        fill(0,0,0);
+        textFont(font, 9);
+        text(dist, i, distance_offset-distance_history[i]*distance_zoom-10);
+      }
+      else
+      {
+        stroke(0,0,0);
+        strokeWeight(2);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+      }
+      
       // heading
       stroke(0,0,0);
       strokeWeight(2);
@@ -90,17 +113,41 @@ void draw()
       stroke(0,0,255);
       strokeWeight(3);
       point(i,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+      
+      // wall pid
+      stroke(0,0,0);
+      strokeWeight(2);
+      point(i,wall_pid_offset-wall_pid_history[i]*wall_pid_zoom,0); 
+      // wall position
+      stroke(255,0,0);
+      strokeWeight(2);
+      point(i,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0); 
 
     }
   }
   else
   {
-    for (int i = 0; i < iteration; i++) 
+    for (int i = 0; i < iteration-1; i++) 
     {
       // distance
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,distance_offset-distance_history[i]*distance_zoom,0); 
+      if((i%20)==0)
+      {  
+        stroke(255,0,0);
+        strokeWeight(3);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+        String dist =  (int)(distance_history[i]*1000.0)+ " ";
+        stroke(255,0,0);
+        fill(0,0,0);
+        textFont(font, 9);
+        text(dist, i, distance_offset-distance_history[i]*distance_zoom-10);
+      }
+      else
+      {
+        stroke(0,0,0);
+        strokeWeight(2);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+      }
+      
       // heading
       stroke(0,0,0);
       strokeWeight(2);
@@ -123,6 +170,15 @@ void draw()
       stroke(0,0,255);
       strokeWeight(3);
       point(i,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+
+      // wall pid
+      stroke(0,0,0);
+      strokeWeight(2);
+      point(i,wall_pid_offset-wall_pid_history[i]*wall_pid_zoom,0); 
+      // wall position
+      stroke(255,0,0);
+      strokeWeight(2);
+      point(i,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0); 
 
     }
   }
@@ -221,6 +277,8 @@ void serialEvent(Serial p)
         xspeed_actual = float(list[6])/1000.0f;
         wspeed_target = float(list[7])/1.0f;
         wspeed_actual = float(list[8])/1.0f;
+        wall_pid = float(list[9])/1.0f;
+        wall_actual = float(list[10])/1000.0f;
 
         distance_history[iteration%1600] = distance;
         heading_history[iteration%1600] = heading;
@@ -228,6 +286,8 @@ void serialEvent(Serial p)
         xspeed_actual_history[iteration%1600] = xspeed_actual;
         wspeed_target_history[iteration%1600] = wspeed_target;
         wspeed_actual_history[iteration%1600] = wspeed_actual;
+        wall_pid_history[iteration%1600] = wall_pid;
+        wall_actual_history[iteration%1600] = wall_actual;
 
        ++iteration;
     }

@@ -279,7 +279,7 @@ int main()
     }
     cout << "Open table com...";
     //com_table = new Serial("\\\\.\\COM4",9600); //38400);
-    com_table = new Serial("\\\\.\\COM16",9600); //38400);
+    com_table = new Serial("\\\\.\\COM25",9600); //38400);
     if (com_table->IsConnected())
     {
         cout << " [OK]" << endl;

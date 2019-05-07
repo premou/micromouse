@@ -14,8 +14,8 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-#define __FRANCOIS__
-//#define __PATRICK__ 	// Patrick has the prototype HW
+//#define __FRANCOIS__
+#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
 
@@ -39,11 +39,12 @@
 #define 	SIDE_WALL_DISTANCE 					110		// unit : mm
 #define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	87.0	// unit : mm
 #define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	63.0	// unit : mm
-#define 	SIDE_OFFSET 						0.0		// unit : mm
+#define 	WALL_POSITION_OFFSET				0.0		// unit : mm
 #define 	REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
 #define 	REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 #define 	WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
 #define 	WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
+#define		 WALL_FRONT_ANGLE_TURNING_mm 			170.0 	// unit : mm
 #define 	X_SPEED 			0.34F 		// unit : m/s
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
 #define 	X_MAX_DECELERATION 	3.0F		// unit : m/s^2
@@ -63,6 +64,9 @@
 #define 	W_T2 				345			// unit : ms
 #define 	W_MAX_ACCELERATION 	5000		// unit : dps^2
 #define		W_MAX_DECELERATION 	5000		// unit : dpz^2
+#define 	WALL_POSITION_KP 	0.3		// this is a position parameter
+#define 	WALL_POSITION_KI 	0.0
+#define 	WALL_POSITION_KD 	1.0		// this is a speed parameter
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
 //#define FIXED_MOVES // disable AI
@@ -80,28 +84,36 @@
 //#define VOLTAGE_TRACE //to see voltage when IDLE
 
 // 0.02. Use "banc micromouse" to calibrate wall IR sensors (see. WallSensorCallibration.h)
+// >> first check IR sensor orientation
+// 		>> front wall sensor open 5°
+// 		>> diagonal sensor point to middle of side walls when mouse placed before cell
+// >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
 #define 	FRONT_WALL_DISTANCE 				320		// unit : mm
 // maximal distance to left or right wall
-#define 	SIDE_WALL_DISTANCE 					110		// unit : mm
+#define 	SIDE_WALL_DISTANCE 					120		// unit : mm
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	87.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	70.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	63.0	// unit : mm
-// distance offset betwwen right and left wall when mouse in middle
-#define 	SIDE_OFFSET 						0.0		// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	65.0	// unit : mm
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
-#define WALL_FRONT_DISTANCE_mm 					32.0 	// unit : mm
+#define WALL_FRONT_DISTANCE_mm 					26.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
+// distance to front wall when micromouse doing curve turn
+#define WALL_FRONT_ANGLE_TURNING_mm 			240.0 	// unit : mm
+// adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
+// adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
+// to get smooth transition between one or two wall following.
+//#define WALL_FOLLOWING_TRACE  //to see wall position when IDLE, or upload datalogger and watch telemetry
 
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
@@ -172,9 +184,52 @@
 
 // 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
 
+// Next, we set the parameters for wall following
+
+// 3.01. Set PID parameters (Kp,Kd) for WALL POSITION PID
+#define 	WALL_POSITION_KP 	0.5		// this is a position parameter
+#define 	WALL_POSITION_KI 	0.0
+#define 	WALL_POSITION_KD 	10.0	// this is a speed parameter
+
+// 3.02. use visualization and physics to adjust all these parameters in order to :
+// >>> physics : mouse moves forward in the middle of cell and avoids walls
+//#define SC3_START_RUN1_STOP
+//#define SC3_START_RUN3_STOP
+
+// 3.03. Undefine SC3_xxx (comment) and continue tests and configuration
+
+// Next, we set the parameters for wall-to-wall calibration
+
+// 4.01. use visualization and physics to adjust all the following parameters
+// REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
+// REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
+// in order to stop the mouse in the middle of the last cell
+// > try first without wall
+// > try with one side wall, two side walls, one post, two post, one post and a wall, ...
+//#define SC3_START_RUN1_STOP
+//#define SC3_START_RUN3_STOP
+
+// 4.02. Undefine SC3_xxx (comment) and continue tests and configuration
+
+// Next, we set the parameters for front-wall cornering calibration
+
+// 4.05. use visualization and physics to adjust all the following parameters
+// WALL_FRONT_ANGLE_TURNING_mm
+// in order to stop the mouse in the middle of the last cell, and never crash front wall corners; or side wall at the end of corners
+// > try first without wall > carre must be OK
+// > try with one front wall in front, two, three, .. at each corner
+//#define SC2_SQUARE_TEST_1_TURN
+//#define SC2_SQUARE_TEST_2_TURN
 
 
-//#define SC3_U_TURN
+
+
+
+// RAND moves test stress
+
+// U TURN Test & code.
+
+//#define SC4_U_TURN
 
 #endif
 
