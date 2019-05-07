@@ -296,7 +296,6 @@ void init_shortest_array(maze_ctx_t *pCtx)
 
     // Init the min distance and copy flag
     pCtx->min_dist  = MAX_INT;
-    pCtx->copy_flag = 0;
 }
 
 // Fill the array maze with case unknown pattern
@@ -441,6 +440,8 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
 
     if( next_action == ACTION_STOP )
     {
+    	HAL_Serial_Print(&com, "[no easy action, go to next intersection]");
+
         // No easy solution found, find the nearest intersection
         if(pCtx->nb_inter!=0)
         {
@@ -884,9 +885,10 @@ void find_shortest_path(maze_ctx_t *pCtx,
     // if destination is found, update min_dist
     if (i == x && j == y)
     {
-    	// Update the final shortest array
-        if(pCtx->copy_flag == 1)
+        if(dist < pCtx->min_dist)
         {
+            pCtx->min_dist = dist ;
+
             for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
             {
                 for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
@@ -894,17 +896,9 @@ void find_shortest_path(maze_ctx_t *pCtx,
                     pCtx->shortest_array[xx][yy] = pCtx->solve_array[xx][yy];
                 }
             }
-        }
 
-        if(dist < pCtx->min_dist)
-        {
-            pCtx->min_dist = dist ;
-            if(pCtx->copy_flag == 1)
-            {
-            	// Flag the last position
-                pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
-                pCtx->copy_flag = 0;
-            }
+            // Flag the last position
+            pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
         }
         return;
     }
@@ -960,7 +954,6 @@ void build_action_list(
 
     // Clean the context but request shortest array creation, mandatory to build the action list
     init_shortest_array(pCtx);
-    pCtx->copy_flag = 1;
 
     // Find the nearest case
     find_shortest_path(pCtx,
@@ -1239,6 +1232,14 @@ void build_action_list(
             break;
         }
     }
+
+    // If the last case is not known, do not execute the last action, wall sensor + get_next_action will do the job
+    if(((pCtx->maze_array[to_x][to_y] & CASE_VISITED) != CASE_VISITED) && (pCtx->nb_action > 1))
+    {
+    	HAL_Serial_Print(&com, "[cancel last action (%d,%d) is unknown]", to_x, to_y);
+        // Remove the last action
+        pCtx->nb_action -= 1;
+    }
 }// end of build_action_list
 
 // Update the maze context depending on the action and the current direction
@@ -1252,9 +1253,6 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
     algo_update_t     *pAlgo = NULL;
     int                action_flag;
     maze_case_t        wall_sensor;
-    int                restore_x;
-    int                restore_y;
-    robot_direction_t  restore_dir;
 
 	// Get wall state
 	wall_sensor =  get_wall_state(pCtx->current_direction);
@@ -1292,12 +1290,6 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             	// Set the action flag
                 action_flag = 1;
 
-                // If the last action point to a non visited yet case, we restore do not perform
-                // the last action but we use the wall sensor to find the next direction
-                restore_x   = pCtx->current_x;
-                restore_y   = pCtx->current_y;
-                restore_dir = pCtx->current_direction;
-
                 pCtx->current_x         = pCtx->action_array[pCtx->current_action_index].x;
                 pCtx->current_y         = pCtx->action_array[pCtx->current_action_index].y;
                 pCtx->current_direction = pCtx->action_array[pCtx->current_action_index].dir;
@@ -1313,38 +1305,16 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
                 {
                 	// Reset the action list
                     pCtx->current_action_index = -1 ;
-
-                    // Check if the last action is done in an unknown case ?
-                    if((pCtx->maze_array[pCtx->current_x][pCtx->current_y] & CASE_VISITED) != CASE_VISITED)
-                    {
-                    	HAL_Serial_Print(&com, ">[cancel last action list]>");
-
-                    	// Revert the current action
-                    	action_flag = 0;
-                    	pCtx->current_x         = restore_x;
-                    	pCtx->current_y         = restore_y;
-                    	pCtx->current_direction = restore_dir;
-                    	// Get the action depending on the wall sensor
-                    	action = get_next_action(pCtx, wall_sensor);
-                    }
-                }
-
-                // Update case state if action has to be applied
-                if(action_flag==1)
-                {
-                    // Update case state
-                    pCtx->maze_array[pCtx->current_x][pCtx->current_y] |= CASE_VISITED;
-                    pCtx->maze_array[pCtx->current_x][pCtx->current_y] &= ~CASE_TO_VISIT;
                 }
             }
             else
             {
                 // Get the next action depending on the sensor information and the left/right hand
+            	// If there is no solution, the function build an action list to the nearest intersection
+            	// point and returns ACTION_IDLE
                 action = get_next_action(pCtx, wall_sensor);
             }
         }
-
-        // Apply action motion :
 
         // Default
         step_x        = 0;
