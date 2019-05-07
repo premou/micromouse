@@ -71,6 +71,14 @@
 #define 	W_U_T2_90			345			// unit : ms
 #define 	W_U_T1_180			560 		// unit : ms
 #define 	W_U_T2_180			625			// unit : ms
+#define 	X_WALL_FRONT_KP 	1.0
+#define 	X_WALL_FRONT_KI 	0.0001
+#define 	X_WALL_FRONT_KD 	0.0
+#define 	W_WALL_FRONT_KP 	1.0
+#define 	W_WALL_FRONT_KI 	0.0001
+#define 	W_WALL_FRONT_KD 	0.0
+#define 	X_SPEED_FAST_RUN 	0.5 		// m/s
+#define 	X_SPEED_FAST_RUN_IMPROVED 0.7 	// m/s
 
 //#define FIXED_MOVES // disable AI
 //#define SC_START_STOP
@@ -96,7 +104,7 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
@@ -228,16 +236,36 @@
 #define 	W_U_T1_180			560 		// unit : ms
 #define 	W_U_T2_180			616			// unit : ms
 
-// 6.02. use visualization and physics to adjust all the following parameters
-// W_U_T1
+// 6.02. Set front wall distance position  PID
+#define X_WALL_FRONT_KP 1.0
+#define X_WALL_FRONT_KI 0.0001
+#define X_WALL_FRONT_KD 0.0
+
+// 6.03. Set front wall angle position  PID
+#define W_WALL_FRONT_KP 1.0
+#define W_WALL_FRONT_KI 0.0001
+#define W_WALL_FRONT_KD 0.0
+
+// 6.04. use visualization and physics to adjust all the those parameters
 // in order to stop the mouse in the middle of the last cell, and never crash front or side walls
 // > try first without wall
 // > try with one front wall, two or three walls
-#define SC_RUN1_UTURN_RUN1
+#define SC_U_TURN
+//#define SC_RUN1_UTURN_RUN1
 
 
+
+
+
+
+
+// max speed
+#define X_SPEED_FAST_RUN 0.7 // m/s
+#define X_SPEED_FAST_RUN_IMPROVED 1.0 // m/s
 
 // RAND moves test stress
+
+// AI
 
 #endif
 

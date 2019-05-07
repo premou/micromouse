@@ -76,6 +76,22 @@ void speed_control(float x_speed_target, float w_speed_target)
 	ctx.wall_position_pwm = 0;
 	pid_reset(&ctx.wall_position_pid);
 
+	// front wall distance position PID
+	ctx.x_wall_front_target = 0;
+	ctx.x_wall_front_setpoint = 0;
+	ctx.x_wall_front_current = 0;
+	ctx.x_wall_front_error = 0;
+	ctx.x_wall_front_pwm = 0;
+	pid_reset(&ctx.x_wall_front_pid);
+
+	// front wall angle position PID
+	ctx.w_wall_front_target = 0;
+	ctx.w_wall_front_setpoint = 0;
+	ctx.w_wall_front_current = 0;
+	ctx.w_wall_front_error = 0;
+	ctx.w_wall_front_pwm = 0;
+	pid_reset(&ctx.w_wall_front_pid);
+
 	motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 	motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 }
@@ -104,13 +120,68 @@ void speed_control_with_wall_following(float x_speed_target)
 	ctx.wall_position_error = ctx.wall_position_setpoint - ctx.wall_position_current;
 	ctx.wall_position_pwm = pid_output(&ctx.wall_position_pid, ctx.wall_position_error);
 
+	// front wall distance position PID
+	ctx.x_wall_front_target = 0;
+	ctx.x_wall_front_setpoint = 0;
+	ctx.x_wall_front_current = 0;
+	ctx.x_wall_front_error = 0;
+	ctx.x_wall_front_pwm = 0;
+	pid_reset(&ctx.x_wall_front_pid);
+
+	// front wall angle position PID
+	ctx.w_wall_front_target = 0;
+	ctx.w_wall_front_setpoint = 0;
+	ctx.w_wall_front_current = 0;
+	ctx.w_wall_front_error = 0;
+	ctx.w_wall_front_pwm = 0;
+	pid_reset(&ctx.w_wall_front_pid);
+
 	motor_speed_left(ctx.x_speed_pwm - ctx.wall_position_pwm);
 	motor_speed_right(ctx.x_speed_pwm + ctx.wall_position_pwm);
 }
 
 void speed_control_with_front_wall_calibration()
 {
+	// forward speed PID
+	ctx.x_speed_target = 0;
+	ctx.x_speed_setpoint = 0;
+	ctx.x_speed_current = 0;
+	ctx.x_speed_error = 0;
+	ctx.x_speed_pwm = 0;
+	pid_reset(&ctx.x_speed_pid);
 
+	// rotation speed PID
+	ctx.w_speed_target = 0;
+	ctx.w_speed_setpoint = 0;
+	ctx.w_speed_current = 0;
+	ctx.w_speed_error = 0;
+	ctx.w_speed_pwm = 0;
+	pid_reset(&ctx.w_speed_pid);
+
+	// wall following position PID
+	ctx.wall_position_target = 0;
+	ctx.wall_position_setpoint = 0;
+	ctx.wall_position_current = 0;
+	ctx.wall_position_error = 0;
+	ctx.wall_position_pwm = 0;
+	pid_reset(&ctx.wall_position_pid);
+
+	// front wall distance position PID
+	ctx.x_wall_front_target = WALL_FRONT_DISTANCE_mm; // mm
+	ctx.x_wall_front_setpoint = WALL_FRONT_DISTANCE_mm; // mm
+	ctx.x_wall_front_current = ( wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT) + wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT) ) / 2.0;
+	ctx.x_wall_front_error = ctx.x_wall_front_setpoint - ctx.x_wall_front_current;
+	ctx.x_wall_front_pwm = pid_output(&ctx.x_wall_front_pid, ctx.x_wall_front_error);
+
+	// front wall angle position PID
+	ctx.w_wall_front_target = WALL_FRONT_ANGLE_mm; // mm
+	ctx.w_wall_front_setpoint = WALL_FRONT_ANGLE_mm; // mm
+	ctx.w_wall_front_current = wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT) - wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT);
+	ctx.w_wall_front_error = ctx.w_wall_front_setpoint - ctx.w_wall_front_current;
+	ctx.w_wall_front_pwm = pid_output(&ctx.w_wall_front_pid, ctx.w_wall_front_error);
+
+	motor_speed_left(-ctx.x_wall_front_pwm - ctx.w_wall_front_pwm);
+	motor_speed_right(-ctx.x_wall_front_pwm + ctx.w_wall_front_pwm);
 }
 
 
@@ -330,9 +401,7 @@ action_t actions_scenario[] =
 		ACTION_STOP,
 #endif
 #ifdef SC_U_TURN
-		ACTION_RUN_1,
 		ACTION_U_TURN_RIGHT,
-		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
 #ifdef SC_RUN1_UTURN_RUN1
