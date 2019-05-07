@@ -99,7 +99,7 @@
 // distance to left wall when mouse in middle
 #define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	70.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	55.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	65.0	// unit : mm
 // position of micromouse when wall fades (140mm)
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
 // position of micromouse when post fades (140mm)
@@ -109,7 +109,7 @@
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 // distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_mm 			170.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_mm 			240.0 	// unit : mm
 // adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
 // adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
 // to get smooth transition between one or two wall following.
@@ -179,7 +179,7 @@
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
-#define SC2_SQUARE_TEST_1_TURN
+//#define SC2_SQUARE_TEST_1_TURN
 //#define SC2_SQUARE_TEST_2_TURN
 
 // 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
@@ -204,26 +204,32 @@
 // REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
 // REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
 // in order to stop the mouse in the middle of the last cell
-// try first without wall
-// try with one side wall, two side walls, one post, two post, one post and a wall, ...
+// > try first without wall
+// > try with one side wall, two side walls, one post, two post, one post and a wall, ...
 //#define SC3_START_RUN1_STOP
 //#define SC3_START_RUN3_STOP
 
 // 4.02. Undefine SC3_xxx (comment) and continue tests and configuration
 
+// Next, we set the parameters for front-wall cornering calibration
+
+// 4.05. use visualization and physics to adjust all the following parameters
+// WALL_FRONT_ANGLE_TURNING_mm
+// in order to stop the mouse in the middle of the last cell, and never crash front wall corners; or side wall at the end of corners
+// > try first without wall > carre must be OK
+// > try with one front wall in front, two, three, .. at each corner
+//#define SC2_SQUARE_TEST_1_TURN
+//#define SC2_SQUARE_TEST_2_TURN
 
 
 
 
 
-
-// front wall calibration test
-
-// carré wih front wall calibration test
+// RAND moves test stress
 
 // U TURN Test & code.
 
-//#define SC3_U_TURN
+//#define SC4_U_TURN
 
 #endif
 
