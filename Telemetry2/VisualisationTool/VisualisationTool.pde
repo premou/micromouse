@@ -5,7 +5,9 @@ import processing.opengl.*;
 import saito.objloader.*;
 import g4p_controls.*;
 
-int MAX_ITERATION = 1600;
+HScrollbar hs1;
+
+int MAX_ITERATION = 8000;
 
 Float distance = 0.0f;
 Float heading = 0.0f;
@@ -26,14 +28,14 @@ Float wall_pid_zoom = 20.0f;
 Float wall_actual_zoom = 1.0f;
 
 int iteration  = 0;
-Float[] distance_history = new Float[1600];
-Float[] heading_history = new Float[1600];
-Float[] xspeed_target_history = new Float[1600];
-Float[] xspeed_actual_history = new Float[1600];
-Float[] wspeed_target_history = new Float[1600];
-Float[] wspeed_actual_history = new Float[1600];
-Float[] wall_pid_history = new Float[1600];
-Float[] wall_actual_history = new Float[1600];
+Float[] distance_history = new Float[8000];
+Float[] heading_history = new Float[8000];
+Float[] xspeed_target_history = new Float[8000];
+Float[] xspeed_actual_history = new Float[8000];
+Float[] wspeed_target_history = new Float[8000];
+Float[] wspeed_actual_history = new Float[8000];
+Float[] wall_pid_history = new Float[8000];
+Float[] wall_actual_history = new Float[8000];
 
 Float zoom = 1.0f;
 Float distance_offset = 200.0f;
@@ -58,6 +60,8 @@ void setup()
   // Open port.
   port = new Serial(this, "COM3", 115200);
   port.bufferUntil('\n');
+  // scrollbar  
+  hs1 = new HScrollbar(0, height-16, width, 16, 16);
 }
  
 void draw()
@@ -68,197 +72,71 @@ void draw()
   line (0, 200, 0, 1600, 200, 0);
   line (0, 500, 0, 1600, 500, 0);
   line (0, 800, 0, 1600, 800, 0);
-  if(iteration>=1600)
+  //if(iteration>=1600)
   {
-    for (int i = 0; i < 1600; i++) 
+    float index = hs1.getPos(); 
+    int xpos = 0;
+    for (int i = (int)((float)iteration*index/1600.0); i < (int)((float)iteration*index/1600.0)+1600; i++) 
     {
-      // distance
-      if((i%20)==0)
-      {  
-        stroke(255,0,0);
-        strokeWeight(3);
-        point(i,distance_offset-distance_history[i]*distance_zoom,0);
-        String dist =  (int)(distance_history[i]*1000.0)+" ";
-        stroke(255,0,0);
-        fill(0,0,0);
-        textFont(font, 9);
-        text(dist, i, distance_offset-distance_history[i]*distance_zoom-10);
-      }
-      else
+      if(i<iteration-1)
       {
+        // distance
+        if((i%20)==0)
+        {  
+          stroke(255,0,0);
+          strokeWeight(3);
+          point(xpos,distance_offset-distance_history[i]*distance_zoom,0);
+          String dist =  (int)(distance_history[i]*1000.0)+" ";
+          stroke(255,0,0);
+          fill(0,0,0);
+          textFont(font, 9);
+          text(dist, xpos, distance_offset-distance_history[i]*distance_zoom-10);
+        }
+        else
+        {
+          stroke(0,0,0);
+          strokeWeight(2);
+          point(xpos,distance_offset-distance_history[i]*distance_zoom,0);
+        }
+        
+        // heading
         stroke(0,0,0);
         strokeWeight(2);
-        point(i,distance_offset-distance_history[i]*distance_zoom,0);
-      }
-      
-      // heading
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,heading_offset-heading_history[i]*heading_zoom,0); 
-
-      // xspeed
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,xspeed_target_offset-xspeed_target_history[i]*xspeed_target_zoom,0); 
-      // xspeed
-      stroke(0,0,255);
-      strokeWeight(3);
-      point(i,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
-      
-      // wspeed
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,wspeed_target_offset-wspeed_target_history[i]*wspeed_target_zoom,0); 
-      // wspeed
-      stroke(0,0,255);
-      strokeWeight(3);
-      point(i,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
-      
-      // wall pid
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,wall_pid_offset-wall_pid_history[i]*wall_pid_zoom,0); 
-      // wall position
-      stroke(255,0,0);
-      strokeWeight(2);
-      point(i,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0); 
-
-    }
-  }
-  else
-  {
-    for (int i = 0; i < iteration-1; i++) 
-    {
-      // distance
-      if((i%20)==0)
-      {  
-        stroke(255,0,0);
-        strokeWeight(3);
-        point(i,distance_offset-distance_history[i]*distance_zoom,0);
-        String dist =  (int)(distance_history[i]*1000.0)+ " ";
-        stroke(255,0,0);
-        fill(0,0,0);
-        textFont(font, 9);
-        text(dist, i, distance_offset-distance_history[i]*distance_zoom-10);
-      }
-      else
-      {
+        point(xpos,heading_offset-heading_history[i]*heading_zoom,0); 
+  
+        // xspeed
         stroke(0,0,0);
         strokeWeight(2);
-        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+        point(xpos,xspeed_target_offset-xspeed_target_history[i]*xspeed_target_zoom,0); 
+        // xspeed
+        stroke(0,0,255);
+        strokeWeight(3);
+        point(xpos,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
+        
+        // wspeed
+        stroke(0,0,0);
+        strokeWeight(2);
+        point(xpos,wspeed_target_offset-wspeed_target_history[i]*wspeed_target_zoom,0); 
+        // wspeed
+        stroke(0,0,255);
+        strokeWeight(3);
+        point(xpos,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+        
+        // wall pid
+        stroke(0,0,0);
+        strokeWeight(2);
+        point(xpos,wall_pid_offset-wall_pid_history[i]*wall_pid_zoom,0); 
+        // wall position
+        stroke(255,0,0);
+        strokeWeight(2);
+        point(xpos,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0); 
       }
-      
-      // heading
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,heading_offset-heading_history[i]*heading_zoom,0); 
-
-      // xspeed
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,xspeed_target_offset-xspeed_target_history[i]*xspeed_target_zoom,0); 
-      // xspeed
-      stroke(0,0,255);
-      strokeWeight(3);
-      point(i,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
-      
-      // wspeed
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,wspeed_target_offset-wspeed_target_history[i]*wspeed_target_zoom,0); 
-      // wspeed
-      stroke(0,0,255);
-      strokeWeight(3);
-      point(i,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
-
-      // wall pid
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,wall_pid_offset-wall_pid_history[i]*wall_pid_zoom,0); 
-      // wall position
-      stroke(255,0,0);
-      strokeWeight(2);
-      point(i,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0); 
-
+      ++xpos;
     }
   }
   
-  if(iteration>0)
-  {
-  //  String pitch =  "Pitch: " + (int)(ang_history[(iteration-1)%1000].x/1000.0) + "deg.";
-  //  stroke(255,0,0);
-  //  fill(255,0,0);
-  //  textFont(font, 30);
-  //  text(pitch, 100, 900, 0);
-  //  String roll =  "Roll: " + (int)(ang_history[(iteration-1)%1000].y/1000.0) + "deg.";
-  //  stroke(0,255,0);
-  //  fill(0,255,0);
-  //  textFont(font, 30);
-  //  text(roll, 400, 900, 0);
-  //  String yaw =  "Yaw: " + (int)(ang_history[(iteration-1)%1000].z/1000.0) + "deg.";
-  //  stroke(0,0,255);
-  //  fill(0,0,255);
-  //  textFont(font, 30);
-  //  text(yaw, 700, 900, 0);
-    
-  //  String yawgb =  "GyroBias: " + (int)(gyro_yaw_bias_history[(iteration-1)%1000]*1000.0) + "Raw";
-  //  stroke(100,100,255);
-  //  fill(100,100,255);
-  //  textFont(font, 20);
-  //  text(yawgb, 100, 960, 0);
-
-  //  String yawgv =  "GyroVariance: " + (int)(gyro_yaw_deviation_history[(iteration-1)%1000]*1000.0) + "Raw";
-  //  stroke(100,100,255);
-  //  fill(100,100,255);
-  //  textFont(font, 20);
-  //  text(yawgv, 400, 960, 0);
-    
-  //  String yawg =  "Yaw(Gyro): " + (int)(ang2_history[(iteration-1)%1000].z/1000.0) + "deg.";
-  //  stroke(100,100,255);
-  //  fill(100,100,255);
-  //  textFont(font, 30);
-  //  text(yawg, 700, 960, 0);
-    
-  //  {
-  //      String gravity_str =  "Gravity Field: " + gravity_history[(iteration-1)%1000] + "g";
-  //      stroke(200,0,0);
-  //      fill(200,0,0);
-  //      textFont(font, 20);
-  //      text(gravity_str, 10, 220, 0);
-
-  //      String mfied_str =  "Mag Field: " + mfield_history[(iteration-1)%1000] + "gauss";
-  //      stroke(0,0,200);
-  //      fill(0,0,200);
-  //      textFont(font, 20);
-  //      text(mfied_str, 310, 220, 0);
-
-  //      String mdip_str =  "Mag Dip Angle: " + mdip_history[(iteration-1)%1000] + "deg.";
-  //      stroke(0,0,100);
-  //      fill(0,0,100);
-  //      textFont(font, 20);
-  //      text(mdip_str, 610, 220, 0);
-  //}
-  //  // curve legend
-  //  {
-  //      String gravity_str =  "Gravity Field";
-  //      stroke(200,0,0);
-  //      fill(200,0,0);
-  //      textFont(font, 12);
-  //      text(gravity_str, 10, 200-gravity_history[0]*100.0-6, 0);
-    
-  //      String mfied_str =  "Mag Field";
-  //      stroke(0,0,200);
-  //      fill(0,0,200);
-  //      textFont(font, 12);
-  //      text(mfied_str, 10, 200-mfield_history[0]*100.0-6, 0);
-
-  //      String mdip_str =  "Mag Dip Angle";
-  //      stroke(0,0,100);
-  //      fill(0,0,100);
-  //      textFont(font, 12);
-  //      text(mdip_str, 10, 200+mdip_history[0]*1.0-6, 0);
-  //  }
-  }
+  hs1.update();
+  hs1.display();
 }
 
 void serialEvent(Serial p) 
@@ -271,6 +149,7 @@ void serialEvent(Serial p)
     String[] list = split(incoming, " ");
       if ( list.length >= 20  ) 
       {
+        iteration = int(list[1]);
         distance = float(list[3])/1000.0f;
         heading = float(list[4])/1.0f;
         xspeed_target = float(list[5])/1000.0f;
@@ -280,16 +159,92 @@ void serialEvent(Serial p)
         wall_pid = float(list[9])/1.0f;
         wall_actual = float(list[10])/1000.0f;
 
-        distance_history[iteration%1600] = distance;
-        heading_history[iteration%1600] = heading;
-        xspeed_target_history[iteration%1600] = xspeed_target;
-        xspeed_actual_history[iteration%1600] = xspeed_actual;
-        wspeed_target_history[iteration%1600] = wspeed_target;
-        wspeed_actual_history[iteration%1600] = wspeed_actual;
-        wall_pid_history[iteration%1600] = wall_pid;
-        wall_actual_history[iteration%1600] = wall_actual;
+        distance_history[iteration] = distance;
+        heading_history[iteration] = heading;
+        xspeed_target_history[iteration] = xspeed_target;
+        xspeed_actual_history[iteration] = xspeed_actual;
+        wspeed_target_history[iteration] = wspeed_target;
+        wspeed_actual_history[iteration] = wspeed_actual;
+        wall_pid_history[iteration] = wall_pid;
+        wall_actual_history[iteration] = wall_actual;
 
-       ++iteration;
+       //++iteration;
     }
+  }
+}
+
+class HScrollbar {
+  int swidth, sheight;    // width and height of bar
+  float xpos, ypos;       // x and y position of bar
+  float spos, newspos;    // x position of slider
+  float sposMin, sposMax; // max and min values of slider
+  int loose;              // how loose/heavy
+  boolean over;           // is the mouse over the slider?
+  boolean locked;
+  float ratio;
+
+  HScrollbar (float xp, float yp, int sw, int sh, int l) {
+    swidth = sw;
+    sheight = sh;
+    int widthtoheight = sw - sh;
+    ratio = (float)sw / (float)widthtoheight;
+    xpos = xp;
+    ypos = yp-sheight/2;
+    spos = xpos;// + swidth/2 - sheight/2;
+    newspos = spos;
+    sposMin = xpos;
+    sposMax = xpos + swidth - sheight;
+    loose = l;
+  }
+
+  void update() {
+    if (overEvent()) {
+      over = true;
+    } else {
+      over = false;
+    }
+    if (mousePressed && over) {
+      locked = true;
+    }
+    if (!mousePressed) {
+      locked = false;
+    }
+    if (locked) {
+      newspos = constrain(mouseX-sheight/2, sposMin, sposMax);
+    }
+    if (abs(newspos - spos) > 1) {
+      spos = spos + (newspos-spos)/loose;
+    }
+  }
+
+  float constrain(float val, float minv, float maxv) {
+    return min(max(val, minv), maxv);
+  }
+
+  boolean overEvent() {
+    if (mouseX > xpos && mouseX < xpos+swidth &&
+       mouseY > ypos && mouseY < ypos+sheight) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void display() {
+    noStroke();
+    fill(204);
+    rect(xpos, ypos, swidth, sheight);
+    if (over || locked) {
+      fill(0, 0, 0);
+    } else {
+      fill(102, 102, 102);
+    }
+    rect(spos, ypos, sheight, sheight);
+  }
+
+  float getPos() {
+    // Convert spos to be values between
+    // 0 and the total width of the scrollbar
+    return spos * ratio;
   }
 }

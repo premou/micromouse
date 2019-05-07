@@ -108,7 +108,7 @@
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
-#define 	FRONT_WALL_DISTANCE 				320		// unit : mm
+#define 	FRONT_WALL_DISTANCE 				340		// unit : mm
 // maximal distance to left or right wall
 #define 	SIDE_WALL_DISTANCE 					120		// unit : mm
 // distance to left wall when mouse in middle
@@ -136,7 +136,7 @@
 #define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
-#define 	X_SPEED 			0.450F 		// unit : m/s
+#define 	X_SPEED 			0.15 //0.450F 		// unit : m/s
 
 // 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
@@ -233,8 +233,8 @@
 // 6.01 Set timing for dead end rotation
 #define 	W_U_T1_90			200 		// unit : ms
 #define 	W_U_T2_90			256			// unit : ms
-#define 	W_U_T1_180			560 		// unit : ms
-#define 	W_U_T2_180			616			// unit : ms
+#define 	W_U_T1_180			400 		// unit : ms
+#define 	W_U_T2_180			456			// unit : ms
 
 // 6.02. Set front wall distance position  PID
 #define X_WALL_FRONT_KP 1.0
@@ -252,7 +252,7 @@
 // > try with one front wall, two or three walls
 #define SC_U_TURN
 //#define SC_RUN1_UTURN_RUN1
-
+//#define SC_TURN_RIGHT_TEST
 
 
 

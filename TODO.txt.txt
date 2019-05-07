@@ -1,10 +1,6 @@
 P0 : Faire un banc pour aligner les capteurs IR et prendre les mesures de distance
 P0 : Rédiger TUTO pour régler le robot (wall following, wall front, front wall turn calibration, wall to no wall calibration) + Coder les scénarios de réglage
 
-P1 : Coder toutes les combinaisons de U-TURN (droit,gauche,sans mur..)
-
-P2 : Augmenter légèrement la longueur d'application du PID position wall following (couper le PID juste avant la fin des éventuels murs)
-
 P3 : Clean Up configuration (inutile)
 
 P4 : ..\Src\maze_ctx.c:411:13: warning: 'min_dist_index' may be used uninitialized in this function [-Wmaybe-uninitialized]

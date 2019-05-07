@@ -371,6 +371,10 @@ action_t actions_scenario[] =
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
+#ifdef SC_TURN_RIGHT_TEST
+		ACTION_TURN_RIGHT,
+		ACTION_STOP,
+#endif
 #ifdef SC_SQUARE_TEST_1_TURN
 		ACTION_TURN_RIGHT,
 		ACTION_RUN_1,
