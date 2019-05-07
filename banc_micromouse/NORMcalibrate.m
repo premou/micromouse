@@ -21,7 +21,10 @@ for sensor = 1:4
   %% one feature with polynomial regression x <=> 1/sqrt(ADC) 1/ADC 1/ADC²
   %% add x0 col
   %X = [ ones(m,1), 1./sqrt(rawX), 1./rawX, 1./(rawX.^2) ];
+  %%X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX.^2) ];
   X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX.^2) ];
+  %%X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX) ];
+  %%X = [ ones(m,1), 1./log(rawX), 1./(rawX.^2) ];
   %X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX) ];
 
   %% theta
@@ -29,7 +32,8 @@ for sensor = 1:4
   regul(1,1) = 0;
   regul(2,2) = 0.0;
   regul(3,3) = 0.0;
-  theta = pinv(X'*X + regul)*X'*y
+  %%theta = pinv(X'*X + regul)*X'*y
+  theta = pinv(X'*X)*X'*y
 
   #error over distance
   error = X*theta - y;
