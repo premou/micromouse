@@ -73,9 +73,24 @@ void draw()
     for (int i = 0; i < 1600; i++) 
     {
       // distance
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,distance_offset-distance_history[i]*distance_zoom,0); 
+      if((i%20)==0)
+      {  
+        stroke(255,0,0);
+        strokeWeight(3);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+        String dist =  (int)(distance_history[i]*1000.0)+" ";
+        stroke(255,0,0);
+        fill(0,0,0);
+        textFont(font, 9);
+        text(dist, i, distance_offset-distance_history[i]*distance_zoom-10);
+      }
+      else
+      {
+        stroke(0,0,0);
+        strokeWeight(2);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+      }
+      
       // heading
       stroke(0,0,0);
       strokeWeight(2);
@@ -115,9 +130,24 @@ void draw()
     for (int i = 0; i < iteration-1; i++) 
     {
       // distance
-      stroke(0,0,0);
-      strokeWeight(2);
-      point(i,distance_offset-distance_history[i]*distance_zoom,0); 
+      if((i%20)==0)
+      {  
+        stroke(255,0,0);
+        strokeWeight(3);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+        String dist =  (int)(distance_history[i]*1000.0)+ " ";
+        stroke(255,0,0);
+        fill(0,0,0);
+        textFont(font, 9);
+        text(dist, i, distance_offset-distance_history[i]*distance_zoom-10);
+      }
+      else
+      {
+        stroke(0,0,0);
+        strokeWeight(2);
+        point(i,distance_offset-distance_history[i]*distance_zoom,0);
+      }
+      
       // heading
       stroke(0,0,0);
       strokeWeight(2);

@@ -964,12 +964,12 @@ void controller_fsm()
 				if( (encoder_get_absolute() <= DIST_RUN_1/2.0) && (wall_sensor_is_left_wall_detected() || wall_sensor_is_right_wall_detected()) )
 				{
 					ctx.current_pid_type = PID_TYPE_WALL;
-					speed_control_with_wall_following(X_SPEED);
+					speed_control_with_wall_following(0.0F);
 				}
 				else
 				{
 					ctx.current_pid_type = PID_TYPE_GYRO;
-					speed_control(X_SPEED,0.0F);
+					speed_control(0.0F,0.0F);
 				}
 
 				// transition / condition

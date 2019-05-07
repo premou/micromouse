@@ -101,9 +101,9 @@
 // distance to right wall when mouse in middle
 #define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	55.0	// unit : mm
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_DISTANCE_mm 					26.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
@@ -179,7 +179,7 @@
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
-//#define SC2_SQUARE_TEST_1_TURN
+#define SC2_SQUARE_TEST_1_TURN
 //#define SC2_SQUARE_TEST_2_TURN
 
 // 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
@@ -193,14 +193,29 @@
 
 // 3.02. use visualization and physics to adjust all these parameters in order to :
 // >>> physics : mouse moves forward in the middle of cell and avoids walls
-#define SC3_START_RUN3_STOP
+//#define SC3_START_RUN1_STOP
+//#define SC3_START_RUN3_STOP
 
-// 3.02. Undefine SC3_xxx (comment) and continue tests and configuration
+// 3.03. Undefine SC3_xxx (comment) and continue tests and configuration
+
+// Next, we set the parameters for wall-to-wall calibration
+
+// 4.01. use visualization and physics to adjust all the following parameters
+// REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
+// REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
+// in order to stop the mouse in the middle of the last cell
+// try first without wall
+// try with one side wall, two side walls, one post, two post, one post and a wall, ...
+//#define SC3_START_RUN1_STOP
+//#define SC3_START_RUN3_STOP
+
+// 4.02. Undefine SC3_xxx (comment) and continue tests and configuration
 
 
 
 
-// wall calibration test
+
+
 
 // front wall calibration test
 

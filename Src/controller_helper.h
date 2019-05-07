@@ -341,6 +341,10 @@ action_t actions_scenario[] =
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
+#ifdef SC3_START_RUN1_STOP
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
 //		ACTION_RAND,
 //		ACTION_RAND,
 //		ACTION_RAND,
