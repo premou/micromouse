@@ -291,16 +291,16 @@ bool calibration_update()
 // Recorded moves
 action_t actions_scenario[] =
 {
-#ifdef SC1_START_STOP
+#ifdef SC_START_STOP
 		ACTION_STOP,
 #endif
-#ifdef SC1_START_RUN3_STOP
+#ifdef SC_START_RUN3_STOP
 		ACTION_RUN_1,
 		ACTION_RUN_1,
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
-#ifdef SC2_SQUARE_TEST_1_TURN
+#ifdef SC_SQUARE_TEST_1_TURN
 		ACTION_TURN_RIGHT,
 		ACTION_RUN_1,
 		ACTION_TURN_RIGHT,
@@ -310,7 +310,7 @@ action_t actions_scenario[] =
 		ACTION_TURN_RIGHT,
 		ACTION_STOP,
 #endif
-#ifdef SC2_SQUARE_TEST_2_TURN
+#ifdef SC_SQUARE_TEST_2_TURN
 		ACTION_TURN_RIGHT,
 		ACTION_RUN_1,
 		ACTION_TURN_RIGHT,
@@ -329,19 +329,15 @@ action_t actions_scenario[] =
 		ACTION_TURN_RIGHT,
 		ACTION_STOP,
 #endif
-#ifdef SC3_U_TURN
+#ifdef SC_U_TURN
 		ACTION_RUN_1,
 		ACTION_U_TURN_RIGHT,
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
-#ifdef SC3_START_RUN3_STOP
+#ifdef SC_RUN1_UTURN_RUN1
 		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_RUN_1,
-		ACTION_STOP,
-#endif
-#ifdef SC3_START_RUN1_STOP
+		ACTION_U_TURN_RIGHT,
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif

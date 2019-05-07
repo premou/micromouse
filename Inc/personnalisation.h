@@ -67,11 +67,18 @@
 #define 	WALL_POSITION_KP 	0.3		// this is a position parameter
 #define 	WALL_POSITION_KI 	0.0
 #define 	WALL_POSITION_KD 	1.0		// this is a speed parameter
+#define 	W_U_T1_90			280 		// unit : ms
+#define 	W_U_T2_90			345			// unit : ms
+#define 	W_U_T1_180			560 		// unit : ms
+#define 	W_U_T2_180			625			// unit : ms
 
-// 1.00. Define FIXED_MOVES for the following tests and configuration
 //#define FIXED_MOVES // disable AI
-//#define SC2_SQUARE_TEST_1_TURN
-//#define SC3_U_TURN
+//#define SC_START_STOP
+//#define SC_START_RUN3_STOP
+//#define SC_SQUARE_TEST_1_TURN
+//#define SC_SQUARE_TEST_2_TURN
+//#define SC_U_TURN
+//#define SC_RUN1_UTURN_RUN1
 #endif
 
 #ifdef __PATRICK__
@@ -142,10 +149,8 @@
 // 1.05, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : distance traveled must be equal to 180 mm
 // >>> visualization : actual forward speed must follow current forward speed
-//#define SC1_START_STOP // 180mm
-//#define SC1_START_RUN3_STOP // 720mm
-
-// 1.06. Undefine SC1_xxx (comment) and continue tests and configuration
+//#define SC_START_STOP // 180mm
+//#define SC_START_RUN3_STOP // 720mm
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
 
@@ -179,10 +184,8 @@
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
-//#define SC2_SQUARE_TEST_1_TURN
-//#define SC2_SQUARE_TEST_2_TURN
-
-// 2.05. Undefine SC2_xxx (comment) and continue tests and configuration
+//#define SC_SQUARE_TEST_1_TURN
+//#define SC_SQUARE_TEST_2_TURN
 
 // Next, we set the parameters for wall following
 
@@ -193,10 +196,8 @@
 
 // 3.02. use visualization and physics to adjust all these parameters in order to :
 // >>> physics : mouse moves forward in the middle of cell and avoids walls
-//#define SC3_START_RUN1_STOP
-//#define SC3_START_RUN3_STOP
-
-// 3.03. Undefine SC3_xxx (comment) and continue tests and configuration
+//#define SC_START_RUN1_STOP
+//#define SC_START_RUN3_STOP
 
 // Next, we set the parameters for wall-to-wall calibration
 
@@ -206,30 +207,37 @@
 // in order to stop the mouse in the middle of the last cell
 // > try first without wall
 // > try with one side wall, two side walls, one post, two post, one post and a wall, ...
-//#define SC3_START_RUN1_STOP
-//#define SC3_START_RUN3_STOP
-
-// 4.02. Undefine SC3_xxx (comment) and continue tests and configuration
+//#define SC_START_RUN1_STOP
+//#define SC_START_RUN3_STOP
 
 // Next, we set the parameters for front-wall cornering calibration
 
-// 4.05. use visualization and physics to adjust all the following parameters
+// 5.01. use visualization and physics to adjust all the following parameters
 // WALL_FRONT_ANGLE_TURNING_mm
 // in order to stop the mouse in the middle of the last cell, and never crash front wall corners; or side wall at the end of corners
 // > try first without wall > carre must be OK
 // > try with one front wall in front, two, three, .. at each corner
-//#define SC2_SQUARE_TEST_1_TURN
-//#define SC2_SQUARE_TEST_2_TURN
+//#define SC_SQUARE_TEST_1_TURN
+//#define SC_SQUARE_TEST_2_TURN
 
+// Next, we set the parameters for uturn
 
+// 6.01 Set timing for dead end rotation
+#define 	W_U_T1_90			200 		// unit : ms
+#define 	W_U_T2_90			256			// unit : ms
+#define 	W_U_T1_180			560 		// unit : ms
+#define 	W_U_T2_180			616			// unit : ms
+
+// 6.02. use visualization and physics to adjust all the following parameters
+// W_U_T1
+// in order to stop the mouse in the middle of the last cell, and never crash front or side walls
+// > try first without wall
+// > try with one front wall, two or three walls
+#define SC_RUN1_UTURN_RUN1
 
 
 
 // RAND moves test stress
-
-// U TURN Test & code.
-
-//#define SC4_U_TURN
 
 #endif
 

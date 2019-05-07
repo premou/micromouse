@@ -765,7 +765,7 @@ void controller_fsm()
 					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-					if(HAL_GetTick() > ctx.action_time + W_U_T1)
+					if(HAL_GetTick() > ctx.action_time + W_U_T1_90)
 					{
 						ctx.sub_action_index++;
 					}
@@ -792,7 +792,7 @@ void controller_fsm()
 						motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 						motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-						if(HAL_GetTick() > ctx.action_time + W_T2)
+						if(HAL_GetTick() > ctx.action_time + W_U_T2_90)
 						{
 							ctx.sub_action_index++;
 							ctx.action_time = HAL_GetTick();
@@ -860,7 +860,7 @@ void controller_fsm()
 					motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 					motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-					if(HAL_GetTick() > ctx.action_time + W_U_T1)
+					if(HAL_GetTick() > ctx.action_time + W_U_T1_90)
 					{
 						ctx.sub_action_index++;
 					}
@@ -886,7 +886,7 @@ void controller_fsm()
 						motor_speed_left(ctx.x_speed_pwm - ctx.w_speed_pwm);
 						motor_speed_right(ctx.x_speed_pwm + ctx.w_speed_pwm);
 
-						if(HAL_GetTick() > ctx.action_time + W_T2)
+						if(HAL_GetTick() > ctx.action_time + W_U_T2_90)
 						{
 							ctx.sub_action_index++;
 							ctx.action_time = HAL_GetTick();
