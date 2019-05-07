@@ -122,8 +122,6 @@ typedef struct {
 
 	// Min distance for shortest way
 	int min_dist;
-	// Copy flag to get shortest path
-    int copy_flag;
 
 	// Number max of action
 	int nb_action;

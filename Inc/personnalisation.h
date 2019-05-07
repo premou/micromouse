@@ -58,7 +58,7 @@
 #define 	INIT_GYRO_BIAS 						-1.530F	// unit : dps
 #define 	GYRO_AUTOCAL_VARIANCE_THRESHOLD 	0.040F	// unit : dps^2 (don't change this)
 #define 	GYRO_SENSITIVITY_CORRECTION 		1.000F	// unit : %
-#define 	W_SPEED 			330.0		// unit : dps
+#define 	W_SPEED 			320.0		// unit : dps
 #define 	W_T1 				280 		// unit : ms
 #define 	W_T2 				345			// unit : ms
 #define 	W_MAX_ACCELERATION 	5000		// unit : dps^2
