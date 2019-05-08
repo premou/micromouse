@@ -338,13 +338,15 @@ void controller_fsm(); // forward declaration
 void controller_update(){
 	// controller period
 	uint16_t time_us_current = timer_us_get();
-	if( (time_us_current-ctx.time_us) >= CONTROLLER_PERIOD ) // wait for PERIOD, then update sensors and call controller fsm
+	int16_t delta_time_us = time_us_current-ctx.time_us;
+	if( delta_time_us >= CONTROLLER_PERIOD ) // wait for PERIOD, then update sensors and call controller fsm
 	{
+		float delta_time_s = (float)(delta_time_us)/1000000.0F;
 		ctx.time_us = time_us_current;
 
 		// sensor update
 		encoder_update();
-		gyro_update(CONTROLLER_PERDIO_F);
+		gyro_update(delta_time_s); //CONTROLLER_PERDIO_F);
 		wall_sensor_update();
 
 		// motor control update
@@ -355,7 +357,7 @@ void controller_update(){
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				//(int32_t)(ctx.sub_action_index),		 // integer value of each field
 				(int32_t)(encoder_get_absolute()*1000.0),		 // integer value of each field
-				(int32_t)(gyro_get_heading()),
+				(int32_t)(gyro_get_heading())%360,
 
 				(int32_t)(ctx.x_speed_setpoint * 1000.0),// setpoint speed
 				(int32_t)(ctx.x_speed_current* 1000.0),	 // current speed
@@ -1053,7 +1055,7 @@ void controller_fsm()
 				}
 
 				// transition / condition
-				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
+				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION*0.99F)) // margin
 				{
 					ctx.sub_action_index++;
 					ctx.action_time = HAL_GetTick();
@@ -1066,9 +1068,10 @@ void controller_fsm()
 			case 1 :
 			{
 				// brake and use side walls
-				speed_control(0.05F,0.0F);
+				speed_control(0.0F,0.0F);
 				// transition / condition
-				if(encoder_get_absolute() >= DIST_STOP)
+				//if(encoder_get_absolute() >= DIST_STOP)
+				if(ctx.x_speed_target == 0.0F)
 				{
 					ctx.sub_action_index++;
 					ctx.action_time = HAL_GetTick();

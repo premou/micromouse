@@ -326,7 +326,7 @@ void draw()
     stroke(0,0,0);
     fill(0,0,0);
     textFont(font, 15);
-    text(legend_w, 5, wspeed_actual_offset-20);    
+    text(legend_w, 5, wspeed_actual_offset+20);    
     // legend
     String legend_dx =  "DL(green) DR(red)";
     stroke(0,0,0);
@@ -376,7 +376,7 @@ void serialEvent(Serial p)
         front_wall_pid = float(int(list[18])>>4);
 
         distance_history[iteration] = distance;
-        heading_history[iteration] = heading % 360;
+        heading_history[iteration] = (heading % 360);
         xspeed_target_history[iteration] = xspeed_target;
         xspeed_actual_history[iteration] = xspeed_actual;
         wspeed_target_history[iteration] = wspeed_target;

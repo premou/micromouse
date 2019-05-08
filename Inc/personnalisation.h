@@ -138,7 +138,7 @@
 #define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
-#define 	X_SPEED 			0.45 //0.450F 		// unit : m/s
+#define 	X_SPEED 			0.35 		// unit : m/s
 
 // 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
@@ -151,11 +151,12 @@
 #define 	W_SPEED_KP 			0.04 //0.08F 		// this is a speed parameter
 #define 	W_SPEED_KI 			0.002 //0.002F 		// this is a position parameter
 #define 	W_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
-#define 	W_SPEED_KF 			0.07F 		// this is a feed forward speed input
+#define 	W_SPEED_KF 			0.08F 		// this is a feed forward speed input
 
 // 1.04. Set wheel diameter and micro gear ratio
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
-#define 	WHEEL_DIAMETER      0.026000F	// unit : mm
+#define 	WHEEL_DIAMETER      0.0259F	// unit : mm
+// the greater is the wheel diameter, lesser is the distance traveled
 
 // 1.05, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : distance traveled must be equal to 180 mm
@@ -174,8 +175,10 @@
 
 // 2.01 Set the sensitivity correction
 // >>> physics using turn table : one turn gives 360° heading exactly (display heading)
-#define 	GYRO_SENSITIVITY_CORRECTION 		1.025F	// unit : %
+#define 	GYRO_SENSITIVITY_CORRECTION 		0.990F //1.025F	// unit : %
+// the greater is the correction, lesser the robot turn
 // #define IMU_TRACE //to see heading when IDLE, or upload datalogger and watch telemetry
+// use carré test to check real heading with estimated heading with telemetry
 
 // 2.02 Set rotation speed of curve turn
 // >>> use Trapezoidal-Curve-Turn-Profile-Generator
@@ -186,19 +189,23 @@
 //     deceleration = W_MAX_DECELERATION
 //     max angular vel = W_SPEED
 //     mouse width = 70
-#define 	W_SPEED 			455.0F		// unit : dps
-#define 	W_T1 				200 		// unit : ms
-#define 	W_T2 				256			// unit : ms
+#define 	W_SPEED 			330.0F		// unit : dps
+#define 	W_T1 				273 		// unit : ms
+#define 	W_T2 				328			// unit : ms
 
 // 2.03. Set rotation acceleration
-#define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
-#define		W_MAX_DECELERATION 	8000		// unit : dps^2
+#define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
+#define		W_MAX_DECELERATION 	6000		// unit : dps^2
 
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
+//#define SC_F_L90_F
+//#define SC_F_R90_F
 //#define SC_SQUARE_TEST_1_TURN
 //#define SC_SQUARE_TEST_2_TURN
+//#define SC_F_R90_R90_F
+#define SC_ZIGZAG
 
 // Next, we set the parameters for wall following
 
@@ -256,7 +263,7 @@
 // in order to stop the mouse in the middle of the last cell, and never crash front or side walls
 // > try first without wall
 // > try with one front wall, two or three walls
-#define SC_U_TURN
+//#define SC_U_TURN
 //#define SC_RUN1_UTURN_RUN1
 //#define SC_TURN_RIGHT_TEST
 

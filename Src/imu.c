@@ -39,8 +39,8 @@
 #define WHO_AM_I_VALUE 0x69
 
 // register configuration values (LSM6DS33)
-#define CTRL10_C_value_init 0x20
-#define CTRL2_G_value_init  0x74
+#define CTRL10_C_value_init 0x20 // ZG axis activated
+#define CTRL2_G_value_init  0x74 // 833 ODR + 500dps
 #define CTRL3_C_value_init  0x40 // BDU=1
 // constants
 #define ANGULAR_RATE_SENSITIVITY_500 0.0175 // factory sensititvy (p.15 datasheet)
