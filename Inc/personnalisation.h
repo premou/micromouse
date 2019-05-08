@@ -110,7 +110,7 @@
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
-#define 	FRONT_WALL_DISTANCE 				340		// unit : mm
+#define 	FRONT_WALL_DISTANCE 				350		// unit : mm
 // maximal distance to left or right wall
 #define 	SIDE_WALL_DISTANCE 					120		// unit : mm
 // distance to left wall when mouse in middle
@@ -244,7 +244,7 @@
 
 // 6.02. Set front wall distance position  PID
 #define X_WALL_FRONT_KP 1.0
-#define X_WALL_FRONT_KI 0.0001
+#define X_WALL_FRONT_KI 0.0002
 #define X_WALL_FRONT_KD 0.0
 
 // 6.03. Set front wall angle position  PID

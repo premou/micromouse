@@ -49,7 +49,7 @@ Float[] w_front_wall_actual_history = new Float[8000];
 Float distance_zoom = 1000.0f; // OK => 0..180mm >> 180pixels 
 Float heading_zoom = 0.4f;
 Float xspeed_zoom = 100.0f; // 0..1m/s ==> 0..100pixels
-Float wspeed_zoom = 0.5f;
+Float wspeed_zoom = 0.33f;
 Float wall_pid_zoom = 20.0f;
 Float wall_actual_zoom = 3.0f;
 Float dx_zoom = 1.0f;
@@ -60,17 +60,20 @@ Float w_front_wall_zoom = 4.0f;
 Float zoom = 1.0f;
 
 Float distance_offset = 200.0f;
-Float heading_offset = 600.0f; 
+
 Float xspeed_target_offset = 300.0f;
 Float xspeed_actual_offset = 300.0f;
-Float wspeed_target_offset = 600.0f;
-Float wspeed_actual_offset = 600.0f;
-Float wall_pid_offset = 600.0f;
-Float wall_actual_offset = 600.0f;
-Float dx_offset = 840.0f;
-Float fx_offset = 1040.0f;
 Float x_front_wall_offset = 300.0f;
-Float w_front_wall_offset = 600.0f;
+
+Float heading_offset = 500.0f; 
+Float wspeed_target_offset = 500.0f;
+Float wspeed_actual_offset = 500.0f;
+Float wall_pid_offset = 500.0f;
+Float wall_actual_offset = 500.0f;
+Float w_front_wall_offset = 500.0f;
+
+Float dx_offset = 800.0f;
+Float fx_offset = 1020.0f;
 
 PFont font;
 
@@ -92,7 +95,6 @@ void setup()
 void draw()
 {
   background(255);
-  //if(iteration>=1900)
   {
     float index = hs1.getPos(); 
     int xpos = 0;
@@ -199,34 +201,146 @@ void draw()
           point(xpos,w_front_wall_offset-w_front_wall_target_history[i]*w_front_wall_zoom,0); 
           stroke(0,255,0);
           strokeWeight(3);
-          point(xpos,w_front_wall_offset-w_front_wall_actual_history[i]*w_front_wall_zoom,0); 
+          point(xpos,w_front_wall_offset-w_front_wall_actual_history[i]*w_front_wall_zoom,0);
         }
         
         // dx
+        
+        // refence 0
         stroke(0,0,0);
         strokeWeight(1);
         line (0, dx_offset, 0, 1900, dx_offset, 0);
-        stroke(0,255,0);
-        strokeWeight(2);
-        point(xpos,dx_offset-dl_history[i]*dx_zoom,0); 
-        stroke(255,0,0);
-        strokeWeight(2);
-        point(xpos,dx_offset-dr_history[i]*dx_zoom,0); 
+        // side wall distance detection
+        stroke(200,200,200);
+        strokeWeight(1);
+        point(xpos,dx_offset-(120.0)*dx_zoom,0);  // SIDE_WALL_DISTANCE
+        point(xpos,dx_offset-(140.0)*dx_zoom,0); // wall to no wall 
+        stroke(200,0,0);
+        strokeWeight(1);
+        point(xpos,dx_offset-(60.0)*dx_zoom,0); // RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
+        stroke(0,200,0);
+        strokeWeight(1);
+        point(xpos,dx_offset-(70.0)*dx_zoom,0); // LEFT_WALL_DISTANCE_NO_SIDE_ERROR
+        // plot
+        if((i%20)==0)
+        { 
+            stroke(0,0,0);
+            strokeWeight(3);
+            point(xpos,dx_offset-dl_history[i]*dx_zoom,0); 
+            stroke(0,0,0);
+            strokeWeight(3);
+            point(xpos,dx_offset-dr_history[i]*dx_zoom,0);
+            // dl
+            String dist_dl =  (int)(dl_history[i]+1.0)+" ";
+            stroke(0,200,0);
+            fill(0,200,0);
+            textFont(font, 10);
+            text(dist_dl, xpos, dx_offset+9);
+            // dr
+            String dist_dr =  (int)(dr_history[i]+1.0)+" ";
+            stroke(200,0,0);
+            fill(200,0,0);
+            textFont(font, 10);
+            text(dist_dr, xpos, dx_offset+19);        
+        }
+        else
+        {
+          stroke(0,255,0);
+          strokeWeight(2);
+          point(xpos,dx_offset-dl_history[i]*dx_zoom,0); 
+          stroke(255,0,0);
+          strokeWeight(2);
+          point(xpos,dx_offset-dr_history[i]*dx_zoom,0);
+        }
+        
         // fx
+        
+        // refence 0
         stroke(0,0,0);
         strokeWeight(1);
         line (0, fx_offset, 0, 1900, fx_offset, 0);
+        // front wall distance destection
+        stroke(200,200,200);
+        strokeWeight(1);
+        point(xpos,fx_offset-(350.0)/2.0*fx_zoom,0); // FRONT_WALL_DISTANCE
+        point(xpos,fx_offset-(240.0)/2.0*fx_zoom,0); // WALL_FRONT_ANGLE_TURNING_mm
+        point(xpos,fx_offset-(26.0)*fx_zoom,0); // WALL_FRONT_DISTANCE_mm
+        // plot
         stroke(0,255,0);
-        strokeWeight(2);
+        strokeWeight(1);
         point(xpos,fx_offset-fl_history[i]*fx_zoom,0); 
         stroke(255,0,0);
-        strokeWeight(2);
-        point(xpos,fx_offset-fr_history[i]*fx_zoom,0); 
-        
+        strokeWeight(1);
+        point(xpos,fx_offset-fr_history[i]*fx_zoom,0);
+        // values
+          if((i%20)==0)
+          { 
+            // mean fr+fl
+            stroke(255,0,0);
+            strokeWeight(3);
+            point(xpos,fx_offset-(fr_history[i]+fl_history[i])/2.0*fx_zoom,0); 
+            // fl
+            String dist_fl =  (int)(fl_history[i]+1.0)+" ";
+            stroke(0,200,0);
+            fill(0,200,0);
+            textFont(font, 10);
+            text(dist_fl, xpos, fx_offset+9);
+            //fr
+            String dist_fr =  (int)(fr_history[i]+1.0)+" ";
+            stroke(200,0,0);
+            fill(200,0,0);
+            textFont(font, 10);
+            text(dist_fr, xpos, fx_offset+19);
+            // sum
+            String dist =  (int)(fr_history[i]+fl_history[i])+" ";
+            stroke(200,200,200);
+            fill(0,0,0);
+            textFont(font, 10);
+            text(dist, xpos, fx_offset-(fr_history[i]+fl_history[i])/2.0*fx_zoom-10);
+            
+          }
+          else
+          {
+            // mean fr+fl
+            stroke(0,0,0);
+            strokeWeight(2);
+            point(xpos,fx_offset-(fr_history[i]+fl_history[i])/2.0*fx_zoom,0); 
+          }            
       }
       ++xpos;
     }
+    // legend
+    String legend_d =  "Distance(cm)";
+    stroke(0,0,0);
+    fill(0,0,0);
+    textFont(font, 15);
+    text(legend_d, 5, distance_offset+15);    
+    // legend
+    String legend_x =  "xPID(B) FrontWall(G):";
+    stroke(0,0,0);
+    fill(0,0,0);
+    textFont(font, 15);
+    text(legend_x, 5, xspeed_actual_offset+15);    
+    // legend
+    String legend_w =  "wPID(B) SideWall(R) FrontWall(G)";
+    stroke(0,0,0);
+    fill(0,0,0);
+    textFont(font, 15);
+    text(legend_w, 5, wspeed_actual_offset-20);    
+    // legend
+    String legend_dx =  "DL(green) DR(red)";
+    stroke(0,0,0);
+    fill(0,0,0);
+    textFont(font, 15);
+    text(legend_dx, 5, dx_offset-10);    
+    // legend
+    String legend_fx =  "FL(G) FR(R) Sum(B)";
+    stroke(0,0,0);
+    fill(0,0,0);
+    textFont(font, 15);
+    text(legend_fx, 5, fx_offset-10);    
   }
+
   
   hs1.update();
   hs1.display();
