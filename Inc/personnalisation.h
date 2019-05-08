@@ -116,7 +116,7 @@
 // distance to left wall when mouse in middle
 #define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	70.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	65.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	60.0	// unit : mm
 // position of micromouse when wall fades (140mm)
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
 // position of micromouse when post fades (140mm)
@@ -148,10 +148,10 @@
 #define 	X_SPEED_KP 			600.0F		// this is a speed parameter
 #define 	X_SPEED_KI 			10.0F		// this is a position parameter
 #define 	X_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
-#define 	W_SPEED_KP 			0.1F 		// this is a speed parameter
-#define 	W_SPEED_KI 			0.004F 		// this is a position parameter
+#define 	W_SPEED_KP 			0.04 //0.08F 		// this is a speed parameter
+#define 	W_SPEED_KI 			0.002 //0.002F 		// this is a position parameter
 #define 	W_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
-#define 	W_SPEED_KF 			0.03F 		// this is a feed forward speed input
+#define 	W_SPEED_KF 			0.07F 		// this is a feed forward speed input
 
 // 1.04. Set wheel diameter and micro gear ratio
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
@@ -161,6 +161,8 @@
 // >>> physics : distance traveled must be equal to 180 mm
 // >>> visualization : actual forward speed must follow current forward speed
 //#define SC_START_STOP // 180mm
+//#define SC_START_RUN_STOP // 360mm
+//#define SC_START_RUN2_STOP // 540mm
 //#define SC_START_RUN3_STOP // 720mm
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
@@ -207,7 +209,7 @@
 
 // 3.02. use visualization and physics to adjust all these parameters in order to :
 // >>> physics : mouse moves forward in the middle of cell and avoids walls
-//#define SC_START_RUN1_STOP
+//#define SC_START_RUN_STOP
 //#define SC_START_RUN3_STOP
 
 // Next, we set the parameters for wall-to-wall calibration
@@ -254,8 +256,8 @@
 // in order to stop the mouse in the middle of the last cell, and never crash front or side walls
 // > try first without wall
 // > try with one front wall, two or three walls
-//#define SC_U_TURN
-#define SC_RUN1_UTURN_RUN1
+#define SC_U_TURN
+//#define SC_RUN1_UTURN_RUN1
 //#define SC_TURN_RIGHT_TEST
 
 

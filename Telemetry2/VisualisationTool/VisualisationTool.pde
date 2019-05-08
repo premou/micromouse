@@ -15,12 +15,17 @@ Float xspeed_target = 0.0f;
 Float xspeed_actual = 0.0f;
 Float wspeed_target = 0.0f;
 Float wspeed_actual = 0.0f;
+Float front_wall_pid = 0.0f;
 Float wall_pid = 0.0f;
 Float wall_actual = 0.0f;
 Float dl = 0.0f;
 Float fl = 0.0f;
 Float fr = 0.0f;
 Float dr = 0.0f;
+Float x_front_wall_target = 0.0f;
+Float x_front_wall_actual = 0.0f;
+Float w_front_wall_target = 0.0f;
+Float w_front_wall_actual = 0.0f;
 
 int iteration  = 0;
 Float[] distance_history = new Float[8000];
@@ -29,23 +34,28 @@ Float[] xspeed_target_history = new Float[8000];
 Float[] xspeed_actual_history = new Float[8000];
 Float[] wspeed_target_history = new Float[8000];
 Float[] wspeed_actual_history = new Float[8000];
+Float[] front_wall_pid_history = new Float[8000];
 Float[] wall_pid_history = new Float[8000];
 Float[] wall_actual_history = new Float[8000];
 Float[] dl_history = new Float[8000];
 Float[] fl_history = new Float[8000];
 Float[] fr_history = new Float[8000];
 Float[] dr_history = new Float[8000];
+Float[] x_front_wall_target_history = new Float[8000];
+Float[] x_front_wall_actual_history = new Float[8000];
+Float[] w_front_wall_target_history = new Float[8000];
+Float[] w_front_wall_actual_history = new Float[8000];
 
 Float distance_zoom = 1000.0f; // OK => 0..180mm >> 180pixels 
 Float heading_zoom = 0.4f;
-Float xspeed_target_zoom = 100.0f; // 0..1m/s ==> 0..100pixels
-Float xspeed_actual_zoom = 100.0f;
-Float wspeed_target_zoom = 0.5f;
-Float wspeed_actual_zoom = 0.5f;
+Float xspeed_zoom = 100.0f; // 0..1m/s ==> 0..100pixels
+Float wspeed_zoom = 0.5f;
 Float wall_pid_zoom = 20.0f;
 Float wall_actual_zoom = 3.0f;
 Float dx_zoom = 1.0f;
 Float fx_zoom = 0.5f;
+Float x_front_wall_zoom = 2.0f;
+Float w_front_wall_zoom = 4.0f;
 
 Float zoom = 1.0f;
 
@@ -59,6 +69,8 @@ Float wall_pid_offset = 600.0f;
 Float wall_actual_offset = 600.0f;
 Float dx_offset = 840.0f;
 Float fx_offset = 1040.0f;
+Float x_front_wall_offset = 300.0f;
+Float w_front_wall_offset = 600.0f;
 
 PFont font;
 
@@ -132,39 +144,62 @@ void draw()
           point(xpos,heading_offset-heading_history[i]*heading_zoom,0); 
         }        
 
-        // xspeed
+        // xspeedor front wall x position
         stroke(0,0,0);
         strokeWeight(1);
         line (0, xspeed_target_offset, 0, 1900, xspeed_target_offset, 0);
-        stroke(0,0,0);
-        strokeWeight(2);
-        point(xpos,xspeed_target_offset-xspeed_target_history[i]*xspeed_target_zoom,0); 
-        // xspeed
-        stroke(0,0,255);
-        strokeWeight(3);
-        point(xpos,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_actual_zoom,0); 
-
-         // wspeed or wall_following pid
-          stroke(0,0,0);
-          strokeWeight(1);
-          line (0, wspeed_target_offset, 0, 1900, wspeed_target_offset, 0);
-        if(wall_pid_history[i]==0)
+        if(front_wall_pid_history[i]==0)
         {
-          // wspeed
           stroke(0,0,0);
           strokeWeight(2);
-          point(xpos,wspeed_target_offset-wspeed_target_history[i]*wspeed_target_zoom,0); 
-          // wspeed
+          point(xpos,xspeed_target_offset-xspeed_target_history[i]*xspeed_zoom,0); 
           stroke(0,0,255);
           strokeWeight(3);
-          point(xpos,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_actual_zoom,0); 
+          point(xpos,xspeed_actual_offset-xspeed_actual_history[i]*xspeed_zoom,0); 
         }
         else
         {
-          // wall position
-          stroke(255,0,0);
+          stroke(0,0,0);
+          strokeWeight(2);
+          point(xpos,x_front_wall_offset-x_front_wall_target_history[i]*x_front_wall_zoom,0); 
+          stroke(0,255,0);
           strokeWeight(3);
-          point(xpos,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0);
+          point(xpos,x_front_wall_offset-x_front_wall_actual_history[i]*x_front_wall_zoom,0); 
+        }
+
+         // wspeed or wall_following pid or front wall w position
+        stroke(0,0,0);
+        strokeWeight(1);
+        line (0, wspeed_target_offset, 0, 1900, wspeed_target_offset, 0);
+        if(front_wall_pid_history[i]==0)
+        {
+          if(wall_pid_history[i]==0)
+          {
+            // wspeed
+            stroke(0,0,0);
+            strokeWeight(2);
+            point(xpos,wspeed_target_offset-wspeed_target_history[i]*wspeed_zoom,0); 
+            // wspeed
+            stroke(0,0,255);
+            strokeWeight(3);
+            point(xpos,wspeed_actual_offset-wspeed_actual_history[i]*wspeed_zoom,0); 
+          }
+          else
+          {
+            // wall following
+            stroke(255,0,0);
+            strokeWeight(3);
+            point(xpos,wall_actual_offset-wall_actual_history[i]*wall_actual_zoom,0);
+          }
+        }
+        else
+        {
+          stroke(0,0,0);
+          strokeWeight(2);
+          point(xpos,w_front_wall_offset-w_front_wall_target_history[i]*w_front_wall_zoom,0); 
+          stroke(0,255,0);
+          strokeWeight(3);
+          point(xpos,w_front_wall_offset-w_front_wall_actual_history[i]*w_front_wall_zoom,0); 
         }
         
         // dx
@@ -215,11 +250,16 @@ void serialEvent(Serial p)
         wspeed_target = float(list[7])/1.0f;
         wspeed_actual = float(list[8])/1.0f;
         wall_actual = float(list[9])/1.0f;
+        x_front_wall_target = float(list[10])/1.0f;
+        x_front_wall_actual = float(list[11])/1.0f;
+        w_front_wall_target = float(list[12])/1.0f;
+        w_front_wall_actual = float(list[13])/1.0f;
         dl = float(list[14])/1.0f;
         fl = float(list[15])/1.0f;
         fr = float(list[16])/1.0f;
         dr = float(list[17])/1.0f;
         wall_pid = float(int(list[18])>>3);
+        front_wall_pid = float(int(list[18])>>4);
 
         distance_history[iteration] = distance;
         heading_history[iteration] = heading % 360;
@@ -229,10 +269,15 @@ void serialEvent(Serial p)
         wspeed_actual_history[iteration] = wspeed_actual;
         wall_pid_history[iteration] = wall_pid;
         wall_actual_history[iteration] = wall_actual;
+        front_wall_pid_history[iteration] = front_wall_pid;
         dl_history[iteration] = dl;
         fl_history[iteration] = fl;
         fr_history[iteration] = fr;
         dr_history[iteration] = dr;
+        x_front_wall_target_history[iteration] = x_front_wall_target;
+        x_front_wall_actual_history[iteration] = x_front_wall_actual;
+        w_front_wall_target_history[iteration] = w_front_wall_target;
+        w_front_wall_actual_history[iteration] = w_front_wall_actual;
 
        //++iteration;
     }

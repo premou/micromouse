@@ -164,6 +164,11 @@ float gyro_get_dps()
 	return ctx.rate- ctx.bias;
 }
 
+void gyro_reset_heading()
+{
+	ctx.heading = 0.0F;
+}
+
 float gyro_get_heading()
 {
 	return ctx.heading;

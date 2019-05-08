@@ -366,6 +366,15 @@ action_t actions_scenario[] =
 #ifdef SC_START_STOP
 		ACTION_STOP,
 #endif
+#ifdef SC_START_RUN_STOP
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
+#ifdef SC_START_RUN2_STOP
+		ACTION_RUN_1,
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
 #ifdef SC_START_RUN3_STOP
 		ACTION_RUN_1,
 		ACTION_RUN_1,
