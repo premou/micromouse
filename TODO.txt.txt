@@ -1,5 +1,5 @@
-P0 : Faire un banc pour aligner les capteurs IR et prendre les mesures de distance
-P0 : Rédiger TUTO pour régler le robot (wall following, wall front, front wall turn calibration, wall to no wall calibration) + Coder les scénarios de réglage
+P1 : Front wall W calibration dans RIGHT/LEFT TURN
+P2 : Tester WALL to no WALL dans la sortie de UTURN
 
 P3 : Clean Up configuration (inutile)
 
