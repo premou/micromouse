@@ -151,7 +151,7 @@
 #define 	W_SPEED_KP 			0.1F 		// this is a speed parameter
 #define 	W_SPEED_KI 			0.004F 		// this is a position parameter
 #define 	W_SPEED_KD 			0.0F 		// this is an acceleration, so we do not use this input
-#define 	W_SPEED_KF 			0.02F 		// this is a feed forward speed input
+#define 	W_SPEED_KF 			0.03F 		// this is a feed forward speed input
 
 // 1.04. Set wheel diameter and micro gear ratio
 #define 	GEAR_BOX_RATIO		1.0F/50.0F	// 1:50
@@ -236,9 +236,9 @@
 // 6.01 Set timing for dead end rotation
 #define 	W_U_SPEED 			360.0F		// unit : dps
 #define 	W_U_T1_90			260 		// unit : ms
-#define 	W_U_T2_90			310			// unit : ms
+#define 	W_U_T2_90			305			// unit : ms
 #define 	W_U_T1_180			510 		// unit : ms
-#define 	W_U_T2_180			560			// unit : ms
+#define 	W_U_T2_180			555			// unit : ms
 
 // 6.02. Set front wall distance position  PID
 #define X_WALL_FRONT_KP 1.0
@@ -254,8 +254,8 @@
 // in order to stop the mouse in the middle of the last cell, and never crash front or side walls
 // > try first without wall
 // > try with one front wall, two or three walls
-#define SC_U_TURN
-//#define SC_RUN1_UTURN_RUN1
+//#define SC_U_TURN
+#define SC_RUN1_UTURN_RUN1
 //#define SC_TURN_RIGHT_TEST
 
 
