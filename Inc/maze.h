@@ -95,7 +95,6 @@ typedef struct {
 	int enable;
 	int x;
 	int y;
-	int min_dist;
 } inter_t ;
 
 typedef struct {
@@ -132,14 +131,11 @@ typedef struct {
 	// Number max of intersection to visit
 	int nb_inter;
 
-	// Unknown variable ???
-	uint8_t switch_led;
-
 	// Intesection list
-	inter_t inter_array[MAX_INTER];
+	inter_t inter_list[MAX_INTER];
 
 	// Action list
-	action_ctx action_array[MAX_ACTION];
+	action_ctx action_list[MAX_ACTION];
 
 	// The maze array:               x              y
 	maze_case_t maze_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH];
@@ -149,6 +145,10 @@ typedef struct {
 
 	// For solve mode
 	maze_case_t shortest_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH];
+
+    // For intersection
+    maze_case_t inter_array[MAX_MAZE_DEPTH][MAX_MAZE_DEPTH];
+
 } maze_ctx_t;
 
 // Prototypes
@@ -169,17 +169,12 @@ void         find_shortest_path(maze_ctx_t *pCtx,
 		int i, int j, // from
 		int x, int y, // to
 		int dist);
-int          is_valid(int x, int y);
-int          is_safe(maze_ctx_t *pCtx, int x, int y);
-int          is_no_wall(maze_ctx_t *pCtx, int x, int y, maze_case_t wall);
 void         build_action_list(maze_ctx_t *pCtx,
 		robot_direction_t from_dir,
 		int from_x, int from_y,
 		int to_x, int to_y);
 action_t     get_next_next_action(maze_ctx_t *pCtx);
 void         update_intersection(maze_ctx_t *pCtx);
-int          is_good_choice(maze_ctx_t *pCtx, action_t next_action);
-
 
 #endif // _MAZE_INC
 
