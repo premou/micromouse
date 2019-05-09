@@ -2,8 +2,8 @@ import processing.serial.*;
 import java.awt.datatransfer.*;
 import java.awt.Toolkit;
 import processing.opengl.*;
-import saito.objloader.*;
-import g4p_controls.*;
+//import saito.objloader.*;
+//import g4p_controls.*;
 
 HScrollbar hs1;
 
@@ -86,7 +86,7 @@ void setup()
   frameRate(30);
   font = createFont("ArialMT", 48, true);
   // Open port.
-  port = new Serial(this, "COM3", 115200);
+  port = new Serial(this, "COM4", 115200);
   port.bufferUntil('\n');
   // scrollbar  
   hs1 = new HScrollbar(0, height-8, width, 16, 16);
