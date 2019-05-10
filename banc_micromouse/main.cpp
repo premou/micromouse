@@ -154,7 +154,7 @@ void flush_com_robot()
     fill(robot_recv_buffer,robot_recv_buffer+sizeof(robot_recv_buffer),0x00);
 }
 
-unsigned int const max_distance = 180;
+unsigned int const max_distance = 140;
 
 void calibrate(int selection)
 {
@@ -278,8 +278,8 @@ int main()
         cout << " [FAIL]" << endl;
     }
     cout << "Open table com...";
-    //com_table = new Serial("\\\\.\\COM4",9600); //38400);
-    com_table = new Serial("\\\\.\\COM25",9600); //38400);
+    com_table = new Serial("\\\\.\\COM16",9600); //38400);
+    //com_table = new Serial("\\\\.\\COM25",9600); //38400);
     if (com_table->IsConnected())
     {
         cout << " [OK]" << endl;

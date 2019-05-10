@@ -21,19 +21,19 @@ for sensor = 1:4
   %% one feature with polynomial regression x <=> 1/sqrt(ADC) 1/ADC 1/ADC²
   %% add x0 col
   %X = [ ones(m,1), 1./sqrt(rawX), 1./rawX, 1./(rawX.^2) ];
-  %%X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX.^2) ];
-  X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX.^2) ];
+  X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX) ];
+ % X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX.^2) ];
   %%X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX) ];
-  %%X = [ ones(m,1), 1./log(rawX), 1./(rawX.^2) ];
+  %X = [ ones(m,1), 1./log(rawX), 1./(rawX.^2) ];
   %X = [ ones(m,1), 1./sqrt(rawX), 1./(rawX) ];
 
   %% theta
   regul = eye(3,3);
   regul(1,1) = 0;
-  regul(2,2) = 0.0;
-  regul(3,3) = 0.0;
-  %%theta = pinv(X'*X + regul)*X'*y
-  theta = pinv(X'*X)*X'*y
+  regul(2,2) = 0.001;
+  regul(3,3) = 0.001;
+  theta = pinv(X'*X + regul)*X'*y
+  %theta = pinv(X'*X)*X'*y
 
   #error over distance
   error = X*theta - y;
@@ -48,7 +48,7 @@ for sensor = 1:4
   %legend("Raw measures","H")
   title(sprintf("Raw ADC value to Distance %s", { "DL"; "FL"; "FR"; "DR" }{sensor}))
   subplot(4,2,2*sensor)
-  plot(y(20:175),error(20:175),"r");
+  plot(y(20:139),error(20:139),"r");
   hold on;
   plot(y,zeros(m,1),'k');
   xlabel("Distance(mm)");

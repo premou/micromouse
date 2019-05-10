@@ -1,10 +1,10 @@
-# Created by Octave 5.1.0, Tue May 07 23:33:57 2019 GMT <unknown@Patrick-i7>
+# Created by Octave 5.1.0, Sat May 11 00:20:53 2019 GMT <unknown@Patrick-i7>
 # name: theta
 # type: matrix
 # rows: 3
 # columns: 1
- NaN
- NaN
- NaN
+ -35.770174707720123
+ 3448.7146519532103
+ 196.05864093517019
 
 
