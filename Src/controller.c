@@ -504,7 +504,7 @@ void controller_fsm()
 				// transition / condition
 				if( wall_sensor_is_front_wall_detected() )
 				{
-					if( (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)+wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT)) <= WALL_FRONT_ANGLE_TURNING_mm )
+					if( (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)+wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT)) <= WALL_FRONT_ANGLE_TURNING_SUM_mm )
 					{
 						ctx.sub_action_index++;
 						ctx.action_time = HAL_GetTick();
@@ -607,7 +607,7 @@ void controller_fsm()
 			// STEP1 : RUN until BRAKE
 			case 0 :
 			{
-				// check wall and decide wich kind of dead end turn to do
+				// check wall and decide which kind of dead end turn to do
 				if( wall_sensor_is_front_wall_detected() &&
 						wall_sensor_is_right_wall_detected() ) 	// 111 + 011
 				{

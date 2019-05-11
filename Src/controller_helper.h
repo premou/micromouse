@@ -443,6 +443,14 @@ action_t actions_scenario[] =
 		ACTION_RUN_1,
 		ACTION_STOP,
 #endif
+#ifdef SC_F_R90_F_R90_F
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_TURN_RIGHT,
+		ACTION_RUN_1,
+		ACTION_STOP,
+#endif
 #ifdef SC_ZIGZAG
 		ACTION_TURN_RIGHT,
 		ACTION_TURN_LEFT,

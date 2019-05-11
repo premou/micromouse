@@ -86,7 +86,8 @@ void setup()
   frameRate(30);
   font = createFont("ArialMT", 48, true);
   // Open port.
-  port = new Serial(this, "COM4", 115200);
+  //port = new Serial(this, "COM4", 115200);
+  port = new Serial(this, "COM3", 115200);
   port.bufferUntil('\n');
   // scrollbar  
   hs1 = new HScrollbar(0, height-8, width, 16, 16);
@@ -217,10 +218,10 @@ void draw()
         point(xpos,dx_offset-(140.0)*dx_zoom,0); // wall to no wall 
         stroke(200,0,0);
         strokeWeight(1);
-        point(xpos,dx_offset-(60.0)*dx_zoom,0); // RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
+        point(xpos,dx_offset-(40.0)*dx_zoom,0); // RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
         stroke(0,200,0);
         strokeWeight(1);
-        point(xpos,dx_offset-(70.0)*dx_zoom,0); // LEFT_WALL_DISTANCE_NO_SIDE_ERROR
+        point(xpos,dx_offset-(40.0)*dx_zoom,0); // LEFT_WALL_DISTANCE_NO_SIDE_ERROR
         // plot
         if((i%20)==0)
         { 
