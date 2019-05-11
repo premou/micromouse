@@ -288,8 +288,8 @@
 // 		>> front wall sensor open 5°
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
-#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+//#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
+#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)

@@ -25,6 +25,12 @@ subplot(2,3,1)
 plot(filt_raw)
 legend("DL","FL","FR","DR")
 title("distance (mm) to filtered ADC (12bits)")
+
+
+
+
+
+
 %print -dpng raw
 % find a (ln or squareroot law)
 log_raw = 1./sqrt(filt_raw);

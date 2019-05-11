@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1557564940 source:c:\github\micromouse\banc_micromouse2\main.cpp
+	<iostream>
+	<sstream>
+	<fstream>
+	<vector>
+	<algorithm>
+	<map>
+

@@ -69,6 +69,8 @@ float theta2[WALL_SENSOR_COUNT] =
 
 #ifdef __PATRICK__
 
+#include "../Src/wall_sensor_table_patrick.h"
+
 // DL, FL, FR, DR
 float theta0[WALL_SENSOR_COUNT] =
 	{
@@ -149,14 +151,22 @@ float theta2[WALL_SENSOR_COUNT] =
 
 #endif
 
+
+//void raw_to_distance(int32_t const * raw, float * distance)
+//{
+//	for(uint32_t sensor=0;sensor<WALL_SENSOR_COUNT;++sensor)
+//		distance[sensor] =
+//				theta0[sensor] * 1.0 +
+//				theta1[sensor] / sqrt( (float)raw[sensor] ) +
+//				theta2[sensor] / pow( (float)raw[sensor], 2 );
+//}
+
 void raw_to_distance(int32_t const * raw, float * distance)
 {
-	for(uint32_t sensor=0;sensor<WALL_SENSOR_COUNT;++sensor)
-		distance[sensor] =
-				theta0[sensor] * 1.0 +
-				theta1[sensor] / sqrt( (float)raw[sensor] ) +
-				theta2[sensor] / pow( (float)raw[sensor], 2 );
+	distance[WALL_SENSOR_LEFT_DIAG]		=	table_dl[	raw[WALL_SENSOR_LEFT_DIAG]		];
+	distance[WALL_SENSOR_LEFT_STRAIGHT]	=	table_fl[	raw[WALL_SENSOR_LEFT_STRAIGHT]	];
+	distance[WALL_SENSOR_RIGHT_STRAIGHT]=	table_fr[	raw[WALL_SENSOR_RIGHT_STRAIGHT]	];
+	distance[WALL_SENSOR_RIGHT_DIAG]	=	table_dr[	raw[WALL_SENSOR_RIGHT_DIAG]		];
 }
-
 
 #endif /* WALLSENSORCALIBRATION_H_ */

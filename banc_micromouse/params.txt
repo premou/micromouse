@@ -1,0 +1,15 @@
+# Created by Octave 5.1.0, Sat May 11 07:57:39 2019 GMT <unknown@Patrick-i7>
+# name: a
+# type: matrix
+# rows: 1
+# columns: 4
+ NaN 0.00034893709341631614 0.00030051180822443155 NaN
+
+
+# name: b
+# type: matrix
+# rows: 1
+# columns: 4
+ NaN 0.010213784170079707 0.0090935630985258097 NaN
+
+
