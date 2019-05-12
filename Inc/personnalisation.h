@@ -293,7 +293,7 @@
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
-#define 	FRONT_WALL_DISTANCE 				310		// unit : mm
+#define 	FRONT_WALL_DISTANCE 				315		// unit : mm
 // maximal distance to left or right wall
 #define 	SIDE_WALL_DISTANCE 					100		// unit : mm
 // distance to left wall when mouse in middle
@@ -301,18 +301,18 @@
 // distance to right wall when mouse in middle
 #define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	40.0	// unit : mm
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.120 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.100 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.095 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_DISTANCE_mm 					45.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					4.0 	// unit : mm
 // sum distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			220.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			240.0 	// unit : mm
 // delta distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			0.0 	// unit : mm
-#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			1.75 	// unit : mm to ms
+#define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			18.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			1.0 	// unit : mm to ms
 // adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
 // adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
 // to get smooth transition between one or two wall following.
@@ -387,7 +387,7 @@
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
 //#define SC_F_L90_F
-#define SC_F_R90_F
+//#define SC_F_R90_F
 //#define SC_F_R90_F_R90_F
 //#define SC_SQUARE_TEST_1_TURN
 //#define SC_SQUARE_TEST_2_TURN
@@ -460,6 +460,10 @@
 #define X_SPEED_FAST_RUN_IMPROVED 1.0 // m/s
 
 // RAND moves test stress
+//#define RAND_MOVES_3
+//#define RAND_MOVES_6
+//#define RAND_MOVES_12
+#define RAND_MOVES_16
 
 // AI
 
