@@ -34,8 +34,8 @@ static float const hal_battery_voltage_hw_ration[VBATT_COUNT] = {
 };
 
 static float const hal_battery_voltage_low_threshold[VBATT_COUNT] = {
-	6.6, // V
-	6.6
+	6.4, // V
+	6.4
 };
 
 /* HAL Public Data ------------------------------------------------------------------*/

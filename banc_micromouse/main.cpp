@@ -154,7 +154,7 @@ void flush_com_robot()
     fill(robot_recv_buffer,robot_recv_buffer+sizeof(robot_recv_buffer),0x00);
 }
 
-unsigned int const max_distance = 160;
+unsigned int const max_distance = 180;
 
 void calibrate(int selection)
 {

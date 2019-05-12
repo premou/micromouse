@@ -504,10 +504,29 @@ void controller_fsm()
 				// transition / condition
 				if( wall_sensor_is_front_wall_detected() )
 				{
-					if( (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)+wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT)) <= WALL_FRONT_ANGLE_TURNING_mm )
+					if( (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)+wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT)) <= WALL_FRONT_ANGLE_TURNING_SUM_mm )
 					{
 						ctx.sub_action_index++;
-						ctx.action_time = HAL_GetTick();
+						{
+							// what is the incidence of the robot with the front wall ?
+							float delta_distance_mm = (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)-wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT))-WALL_FRONT_ANGLE_TURNING_DELTA_mm; // mm
+							// note : positive when robot is on the right
+							// now convert delta distance in delta time
+							if(ctx.current_state == ACTION_TURN_RIGHT)
+							{
+								if(delta_distance_mm > 0)
+									ctx.action_time = HAL_GetTick() + (uint32_t)(delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+								else
+									ctx.action_time = HAL_GetTick() - (uint32_t)(-delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+							}
+							else
+							{
+								if(delta_distance_mm > 0)
+									ctx.action_time = HAL_GetTick() - (uint32_t)(delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+								else
+									ctx.action_time = HAL_GetTick() + (uint32_t)(-delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+							}
+						}
 						ctx.current_xpid_type = PID_TYPE_SPEED;
 						ctx.current_wpid_type = PID_TYPE_GYRO;
 
@@ -604,10 +623,10 @@ void controller_fsm()
 	{
 		switch (ctx.sub_action_index)
 		{
-			// STEP1 : RUN until BRAKE
+			// STEP0 : RUN and wall capture
 			case 0 :
 			{
-				// check wall and decide wich kind of dead end turn to do
+				// check wall and decide which kind of dead end turn to do
 				if( wall_sensor_is_front_wall_detected() &&
 						wall_sensor_is_right_wall_detected() ) 	// 111 + 011
 				{
@@ -651,18 +670,48 @@ void controller_fsm()
 				}
 
 				// transition / condition
+				ctx.sub_action_index++;
+				ctx.action_time = HAL_GetTick();
+				ctx.current_xpid_type = PID_TYPE_SPEED;
+				ctx.current_wpid_type = PID_TYPE_GYRO;
+#ifdef UTURN_TRACE
+					HAL_Serial_Print(&com," STEP->%d, type=%d\r\n",ctx.sub_action_index,ctx.current_uturn_type);
+#endif
+			}
+			break;
+			// STEP1 : RUN until BRAKE
+			case 1 :
+			{
+				// move forward and use side walls
+				// middle cell alignement (abandonned)
+				//if( (encoder_get_absolute() <= DIST_RUN_1/2.0) && (wall_sensor_is_left_wall_detected() || wall_sensor_is_right_wall_detected()) )
+				// wall collision avoidance
+				if( (encoder_get_absolute() <= DIST_STOP/2.0) && (wall_sensor_get_side_error() != 0.0F) )
+				{
+					ctx.current_wpid_type = PID_TYPE_WALL;
+					speed_control_with_wall_following(X_SPEED);
+				}
+				else
+				{
+					ctx.current_wpid_type = PID_TYPE_GYRO;
+					speed_control(X_SPEED,0.0F);
+				}
+
+				// transition / condition
 				if(have_to_break(0, ctx.x_speed_setpoint, DIST_STOP-encoder_get_absolute(), X_MAX_DECELERATION))
 				{
 					ctx.sub_action_index++;
 					ctx.action_time = HAL_GetTick();
 					ctx.current_xpid_type = PID_TYPE_SPEED;
 					ctx.current_wpid_type = PID_TYPE_GYRO;
-					//HAL_Serial_Print(&com," STEP0->1, type=%d\r\n",ctx.current_uturn_type);
+#ifdef UTURN_TRACE
+					HAL_Serial_Print(&com," STEP->%d, type=%d\r\n",ctx.sub_action_index,ctx.current_uturn_type);
+#endif
 				}
 			}
 			break;
-			// STEP1 : BRAKE
-			case 1 :
+			// STEP2 : BRAKE
+			case 2 :
 			{
 				switch(ctx.current_uturn_type)
 				{
@@ -680,9 +729,9 @@ void controller_fsm()
 							ctx.action_time = HAL_GetTick();
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
-
-							//HAL_Serial_Print(&com," STEP->%d BRAKE 0.05\r\n",ctx.sub_action_index);
-
+#ifdef UTURN_TRACE
+						HAL_Serial_Print(&com," STEP->%d BRAKE 0.05\r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
@@ -701,15 +750,17 @@ void controller_fsm()
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 
-							//HAL_Serial_Print(&com," STEP->%d BRAKE 0.1\r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d BRAKE 0.1\r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
 				}
 			}
 			break;
-			// STEP2 : FRONT WALL CALIBRATION or just STILL for a little time
-			case 2 :
+			// STEP3 : FRONT WALL CALIBRATION or just STILL for a little time
+			case 3 :
 			{
 				switch(ctx.current_uturn_type)
 				{
@@ -728,7 +779,9 @@ void controller_fsm()
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 
 							encoder_reset();
+#ifdef UTURN_TRACE
 							HAL_Serial_Print(&com," STEP->%d STILL %d\r\n",ctx.sub_action_index,HAL_GetTick());
+#endif
 						}
 					}
 					break;
@@ -749,15 +802,17 @@ void controller_fsm()
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 
 							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d FRONT WALL Cal\r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d FRONT WALL Cal\r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
 				}
 			}
 			break;
-			// STEP3 : TURN (accelerate+cruise)
-			case 3 :
+			// STEP4 : TURN (accelerate+cruise)
+			case 4 :
 			{
 				switch(ctx.current_uturn_type)
 				{
@@ -770,7 +825,9 @@ void controller_fsm()
 						if(HAL_GetTick() > ctx.action_time + W_U_T1_180)
 						{
 							ctx.sub_action_index++;
-							//HAL_Serial_Print(&com," STEP->%d TURN 180 %d\r\n",ctx.sub_action_index,HAL_GetTick());
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d TURN 180 %d\r\n",ctx.sub_action_index,HAL_GetTick());
+#endif
 						}
 					}
 					break;
@@ -793,15 +850,17 @@ void controller_fsm()
 						if(HAL_GetTick() > ctx.action_time + W_U_T1_90)
 						{
 							ctx.sub_action_index++;
-							//HAL_Serial_Print(&com," STEP->%d TURN90\r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d TURN90\r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
 				}
 			}
 			break;
-			// STEP4 : TURN (decelerate)
-			case 4 :
+			// STEP5 : TURN (decelerate)
+			case 5 :
 			{
 				switch(ctx.current_uturn_type)
 				{
@@ -818,7 +877,9 @@ void controller_fsm()
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d TURN180 end %d\r\n",ctx.sub_action_index,HAL_GetTick());
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d TURN180 end %d\r\n",ctx.sub_action_index,HAL_GetTick());
+#endif
 						}
 					}
 					break;
@@ -837,60 +898,16 @@ void controller_fsm()
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d TURN90 end\r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d TURN90 end\r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
 				}
 			}
 			break;
-			// STEP5 : FRONT WALL CALIBRATION or just STILL for a little time
-			case 5 :
-			{
-				switch(ctx.current_uturn_type)
-				{
-					case UTURN_NO_WALL:
-					case UTURN_FRONT_WALL:
-					{
-						// keep position
-						speed_control(0.0F,0.0F);
-						// transition / condition
-						if(HAL_GetTick() > ctx.action_time + 50)
-						{
-							ctx.sub_action_index++;
-							ctx.action_time = HAL_GetTick();
-							ctx.current_xpid_type = PID_TYPE_SPEED;
-							ctx.current_wpid_type = PID_TYPE_GYRO;
-							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
-						}
-					}
-					break;
-					case UTURN_FRONT_RIGHT_WALLS:
-					case UTURN_FRONT_LEFT_WALLS:
-					case UTURN_RIGHT_WALL:
-					case UTURN_LEFT_WALL:
-					{
-						// front wall calibration
-						ctx.current_xpid_type = PID_TYPE_WALL_POSITION;
-						speed_control_with_front_wall_calibration();
-						// transition / condition
-						if(HAL_GetTick() > ctx.action_time + 700)
-						{
-							ctx.sub_action_index++;
-							ctx.action_time = HAL_GetTick();
-							ctx.current_xpid_type = PID_TYPE_SPEED;
-							ctx.current_wpid_type = PID_TYPE_GYRO;
-							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d FRONT WALL Cal\r\n",ctx.sub_action_index);
-						}
-					}
-					break;
-				}
-
-			}
-			break;
-			// STEP6 : TURN (accelerate+cruise) or just STILL for a little time
+			// STEP6 : FRONT WALL CALIBRATION or just STILL for a little time
 			case 6 :
 			{
 				switch(ctx.current_uturn_type)
@@ -908,7 +925,59 @@ void controller_fsm()
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
+#endif
+						}
+					}
+					break;
+					case UTURN_FRONT_RIGHT_WALLS:
+					case UTURN_FRONT_LEFT_WALLS:
+					case UTURN_RIGHT_WALL:
+					case UTURN_LEFT_WALL:
+					{
+						// front wall calibration
+						ctx.current_xpid_type = PID_TYPE_WALL_POSITION;
+						speed_control_with_front_wall_calibration();
+						// transition / condition
+						if(HAL_GetTick() > ctx.action_time + 700)
+						{
+							ctx.sub_action_index++;
+							ctx.action_time = HAL_GetTick();
+							ctx.current_xpid_type = PID_TYPE_SPEED;
+							ctx.current_wpid_type = PID_TYPE_GYRO;
+							encoder_reset();
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d FRONT WALL Cal\r\n",ctx.sub_action_index);
+#endif
+						}
+					}
+					break;
+				}
+
+			}
+			break;
+			// STEP7 : TURN (accelerate+cruise) or just STILL for a little time
+			case 7 :
+			{
+				switch(ctx.current_uturn_type)
+				{
+					case UTURN_NO_WALL:
+					case UTURN_FRONT_WALL:
+					{
+						// keep position
+						speed_control(0.0F,0.0F);
+						// transition / condition
+						if(HAL_GetTick() > ctx.action_time + 50)
+						{
+							ctx.sub_action_index++;
+							ctx.action_time = HAL_GetTick();
+							ctx.current_xpid_type = PID_TYPE_SPEED;
+							ctx.current_wpid_type = PID_TYPE_GYRO;
+							encoder_reset();
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
@@ -931,15 +1000,17 @@ void controller_fsm()
 						if(HAL_GetTick() > ctx.action_time + W_U_T1_90)
 						{
 							ctx.sub_action_index++;
-							//HAL_Serial_Print(&com," STEP->%d TURN90 \r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d TURN90 \r\n",ctx.sub_action_index);
+#endif
 						}
 					}
 					break;
 				}
 			}
 			break;
-			// STEP7 : TURN (decelerate) or just STILL for a little time
-			case 7 :
+			// STEP8 : TURN (decelerate) or just STILL for a little time
+			case 8 :
 			{
 				switch(ctx.current_uturn_type)
 				{
@@ -956,8 +1027,10 @@ void controller_fsm()
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
-						}
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
+#endif
+							}
 					}
 					break;
 					case UTURN_FRONT_RIGHT_WALLS:
@@ -975,15 +1048,17 @@ void controller_fsm()
 							ctx.current_xpid_type = PID_TYPE_SPEED;
 							ctx.current_wpid_type = PID_TYPE_GYRO;
 							encoder_reset();
-							//HAL_Serial_Print(&com," STEP->%d TURN90 end\r\n",ctx.sub_action_index);
-						}
+#ifdef UTURN_TRACE
+							HAL_Serial_Print(&com," STEP->%d TURN90 end\r\n",ctx.sub_action_index);
+#endif
+							}
 					}
 					break;
 				}
 			}
 			break;
-			// STEP8 : STILL for a little time
-			case 8 :
+			// STEP9 : STILL for a little time
+			case 9 :
 			{
 				// keep position
 				speed_control(0.0F,0.0F);
@@ -995,12 +1070,14 @@ void controller_fsm()
 					ctx.current_xpid_type = PID_TYPE_SPEED;
 					ctx.current_wpid_type = PID_TYPE_GYRO;
 					encoder_reset();
-					//HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
-				}
+#ifdef UTURN_TRACE
+					HAL_Serial_Print(&com," STEP->%d STILL\r\n",ctx.sub_action_index);
+#endif
+					}
 			}
 			break;
-			//START
-			case 9 :
+			// STEP10 : START
+			case 10 :
 			{
 				// move forward (acc+cruise)
 				speed_control(X_SPEED,0.0F);
@@ -1022,7 +1099,9 @@ void controller_fsm()
 					calibration_reset();
 
 					led_toggle();
-					//HAL_Serial_Print(&com," STEP->%d START\r\n",ctx.sub_action_index);
+#ifdef UTURN_TRACE
+					HAL_Serial_Print(&com," STEP->%d START\r\n",ctx.sub_action_index);
+#endif
 				}
 			}
 			break;

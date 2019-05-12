@@ -26,6 +26,9 @@ Float x_front_wall_target = 0.0f;
 Float x_front_wall_actual = 0.0f;
 Float w_front_wall_target = 0.0f;
 Float w_front_wall_actual = 0.0f;
+Float front_wall_detect = 0.0f;
+Float left_wall_detect = 0.0f;
+Float right_wall_detect = 0.0f;
 
 int iteration  = 0;
 Float[] distance_history = new Float[8000];
@@ -45,6 +48,9 @@ Float[] x_front_wall_target_history = new Float[8000];
 Float[] x_front_wall_actual_history = new Float[8000];
 Float[] w_front_wall_target_history = new Float[8000];
 Float[] w_front_wall_actual_history = new Float[8000];
+Float[] front_wall_detect_history = new Float[8000];
+Float[] left_wall_detect_history = new Float[8000];
+Float[] right_wall_detect_history = new Float[8000];
 
 Float distance_zoom = 1000.0f; // OK => 0..180mm >> 180pixels 
 Float heading_zoom = 0.4f;
@@ -86,7 +92,8 @@ void setup()
   frameRate(30);
   font = createFont("ArialMT", 48, true);
   // Open port.
-  port = new Serial(this, "COM4", 115200);
+  //port = new Serial(this, "COM4", 115200);
+  port = new Serial(this, "COM3", 115200);
   port.bufferUntil('\n');
   // scrollbar  
   hs1 = new HScrollbar(0, height-8, width, 16, 16);
@@ -213,14 +220,14 @@ void draw()
         // side wall distance detection
         stroke(200,200,200);
         strokeWeight(1);
-        point(xpos,dx_offset-(120.0)*dx_zoom,0);  // SIDE_WALL_DISTANCE
+        point(xpos,dx_offset-(100.0)*dx_zoom,0);  // SIDE_WALL_DISTANCE
         point(xpos,dx_offset-(140.0)*dx_zoom,0); // wall to no wall 
         stroke(200,0,0);
         strokeWeight(1);
-        point(xpos,dx_offset-(60.0)*dx_zoom,0); // RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
+        point(xpos,dx_offset-(40.0)*dx_zoom,0); // RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
         stroke(0,200,0);
         strokeWeight(1);
-        point(xpos,dx_offset-(70.0)*dx_zoom,0); // LEFT_WALL_DISTANCE_NO_SIDE_ERROR
+        point(xpos,dx_offset-(40.0)*dx_zoom,0); // LEFT_WALL_DISTANCE_NO_SIDE_ERROR
         // plot
         if((i%20)==0)
         { 
@@ -246,10 +253,16 @@ void draw()
         else
         {
           stroke(0,255,0);
-          strokeWeight(2);
+          if( left_wall_detect_history[i] == 1 )
+            strokeWeight(3);
+          else
+            strokeWeight(1);
           point(xpos,dx_offset-dl_history[i]*dx_zoom,0); 
           stroke(255,0,0);
-          strokeWeight(2);
+          if( right_wall_detect_history[i] == 1 )
+            strokeWeight(3);
+          else
+            strokeWeight(1);
           point(xpos,dx_offset-dr_history[i]*dx_zoom,0);
         }
         
@@ -303,7 +316,10 @@ void draw()
           {
             // mean fr+fl
             stroke(0,0,0);
-            strokeWeight(2);
+            if( front_wall_detect_history[i] == 1 )
+              strokeWeight(3);
+            else
+              strokeWeight(1);
             point(xpos,fx_offset-(fr_history[i]+fl_history[i])/2.0*fx_zoom,0); 
           }            
       }
@@ -372,8 +388,11 @@ void serialEvent(Serial p)
         fl = float(list[15])/1.0f;
         fr = float(list[16])/1.0f;
         dr = float(list[17])/1.0f;
-        wall_pid = float(int(list[18])>>3);
-        front_wall_pid = float(int(list[18])>>4);
+        left_wall_detect = float((int(list[18])>>0)&0x01);
+        front_wall_detect = float((int(list[18])>>1)&0x01);
+        right_wall_detect = float((int(list[18])>>2)&0x01);
+        wall_pid = float((int(list[18])>>3)&0x01);
+        front_wall_pid = float((int(list[18])>>4)&0x01);
 
         distance_history[iteration] = distance;
         heading_history[iteration] = (heading % 360);
@@ -392,6 +411,9 @@ void serialEvent(Serial p)
         x_front_wall_actual_history[iteration] = x_front_wall_actual;
         w_front_wall_target_history[iteration] = w_front_wall_target;
         w_front_wall_actual_history[iteration] = w_front_wall_actual;
+        left_wall_detect_history[iteration] = left_wall_detect;
+        front_wall_detect_history[iteration] = front_wall_detect;
+        right_wall_detect_history[iteration] = right_wall_detect;
 
        //++iteration;
     }
