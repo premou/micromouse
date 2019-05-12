@@ -507,7 +507,26 @@ void controller_fsm()
 					if( (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)+wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT)) <= WALL_FRONT_ANGLE_TURNING_SUM_mm )
 					{
 						ctx.sub_action_index++;
-						ctx.action_time = HAL_GetTick();
+						{
+							// what is the incidence of the robot with the front wall ?
+							float delta_distance_mm = (wall_sensor_get_dist(WALL_SENSOR_LEFT_STRAIGHT)-wall_sensor_get_dist(WALL_SENSOR_RIGHT_STRAIGHT))-WALL_FRONT_ANGLE_TURNING_DELTA_mm; // mm
+							// note : positive when robot is on the right
+							// now convert delta distance in delta time
+							if(ctx.current_state == ACTION_TURN_RIGHT)
+							{
+								if(delta_distance_mm > 0)
+									ctx.action_time = HAL_GetTick() + (uint32_t)(delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+								else
+									ctx.action_time = HAL_GetTick() - (uint32_t)(-delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+							}
+							else
+							{
+								if(delta_distance_mm > 0)
+									ctx.action_time = HAL_GetTick() - (uint32_t)(delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+								else
+									ctx.action_time = HAL_GetTick() + (uint32_t)(-delta_distance_mm*WALL_FRONT_ANGLE_TURNING_DELTA_coef); // modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+							}
+						}
 						ctx.current_xpid_type = PID_TYPE_SPEED;
 						ctx.current_wpid_type = PID_TYPE_GYRO;
 
@@ -520,7 +539,7 @@ void controller_fsm()
 				else if(encoder_get_absolute() >= 0.02)
 				{
 					ctx.sub_action_index++;
-					ctx.action_time = HAL_GetTick();// modify according start angle : delta front wall mm > gives +/- turn angle > gives +/-  turn time T1+T2
+					ctx.action_time = HAL_GetTick();
 					ctx.current_xpid_type = PID_TYPE_SPEED;
 					ctx.current_wpid_type = PID_TYPE_GYRO;
 

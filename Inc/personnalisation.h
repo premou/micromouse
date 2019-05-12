@@ -308,10 +308,11 @@
 #define WALL_FRONT_DISTANCE_mm 					45.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					4.0 	// unit : mm
-// distance to front wall when micromouse doing curve turn
+// sum distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_SUM_mm 			220.0 	// unit : mm
-// distance to front wall when micromouse doing curve turn
+// delta distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			0.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			1.75 	// unit : mm to ms
 // adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
 // adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
 // to get smooth transition between one or two wall following.
@@ -386,7 +387,7 @@
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
 //#define SC_F_L90_F
-//#define SC_F_R90_F
+#define SC_F_R90_F
 //#define SC_F_R90_F_R90_F
 //#define SC_SQUARE_TEST_1_TURN
 //#define SC_SQUARE_TEST_2_TURN
@@ -450,13 +451,9 @@
 // > try first without wall
 // > try with one front wall, two or three walls
 //#define SC_U_TURN
-#define SC_RUN1_UTURN_RUN1
+//#define SC_RUN1_UTURN_RUN1
 //#define SC_TURN_RIGHT_TEST
-#define UTURN_TRACE
-
-
-
-
+//#define UTURN_TRACE
 
 // max speed
 #define X_SPEED_FAST_RUN 0.7 // m/s
