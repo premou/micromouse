@@ -1,6 +1,8 @@
 COMPET: Imprimer des roues
 COMPET : Imprimer des séparateurs de LED
 
+COMPET : Abaisser la tension decoupure LIPO
+
 P1 : Front wall W calibration dans RIGHT/LEFT TURN
 P2 : Tester WALL to no WALL dans la sortie de UTURN
 P2 : Tester la prise de décision 1cm avant le seuil de la case
