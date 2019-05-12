@@ -293,9 +293,9 @@
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
-#define 	FRONT_WALL_DISTANCE 				320		// unit : mm
+#define 	FRONT_WALL_DISTANCE 				310		// unit : mm
 // maximal distance to left or right wall
-#define 	SIDE_WALL_DISTANCE 					80		// unit : mm
+#define 	SIDE_WALL_DISTANCE 					100		// unit : mm
 // distance to left wall when mouse in middle
 #define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	40.0	// unit : mm
 // distance to right wall when mouse in middle
@@ -387,7 +387,7 @@
 // >>> visualization : actual forward and rotation speeds must follow current speeds
 //#define SC_F_L90_F
 //#define SC_F_R90_F
-#define SC_F_R90_F_R90_F
+//#define SC_F_R90_F_R90_F
 //#define SC_SQUARE_TEST_1_TURN
 //#define SC_SQUARE_TEST_2_TURN
 //#define SC_F_R90_R90_F
@@ -450,9 +450,9 @@
 // > try first without wall
 // > try with one front wall, two or three walls
 //#define SC_U_TURN
-//#define SC_RUN1_UTURN_RUN1
+#define SC_RUN1_UTURN_RUN1
 //#define SC_TURN_RIGHT_TEST
-
+#define UTURN_TRACE
 
 
 
