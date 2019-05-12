@@ -47,6 +47,9 @@ Bluetooth
 
 # How to configure the bluetooth module: 
 # Default serial software configuration is : baudrate 38400 + echo local + line mode + AT swith ON (see bluetooth module swith)  
+# Use hyper terminal or other serial console, set baud rate 38400, data 8 bit, stop bit 1, no parity, no flow control. 
+
+# IMPORTANT : the baudrate in AT mode is ALWAYS 38400, even if you change the UART speed to other value than 38400.
 
 .. code-block:: bash
 
