@@ -360,7 +360,8 @@ void maze_ctx_init(maze_ctx_t *pCtx)
 			CASE_WALL_S  ;
 
 	// Default algorithm is left hand
-	pCtx->algo = LEFT_HAND;
+	//pCtx->algo = LEFT_HAND;
+	pCtx->algo = RIGHT_HAND;
 
 	update_related_case(pCtx);
 
