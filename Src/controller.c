@@ -353,6 +353,8 @@ void controller_update(){
 		controller_fsm();
 
 		// data logger
+		static uint32_t counter = 0;
+		if((counter++)%2==0)
 		HAL_DataLogger_Record(17, 						 // number of fields
 				(int32_t)(ctx.actions_index), 				 // integer value of each field
 				//(int32_t)(ctx.sub_action_index),		 // integer value of each field
