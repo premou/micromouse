@@ -1,12 +1,13 @@
 COMPET: Imprimer des roues
-COMPET : Imprimer des séparateurs de LED
 
-COMPET : Abaisser la tension decoupure LIPO
+COMPET : Réallouer les touches en Left hand, Right hand, Telemetry
 
-P1 : Front wall W calibration dans RIGHT/LEFT TURN
-P2 : Tester WALL to no WALL dans la sortie de UTURN
+P1 : Abaisser la vitesse.
+
+P1 : Ajuster le comportement en virage en slow motion, pour vérifier le passage des seuils de case avec la synchro 
+led. DESACTIVER la correction.
+
 P2 : Tester la prise de décision 1cm avant le seuil de la case
-
 P3 : Clean Up configuration (inutile)
 
 P4 : ..\Src\maze_ctx.c:411:13: warning: 'min_dist_index' may be used uninitialized in this function [-Wmaybe-uninitialized]
