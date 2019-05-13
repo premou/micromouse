@@ -5,10 +5,12 @@
 #include "maze.h"
 
 // Verbose mode
-#define VERBOSE_MAZE
+//#define VERBOSE_MAZE
 
 // Extern
+#if defined(VERBOSE_MAZE)
 extern HAL_Serial_Handler com;
+#endif
 
 // Const
 ////////
@@ -89,33 +91,33 @@ const algo_next_action_ctx_t algo_next_action_right_hand[4] =
 {
     // DIR_N
     {
-        CASE_WALL_E,   1,  0, ACTION_TURN_RIGHT,
+        CASE_WALL_E,   0,  1, ACTION_TURN_RIGHT,
         CASE_WALL_N,   0,  1, ACTION_RUN_1,
-        CASE_WALL_W,  -1,  0, ACTION_TURN_LEFT,
+        CASE_WALL_W,   0,  1, ACTION_TURN_LEFT,
         (CASE_WALL_N|CASE_WALL_W|CASE_WALL_E), ACTION_U_TURN_RIGHT
     },
 
     // DIR_S
     {
-        CASE_WALL_W,  -1,  0, ACTION_TURN_RIGHT,
+        CASE_WALL_W,   0, -1, ACTION_TURN_RIGHT,
         CASE_WALL_S,   0, -1, ACTION_RUN_1,
-        CASE_WALL_E,   1,  0, ACTION_TURN_LEFT,
+        CASE_WALL_E,   0, -1, ACTION_TURN_LEFT,
         (CASE_WALL_S|CASE_WALL_E|CASE_WALL_W), ACTION_U_TURN_RIGHT
     },
 
     // DIR_E
     {
-        CASE_WALL_S,   0, -1, ACTION_TURN_RIGHT,
+        CASE_WALL_S,   1,  0, ACTION_TURN_RIGHT,
         CASE_WALL_E,   1,  0, ACTION_RUN_1,
-        CASE_WALL_N,   0,  1, ACTION_TURN_LEFT,
+        CASE_WALL_N,   1,  0, ACTION_TURN_LEFT,
         (CASE_WALL_E|CASE_WALL_N|CASE_WALL_S), ACTION_U_TURN_RIGHT
     },
 
     // DIR_W
     {
-        CASE_WALL_N,   0,  1, ACTION_TURN_RIGHT,
+        CASE_WALL_N,  -1,  0, ACTION_TURN_RIGHT,
         CASE_WALL_W,  -1,  0, ACTION_RUN_1,
-        CASE_WALL_S,   0, -1, ACTION_TURN_LEFT,
+        CASE_WALL_S,  -1,  0, ACTION_TURN_LEFT,
         (CASE_WALL_S|CASE_WALL_W|CASE_WALL_N), ACTION_U_TURN_RIGHT
     }
 };
@@ -504,10 +506,11 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
 						pCtx->inter_list[min_dist_index].x,
 						pCtx->inter_list[min_dist_index].y);
 
+#if defined(VERBOSE_MAZE)
             	HAL_Serial_Print(&com, ">[build action f(%d,%d) t(%d,%d)]>",
             			pCtx->current_x, pCtx->current_y,
 						pCtx->inter_list[min_dist_index].x, pCtx->inter_list[min_dist_index].y);
-
+#endif
             	// Return IDLE in order to switch from LEARN/discover the maze to LEARN/apply action to
             	// go to the nearest intersection
             	return(ACTION_IDLE);
@@ -516,14 +519,18 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
             {
                 // No solution found ?
                 next_action = ACTION_STOP;
+#if defined(VERBOSE_MAZE)
                 HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+#endif
             }
         }
         else
         {
             // No solution ?
             next_action = ACTION_STOP;
+#if defined(VERBOSE_MAZE)
             HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+#endif
         }
     }
 
@@ -1046,7 +1053,9 @@ void build_action_list(
                        0);
     if(pCtx->min_dist > MAX_ACTION)
     {
+#if defined(VERBOSE_MAZE)
     	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+#endif
     }
 
     // Set the number of action
@@ -1173,7 +1182,9 @@ void build_action_list(
         }
         else
         {
+#if defined(VERBOSE_MAZE)
         	HAL_Serial_Print(&com, "###> BIG MESS: %d\n", __LINE__);
+#endif
         }
 
         ////////////////////////
