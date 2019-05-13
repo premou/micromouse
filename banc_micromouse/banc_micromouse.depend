@@ -53,3 +53,11 @@
 
 1423316438 c:\github\micromouse\banc_micromouse\attribute.h
 
+1556042620 source:c:\users\invite\atollic\truestudio\workspace_2\micromouse_repo\banc_micromouse\serial.cpp
+	"Serial.h"
+
+1556042620 c:\users\invite\atollic\truestudio\workspace_2\micromouse_repo\banc_micromouse\serial.h
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+
