@@ -514,7 +514,7 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-#define FIXED_MOVES // disable AI
+//#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 #define 	X_SPEED 			0.35 		// unit : m/s
@@ -656,7 +656,7 @@
 //#define RAND_MOVES_3
 //#define RAND_MOVES_6
 //#define RAND_MOVES_12
-#define RAND_MOVES_16
+//#define RAND_MOVES_16
 
 // AI
 
