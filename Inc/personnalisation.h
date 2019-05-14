@@ -23,6 +23,8 @@
 /* 									SETTINGS								 */
 /*****************************************************************************/
 
+//#define FIXED_MOVES // disable AI
+
 // THIS FILE CONFIGURE EVERY THING (except wall sensor, see WallSensor.h)
 
 #ifdef __ALICE__
@@ -69,7 +71,7 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-#define FIXED_MOVES // disable AI
+//#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 #define 	X_SPEED 			0.35 		// unit : m/s
@@ -490,22 +492,22 @@
 // maximal distance to left or right wall
 #define 	SIDE_WALL_DISTANCE 					100		// unit : mm
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	40.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	35.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	40.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	35.0	// unit : mm
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.100 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.105 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.095 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_DISTANCE_mm 					45.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					4.0 	// unit : mm
 // sum distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			240.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			220.0 	// unit : mm
 // delta distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			18.0 	// unit : mm
-#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			1.0 	// unit : mm to ms
+#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			0.0 	// 1.0 unit : mm to ms
 // adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
 // adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
 // to get smooth transition between one or two wall following.
@@ -514,7 +516,6 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-//#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 #define 	X_SPEED 			0.35 		// unit : m/s
@@ -583,7 +584,7 @@
 //#define SC_F_R90_F
 //#define SC_F_R90_F_R90_F
 //#define SC_SQUARE_TEST_1_TURN
-//#define SC_SQUARE_TEST_2_TURN
+#define SC_SQUARE_TEST_2_TURN
 //#define SC_F_R90_R90_F
 //#define SC_ZIGZAG
 

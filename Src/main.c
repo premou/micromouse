@@ -187,8 +187,8 @@ int main(void)
 	HAL_Serial_Print(&com,"Hello World (v%d.%d.%d)\r\n",0,0,0);
 
 	// init
-	configuration_init();
-	configuration_load();
+	//configuration_init();
+	//configuration_load();
 	timer_us_init();
 	uint32_t controller_init_result = controller_init();
 
@@ -347,13 +347,41 @@ int main(void)
 			motor_speed_right(0);
 
 		  // wait for 1.0s before running
-		  if (tim_start + 1000 < HAL_GetTick() ){
+		  if (tim_start + 1000 < HAL_GetTick() )
+		  {
+
+			  if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET || HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // reset/init
+			  {
+				  controller_init();
+				  current_state = IDLE;
+				  HAL_Serial_Print(&com,"->RESET....\r\n");
+
+				  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+				  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+				  HAL_Delay(500);
+				  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+				  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+				  HAL_Delay(500);
+				  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+				  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+				  HAL_Delay(500);
+				  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+				  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+				  HAL_Delay(500);
+				  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
+				  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+				  HAL_Delay(500);
+				  HAL_Serial_Print(&com,"->IDLE\r\n");
+
+			  }
+			  else
+			  {
+				  current_state = RUNNING;
+				  HAL_Serial_Print(&com,"WARMUP->RUNNING\r\n");
+				  controller_start();
+			  }
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
-			  current_state = RUNNING;
-			  HAL_Serial_Print(&com,"WARMUP->RUNNING\r\n");
-
-			  controller_start();
 		  }
 
 	  }

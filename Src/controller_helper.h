@@ -244,7 +244,8 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_left>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -258,7 +259,8 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_right>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -272,7 +274,8 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_right>140 || calibration_wall_distance_left>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -282,7 +285,8 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_left>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -296,7 +300,8 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_right>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -310,7 +315,8 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_right>140 || calibration_wall_distance_left>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -320,13 +326,15 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_left>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
 			if(calibration_wall_distance_right>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
@@ -337,13 +345,15 @@ bool calibration_update()
 		{
 			if(calibration_wall_distance_right>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
 			if(calibration_wall_distance_left>140)
 			{
-				encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
+				if(abs(encoder_get_absolute()-REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST)<=30) // FIX : blend behavior
+					encoder_set_absolute(REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST);
 				ctx.calibration_state = CALIBRATION_END;
 				return true;
 			}
