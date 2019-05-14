@@ -5,12 +5,15 @@
 #include "maze.h"
 
 // Verbose mode
-//#define VERBOSE_MAZE
+#define VERBOSE_MAZE
 
 // Extern
 #if defined(VERBOSE_MAZE)
 extern HAL_Serial_Handler com;
 #endif
+
+// Main access
+static maze_ctx_t *pGlobalMazeCtx = NULL ;
 
 // Const
 ////////
@@ -362,12 +365,31 @@ void maze_ctx_init(maze_ctx_t *pCtx)
 			CASE_WALL_S  ;
 
 	// Default algorithm is left hand
-	//pCtx->algo = LEFT_HAND;
-	pCtx->algo = RIGHT_HAND;
+	pCtx->algo = LEFT_HAND;
 
 	update_related_case(pCtx);
 
+	// Keep in mind the pointer
+	pGlobalMazeCtx = pCtx;
+
 }// end of maze_ctx_init
+
+
+void maze_ctx_set_alfo_to_left_hand(void)
+{
+	if(pGlobalMazeCtx != NULL)
+	{
+		pGlobalMazeCtx->algo = LEFT_HAND;
+	}
+}
+
+void maze_ctx_set_alfo_to_right_hand(void)
+{
+	if(pGlobalMazeCtx != NULL)
+	{
+		pGlobalMazeCtx->algo = RIGHT_HAND;
+	}
+}
 
 // Fill the array maze with case unknown pattern
 void maze_ctx_start(maze_ctx_t *pCtx)
@@ -376,6 +398,12 @@ void maze_ctx_start(maze_ctx_t *pCtx)
 	pCtx->current_direction = DIR_N;
 	pCtx->current_x = pCtx->start_x ;
 	pCtx->current_y = pCtx->start_y ;
+
+	// Retart from start action
+	if(pCtx->mode == SOLVE)
+	{
+		pCtx->current_action_index = 0;
+	}
 
 #if defined(VERBOSE_MAZE)
 	HAL_Serial_Print(&com, "[maze_ctx_start: mode:%s (%d,%d)]\n", maze_mode_txt[pCtx->mode], pCtx->current_x, pCtx->current_y);

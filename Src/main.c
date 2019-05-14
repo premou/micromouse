@@ -116,6 +116,11 @@ static void MX_GFXSIMULATOR_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_TIM10_Init(void);
+
+// Choise right or left hand algo
+extern void maze_ctx_set_alfo_to_left_hand(void);
+extern void maze_ctx_set_alfo_to_right_hand(void);
+
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -303,33 +308,35 @@ int main(void)
 
 			  current_state = FAILSAFE;
 		  }
-		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET) // run
+		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET) // run rigth
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
-			  HAL_Serial_Print(&com,"IDLE->WARMUP\r\n");
+			  HAL_Serial_Print(&com,"IDLE->WARMUP [algo set to right hand]\r\n");
+			  maze_ctx_set_alfo_to_right_hand();
 
 			  current_state = WARMUP;
 			  tim_start=HAL_GetTick();
 		  }
-		  else if(HAL_GPIO_ReadPin(BUTTON2_GPIO_Port,BUTTON2_Pin)==GPIO_PIN_RESET) // calibration
-		  {
-			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
-			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
-
-			  HAL_Serial_Print(&com,"IDLE->CALIBRATION\r\n");
-			  current_state = CALIBRATION;
-
-			  tim_start=HAL_GetTick();
-		  }
-		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // upload data logger
+		  else if(HAL_GPIO_ReadPin(BUTTON2_GPIO_Port,BUTTON2_Pin)==GPIO_PIN_RESET) // upload data logger
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
 			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
 			  current_state = UPLOAD;
+		  }
+		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // run left
+		  {
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
+
+			  HAL_Serial_Print(&com,"IDLE->WARMUP [algo set to left hand]\r\n");
+			  maze_ctx_set_alfo_to_left_hand();
+
+			  current_state = WARMUP;
+			  tim_start=HAL_GetTick();
 		  }
 	  }
 	  break;

@@ -330,7 +330,7 @@ void controller_stop()
 	encoder_reset();
 
 	// AI
-	// nop
+	// not yet
 }
 
 void controller_fsm(); // forward declaration
