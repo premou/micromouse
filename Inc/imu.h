@@ -9,6 +9,7 @@
 #define APPLICATION_USER_HAL_IMU_H_
 
 #include "stm32f7xx_hal.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
  extern "C" {
@@ -24,6 +25,7 @@ uint32_t gyro_init(); 	// initialise and configure gyro through I2C, return GYRO
 void gyro_update(float duration_s); 	// retreive gyro measures thourgh I2C and do some calculation
 float gyro_get_dps(); 	// get the current rotation speed in degrees per second, ccw : positive dps, cw : negative dps
 void gyro_auto_calibrate();
+bool gyro_is_calibrated();
 
 void gyro_reset_heading();
 float gyro_get_heading();

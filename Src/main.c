@@ -178,8 +178,8 @@ int main(void)
 	HAL_GPIO_WritePin(IR_LED_FR_GPIO_Port,IR_LED_FR_Pin,GPIO_PIN_RESET); // LED IR FRONT RIGHT OFF
 	HAL_GPIO_WritePin(IR_LED_DL_GPIO_Port,IR_LED_DL_Pin,GPIO_PIN_RESET); // LED IR DIAGONAL LEFT OFF
 	HAL_GPIO_WritePin(IR_LED_DR_GPIO_Port,IR_LED_DR_Pin,GPIO_PIN_RESET); // LED IR DIAGONAL RIGHT OFF
-	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // LED RIGHT OFF
-	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // LED LEFT OFF
+	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // LED RIGHT ON
+	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // LED LEFT ON
 
 	HAL_Battery_Init();
 
@@ -215,7 +215,16 @@ int main(void)
 		motor_speed_right(0);
 
 		gyro_auto_calibrate();
-
+		if(gyro_is_calibrated())
+		{
+			HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // LED RIGHT Off
+			HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // LED LEFT Off
+		}
+		else
+		{
+			HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // LED RIGHT ON
+			HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // LED LEFT ON
+		}
 #ifdef VOLTAGE_TRACE
 		  HAL_Serial_Print(&com,"voltage=%d mV\r\n",(int)(HAL_Battery_Get(0)*1000.0f));
 		  HAL_Delay(1000);
@@ -285,15 +294,15 @@ int main(void)
 #endif
 
 		  // decode CLI
-		  while(HAL_Serial_Available(&com)>0)
-		  {
-			  configuration_parse_cli(HAL_Serial_GetChar(&com));
-		  }
+//		  while(HAL_Serial_Available(&com)>0)
+//		  {
+//			  configuration_parse_cli(HAL_Serial_GetChar(&com));
+//		  }
 
 		  if(controller_init_result != 0) // check controller::gyro
 		  {
-			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
-			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
 
 			  HAL_Serial_Print(&com,"IDLE->FAILSAFE, gyro error\r\n");
 
@@ -301,14 +310,14 @@ int main(void)
 		  }
 		  else if(HAL_Battery_Is_Low(VBATT)) // check battery charge
 		  {
-			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // droite OFF
-			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET); // gauche OFF
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite OFF
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche OFF
 
 			  HAL_Serial_Print(&com,"IDLE->FAILSAFE, low battery\r\n");
 
 			  current_state = FAILSAFE;
 		  }
-		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET) // run rigth
+		  else if(HAL_GPIO_ReadPin(BUTTON3_GPIO_Port,BUTTON3_Pin)==GPIO_PIN_RESET && gyro_is_calibrated()) // run rigth
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON
@@ -327,7 +336,7 @@ int main(void)
 			  HAL_Serial_Print(&com,"IDLE->UPLOAD\r\n");
 			  current_state = UPLOAD;
 		  }
-		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET) // run left
+		  else if (HAL_GPIO_ReadPin(BUTTON1_GPIO_Port,BUTTON1_Pin)==GPIO_PIN_RESET && gyro_is_calibrated()) // run left
 		  {
 			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite ON
 			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche ON

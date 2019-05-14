@@ -57,6 +57,7 @@ typedef struct {
 	float rate; //dps
 	float bias; // dps
 	float heading; //degres
+	uint32_t locked;
 } ctx_gyro;
 
 static ctx_gyro ctx;
@@ -117,6 +118,7 @@ uint32_t gyro_init()
 	ctx.rate = 0.0;
 	ctx.bias = INIT_GYRO_BIAS;
 	ctx.heading = 0.0f;
+	ctx.locked = 0;
 	HAL_StatusTypeDef result;
 	uint8_t who_am_i = gyro_read_8bit_register(GYRO_I2C_ADDRESS,WHO_AM_I_ADDRESS,&result);
 	if(result != HAL_OK)
@@ -174,6 +176,11 @@ float gyro_get_heading()
 	return ctx.heading;
 }
 
+bool gyro_is_calibrated()
+{
+	return ctx.locked >= 128;
+}
+
 float mean = 0.0;
 float variance = 0.0;
 float alpha_mean_update = 0.01;
@@ -192,7 +199,11 @@ void gyro_auto_calibrate()
 		variance = alpha_variance_update * pow( ctx.rate-mean,2)  + (1.0-alpha_variance_update) * variance;
 		// if mean stable, update bias
 		if(variance<GYRO_AUTOCAL_VARIANCE_THRESHOLD)
+		{
 			ctx.bias = alpha_bias_update*mean + (1.0-alpha_bias_update)* ctx.bias;
+			if(ctx.locked<1024)
+				++ctx.locked;
+		}
 
 #ifdef IMU_TRACE
 		HAL_Serial_Print(&com,"dps=%d m=%d v=%d b=%d h=%d\r\n",

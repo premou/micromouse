@@ -14,8 +14,8 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-//#define __FRANCOIS__
-#define __PATRICK__ 	// Patrick has the prototype HW
+#define __FRANCOIS__
+//#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
 
@@ -231,17 +231,17 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
-#define 	FRONT_WALL_DISTANCE 				330		// unit : mm
+#define 	FRONT_WALL_DISTANCE 				320		// unit : mm
 // maximal distance to left or right wall
-#define 	SIDE_WALL_DISTANCE 					85		// unit : mm
+#define 	SIDE_WALL_DISTANCE 					65		// unit : mm
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	35.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	30.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	25.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	30.0	// unit : mm
 // position of micromouse when wall fades (140mm)
 #define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.130 	// unit : mm
 // position of micromouse when post fades (140mm)
@@ -251,10 +251,10 @@
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 // sum distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			190.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			160.0 	// unit : mm
 // delta distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			0.0 	// unit : mm
-#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			0.1 	// unit : mm to ms
+#define WALL_FRONT_ANGLE_TURNING_DELTA_coef			0.0 	// unit : mm to ms
 // adjust distances LEFT_WALL_DISTANCE_NO_SIDE_ERROR
 // adjust distances RIGHT_WALL_DISTANCE_NO_SIDE_ERROR
 // to get smooth transition between one or two wall following.
