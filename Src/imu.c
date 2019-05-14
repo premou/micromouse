@@ -43,7 +43,7 @@
 #define CTRL2_G_value_init  0x74 // 833 ODR + 500dps
 #define CTRL3_C_value_init  0x40 // BDU=1
 // constants
-#define ANGULAR_RATE_SENSITIVITY_500 0.0175 // factory sensititvy (p.15 datasheet)
+#define ANGULAR_RATE_SENSITIVITY_500 0.0175 // factory sensitivity (p.15 datasheet)
 // TODO tune sensitivity using turn table
 
 // globals

@@ -10,6 +10,8 @@
 #include "robot_math.h"
 #include "motor.h"
 
+static uint16_t const HAL_MOTOR_AUTORELOADREG = 99; // valeur du registre Auto Reload Register du Timers 1
+
 extern TIM_HandleTypeDef htim1;
 
 void motor_init(){
@@ -19,13 +21,10 @@ void motor_init(){
 
 void motor_speed_right(float pwm){
 
-	int32_t speed_right = (int32_t)constraint(pwm, -100, 100);
+	int32_t speed_right = (int32_t)constraint(pwm, -HAL_MOTOR_AUTORELOADREG, HAL_MOTOR_AUTORELOADREG);
 	//GESTION moteur DROIT
 	if(speed_right>0 )
 	{
-		if(speed_right > 100){
-			speed_right = 100;
-		}
 		//moteur allume DROIT avant
 		HAL_GPIO_WritePin(RIGHT_DIR1_GPIO_Port,RIGHT_DIR1_Pin,GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(RIGHT_DIR2_GPIO_Port,RIGHT_DIR2_Pin,GPIO_PIN_SET);
@@ -33,9 +32,6 @@ void motor_speed_right(float pwm){
 	}
 	else if(speed_right<0)
 	{
-		if(speed_right < -100){
-			speed_right = -100;
-		}
 		//moteur allume DROIT marche arriere
 		HAL_GPIO_WritePin(RIGHT_DIR1_GPIO_Port,RIGHT_DIR1_Pin,GPIO_PIN_SET);
 		HAL_GPIO_WritePin(RIGHT_DIR2_GPIO_Port,RIGHT_DIR2_Pin,GPIO_PIN_RESET);
@@ -52,14 +48,11 @@ void motor_speed_right(float pwm){
 
 void motor_speed_left(float pwm){
 
-	int32_t speed_left = (int32_t)constraint(pwm, -100.0, 100.0);
+	int32_t speed_left = (int32_t)constraint(pwm, -HAL_MOTOR_AUTORELOADREG, HAL_MOTOR_AUTORELOADREG);
 
 	//GESTION moteur GAUCHE
 	if(speed_left>0 )
 	{
-		if(speed_left > 100){
-			speed_left = 100;
-		}
 #ifdef __PATRICK__
 		//moteur allume GAUCHE avant
 		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_SET);
@@ -73,9 +66,6 @@ void motor_speed_left(float pwm){
 	}
 	else if(speed_left<0)
 	{
-		if(speed_left < -100){
-			speed_left = -100;
-		}
 #ifdef __PATRICK__
 		//moteur allume GAUCHE marche arriere
 		HAL_GPIO_WritePin(LEFT_DIR1_GPIO_Port,LEFT_DIR1_Pin,GPIO_PIN_RESET);
