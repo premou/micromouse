@@ -40,11 +40,15 @@
 
 // register configuration values (LSM6DS33)
 #define CTRL10_C_value_init 0x20 // ZG axis activated
-#define CTRL2_G_value_init  0x74 // 833 ODR + 500dps
+#ifdef SCALE_1000_DPS
+	#define CTRL2_G_value_init  0x78 // 833 ODR + 1000dps
+#else
+	#define CTRL2_G_value_init  0x74 // 833 ODR + 500dps
+#endif
 #define CTRL3_C_value_init  0x40 // BDU=1
 // constants
 #define ANGULAR_RATE_SENSITIVITY_500 0.0175 // factory sensitivity (p.15 datasheet)
-// TODO tune sensitivity using turn table
+#define ANGULAR_RATE_SENSITIVITY_1000 0.0350 // factory sensitivity (p.15 datasheet)
 
 // globals
 extern I2C_HandleTypeDef hi2c3;
@@ -157,7 +161,11 @@ void gyro_update(float duration_s)
 	uint8_t res_read_H = gyro_read_8bit_register(GYRO_I2C_ADDRESS, OUTZ_H_G, &result);
 	uint8_t res_read_L = gyro_read_8bit_register(GYRO_I2C_ADDRESS, OUTZ_L_G, &result);
 	ctx.raw_value = ((uint16_t)(res_read_H) << 8) + (uint16_t) res_read_L;
+#ifdef SCALE_1000_DPS
+	ctx.rate = (float)(ctx.raw_value*ANGULAR_RATE_SENSITIVITY_1000*GYRO_SENSITIVITY_CORRECTION);
+#else
 	ctx.rate = (float)(ctx.raw_value*ANGULAR_RATE_SENSITIVITY_500*GYRO_SENSITIVITY_CORRECTION);
+#endif
 	ctx.heading += (ctx.rate - ctx.bias)*duration_s;
 }
 
