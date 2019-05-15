@@ -3,7 +3,7 @@
 
 // Define & Macro
 /////////////////
-#define MAX_MAZE_DEPTH  (20)
+#define MAX_MAZE_DEPTH  (24)
 #define MAX_ACTION      (50)
 #define MAX_INTER       (30)
 #define MAX_INT         (2147483647)
@@ -168,7 +168,8 @@ maze_case_t  get_wall_state(robot_direction_t current_direction);
 void         find_shortest_path(maze_ctx_t *pCtx,
 		int i, int j, // from
 		int x, int y, // to
-		int dist);
+		int dist,
+		int build_result);
 void         build_action_list(maze_ctx_t *pCtx,
 		robot_direction_t from_dir,
 		int from_x, int from_y,
