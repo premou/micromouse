@@ -3,14 +3,13 @@
 #include "serial.h"
 #include "WallSensor.h"
 #include "maze.h"
+#include "timer_us.h"
 
 // Verbose mode
-#define VERBOSE_MAZE
+//#define VERBOSE_MAZE
 
 // Extern
-#if defined(VERBOSE_MAZE)
 extern HAL_Serial_Handler com;
-#endif
 
 // Main access
 static maze_ctx_t *pGlobalMazeCtx = NULL ;
@@ -1376,6 +1375,10 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
     algo_update_t     *pAlgo = NULL;
     int                action_flag;
     maze_case_t        wall_sensor;
+    uint16_t           t0;
+    uint16_t           t1;
+
+    t0 = timer_us_get();
 
 	// Get wall state
 	wall_sensor =  get_wall_state(pCtx->current_direction);
@@ -1589,6 +1592,10 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
            (char *) wall_state_txt[GET_WALL_STATE(pCtx->maze_array[pCtx->current_x][pCtx->current_y])],
            the_end);
 #endif
+
+    t1 = timer_us_get();
+
+    HAL_Serial_Print(&com, "[update_maze_ctx duration: %d µs]\n", t1-t0);
 
     return(action);
 }// end of update_maze_ctx

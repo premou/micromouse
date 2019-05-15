@@ -14,9 +14,9 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-//#define __FRANCOIS__
+#define __FRANCOIS__
 //#define __PATRICK__ 	// Patrick has the prototype HW
-#define __PREM__
+//#define __PREM__
 //#define __REMI__
 
 /*****************************************************************************/
@@ -231,7 +231,7 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
