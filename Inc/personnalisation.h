@@ -23,7 +23,7 @@
 /* 									SETTINGS								 */
 /*****************************************************************************/
 
-#define FIXED_MOVES // disable AI
+//#define FIXED_MOVES // disable AI
 
 // THIS FILE CONFIGURE EVERY THING (except wall sensor, see WallSensor.h)
 
@@ -696,15 +696,15 @@
 // distance to right wall when mouse in middle
 #define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	25.0	// unit : mm
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.130 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_DISTANCE_mm 					35.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 // sum distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			180.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			190.0 	// unit : mm
 // delta distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			0.0 	// unit : mm
 #define WALL_FRONT_ANGLE_TURNING_DELTA_coef			0.0 	// unit : mm to ms
@@ -781,7 +781,7 @@
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
 // >>> visualization : actual forward and rotation speeds must follow current speeds
-#define SC_F_L90_F
+//#define SC_F_L90_F
 //#define SC_F_R90_F
 //#define SC_F_R90_F_R90_F
 //#define SC_SQUARE_TEST_1_TURN
