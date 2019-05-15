@@ -304,6 +304,8 @@
 // 2.01 Set the sensitivity correction
 // >>> physics using turn table : one turn gives 360° heading exactly (display heading)
 #define 	GYRO_SENSITIVITY_CORRECTION 		1.01F //0.990F	// unit : %
+// #define 	SCALE_500_DPS // default
+#define 	SCALE_1000_DPS
 // the greater is the correction, lesser the robot turn
 // #define IMU_TRACE //to see heading when IDLE, or upload datalogger and watch telemetry
 // use carré test to check real heading with estimated heading with telemetry
