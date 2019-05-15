@@ -206,12 +206,14 @@ void gyro_auto_calibrate()
 		}
 
 #ifdef IMU_TRACE
-		HAL_Serial_Print(&com,"dps=%d m=%d v=%d b=%d h=%d\r\n",
+		if((time%500)==0)
+			HAL_Serial_Print(&com,"dps=%d m=%d v=%d b=%d h=%d rate=%d\r\n",
 				(int32_t)(ctx.rate*1000.0),
 				(int32_t)(mean*1000.0),
 				(int32_t)(variance*1000.0),
 				(int32_t)(ctx.bias*1000.0),
-				(int32_t)(ctx.heading)
+				(int32_t)(ctx.heading),
+				(int32_t)(gyro_get_dps()*1000.0)
 								  );
 #endif
 	}

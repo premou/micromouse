@@ -225,6 +225,10 @@ int main(void)
 			HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // LED RIGHT ON
 			HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // LED LEFT ON
 		}
+#ifdef TIMER_US_TRACE
+		  HAL_Serial_Print(&com,"time:%dus\r\n",timer_us_get());
+		  HAL_Delay(10);
+#endif
 #ifdef VOLTAGE_TRACE
 		  HAL_Serial_Print(&com,"voltage=%d mV\r\n",(int)(HAL_Battery_Get(0)*1000.0f));
 		  HAL_Delay(1000);
@@ -310,8 +314,8 @@ int main(void)
 		  }
 		  else if(HAL_Battery_Is_Low(VBATT)) // check battery charge
 		  {
-			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite OFF
-			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche OFF
+			  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET); // droite On
+			  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // gauche On
 
 			  HAL_Serial_Print(&com,"IDLE->FAILSAFE, low battery\r\n");
 

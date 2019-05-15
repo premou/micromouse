@@ -10,7 +10,7 @@
 #include "robot_math.h"
 #include "motor.h"
 
-static uint16_t const HAL_MOTOR_AUTORELOADREG = 99; // valeur du registre Auto Reload Register du Timers 1
+static float const HAL_MOTOR_AUTORELOADREG = 99.0F; // valeur du registre Auto Reload Register du Timers 1
 
 extern TIM_HandleTypeDef htim1;
 
