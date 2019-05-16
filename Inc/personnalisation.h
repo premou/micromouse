@@ -488,6 +488,9 @@
 
 #ifdef __PATRICK__
 
+// Check Timer us
+//#define TIMER_US_TRACE
+
 // Recommendation : Always charge up battery to maximum capacity/voltage (8.4V)
 
 // 0.01. Adjust voltage divider ration
