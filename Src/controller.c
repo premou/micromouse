@@ -448,12 +448,29 @@ void controller_fsm()
 		// use fast speed if possible
 #ifdef FIXED_MOVES
 		if( actions_scenario[ctx.actions_index] ==  ACTION_RUN_1 )
-#else
-		if (get_next_next_action(&ctx.maze) == ACTION_RUN_1)
-#endif
 		{
 			x_speed_target = X_SPEED_FAST_RUN;
 		}
+#else
+		if ( get_next_next_action(&ctx.maze) == ACTION_IDLE )
+		{
+			x_speed_target = X_SPEED;
+		}
+		else if(get_next_next_action(&ctx.maze) == ACTION_RUN_1)
+		{
+			x_speed_target = X_SPEED_FAST_RUN;
+		}
+		else
+		{
+			if(encoder_get_absolute() < (DIST_RUN_1 - 0.03))
+			{
+				x_speed_target = X_SPEED_FAST_RUN;
+			}
+			else{
+				x_speed_target = X_SPEED;
+			}
+		}
+#endif
 
 		// move forward and use side walls
 		// middle cell alignement (abandonned)

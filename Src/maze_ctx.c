@@ -1,5 +1,6 @@
 
-#include "stdio.h"
+#include <stdio.h>
+#include <strings.h>
 #include "controller.h"
 #include "serial.h"
 #include "WallSensor.h"
@@ -307,6 +308,7 @@ void init_inter_list(maze_ctx_t *pCtx)
 
 void init_shortest_array(maze_ctx_t *pCtx)
 {
+#if 0
     uint32_t x, y;
     for(x=0; x<MAX_MAZE_DEPTH; x++)
     {
@@ -316,6 +318,10 @@ void init_shortest_array(maze_ctx_t *pCtx)
             pCtx->shortest_array[x][y] = CASE_UNKNOWN;
         }
     }
+#endif
+
+    memset((void *)&pCtx->solve_array[0],    0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+    memset((void *)&pCtx->shortest_array[0], 0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
 
     // Initialize the minimum distance and copy flag
     pCtx->min_dist  = MAX_INT;
@@ -324,18 +330,10 @@ void init_shortest_array(maze_ctx_t *pCtx)
 // Fill the array maze with case unknown pattern
 void maze_ctx_init(maze_ctx_t *pCtx)
 {
-	uint32_t x, y;
-
-	for(x=0; x<MAX_MAZE_DEPTH; x++)
-	{
-		for(y=0; y<MAX_MAZE_DEPTH; y++)
-		{
-			pCtx->maze_array[x][y]     = CASE_UNKNOWN;
-			pCtx->solve_array[x][y]    = CASE_UNKNOWN;
-			pCtx->shortest_array[x][y] = CASE_UNKNOWN;
-			pCtx->inter_array[x][y]    = CASE_UNKNOWN;
-		}
-	}
+    memset((void *)&pCtx->maze_array[0],     0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+    memset((void *)&pCtx->solve_array[0],    0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+    memset((void *)&pCtx->shortest_array[0], 0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+    memset((void *)&pCtx->inter_array[0],    0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
 
 	// Initialization action list
 	init_action_list(pCtx);
@@ -971,8 +969,6 @@ void find_shortest_path(maze_ctx_t *pCtx,
                         int dist,
 						int build_result)
 {
-    int xx;
-    int yy;
     int x_from, x_to;
     int y_from, y_to;
     int a, b, c, d;
@@ -986,6 +982,13 @@ void find_shortest_path(maze_ctx_t *pCtx,
 
             if(build_result)
             {
+                memcpy((void *)&pCtx->shortest_array[0],
+                       (void *)&pCtx->solve_array[0],
+                       sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+
+#if 0
+                int yy;
+                int xx;
             	for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
             	{
             		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
@@ -993,6 +996,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
             			pCtx->shortest_array[xx][yy] = pCtx->solve_array[xx][yy];
             		}
             	}
+#endif
             }
 
             // Flag the last position
