@@ -532,7 +532,7 @@ void controller_fsm()
 						ctx.current_xpid_type = PID_TYPE_SPEED;
 						ctx.current_wpid_type = PID_TYPE_GYRO;
 
-						encoder_reset();
+						//encoder_reset();
 						calibration_reset();
 
 						led_toggle();
@@ -545,7 +545,7 @@ void controller_fsm()
 					ctx.current_xpid_type = PID_TYPE_SPEED;
 					ctx.current_wpid_type = PID_TYPE_GYRO;
 
-					encoder_reset();
+					//encoder_reset();
 					calibration_reset();
 
 					led_toggle();
@@ -583,8 +583,9 @@ void controller_fsm()
 				ctx.current_xpid_type = PID_TYPE_SPEED;
 				ctx.current_wpid_type = PID_TYPE_GYRO;
 
-				encoder_reset();
-				calibration_reset();
+				//encoder_reset();
+				//calibration_reset();
+				encoder_set_absolute(0.00F);
 
 				led_toggle();
 			}

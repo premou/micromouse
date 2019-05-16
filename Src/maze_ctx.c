@@ -1,16 +1,16 @@
+
 #include "stdio.h"
 #include "controller.h"
 #include "serial.h"
 #include "WallSensor.h"
 #include "maze.h"
+#include "timer_us.h"
 
 // Verbose mode
-#define VERBOSE_MAZE
+//#define VERBOSE_MAZE
 
 // Extern
-#if defined(VERBOSE_MAZE)
 extern HAL_Serial_Handler com;
-#endif
 
 // Main access
 static maze_ctx_t *pGlobalMazeCtx = NULL ;
@@ -514,7 +514,8 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
                     find_shortest_path(pCtx,
                                        pCtx->current_x, pCtx->current_y,
 									   pInter->x, pInter->y,
-                                       0);
+                                       0,
+									   0);
                     if(pCtx->min_dist < min_dist)
                     {
                     	// Keep in mind the shortest distance i.e. nearest intersection
@@ -967,7 +968,8 @@ int is_safe(maze_ctx_t *pCtx, int x_to, int y_to)
 void find_shortest_path(maze_ctx_t *pCtx,
                         int i, int j, // current position
                         int x, int y, // exit
-                        int dist)
+                        int dist,
+						int build_result)
 {
     int xx;
     int yy;
@@ -982,12 +984,15 @@ void find_shortest_path(maze_ctx_t *pCtx,
         {
             pCtx->min_dist = dist ;
 
-            for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
+            if(build_result)
             {
-                for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
-                {
-                    pCtx->shortest_array[xx][yy] = pCtx->solve_array[xx][yy];
-                }
+            	for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
+            	{
+            		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
+            		{
+            			pCtx->shortest_array[xx][yy] = pCtx->solve_array[xx][yy];
+            		}
+            	}
             }
 
             // Flag the last position
@@ -1011,7 +1016,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
     d = is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_W, x_to, y_to);
     if (a && b && (c||d))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
     }
 
     x_to = i;
@@ -1022,7 +1027,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
     d = is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_S, x_to, y_to);
     if (a && b && (c || d))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
     }
 
     x_to = i-1;
@@ -1033,7 +1038,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
     d= is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_E, x_to, y_to);
     if (a && b && (c || d))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
     }
 
     x_to = i;
@@ -1044,7 +1049,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
     d = is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_N, x_to, y_to);
     if (a && b && (c || d))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
     }
 
     // RewindRemove (i, j) from visited matrix
@@ -1079,7 +1084,8 @@ void build_action_list(
     find_shortest_path(pCtx,
                        from_x, from_y,
                        to_x, to_y,
-                       0);
+                       0,
+					   1);
     if(pCtx->min_dist > MAX_ACTION)
     {
 #if defined(VERBOSE_MAZE)
@@ -1376,6 +1382,10 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
     algo_update_t     *pAlgo = NULL;
     int                action_flag;
     maze_case_t        wall_sensor;
+    uint16_t           t0;
+    uint16_t           t1;
+
+    t0 = timer_us_get();
 
 	// Get wall state
 	wall_sensor =  get_wall_state(pCtx->current_direction);
@@ -1589,6 +1599,10 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
            (char *) wall_state_txt[GET_WALL_STATE(pCtx->maze_array[pCtx->current_x][pCtx->current_y])],
            the_end);
 #endif
+
+    t1 = timer_us_get();
+
+    HAL_Serial_Print(&com, "[update_maze_ctx duration: %d µs]\n", t1-t0);
 
     return(action);
 }// end of update_maze_ctx
