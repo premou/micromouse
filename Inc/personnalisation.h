@@ -14,9 +14,9 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-#define __FRANCOIS__
+//#define __FRANCOIS__
 //#define __PATRICK__ 	// Patrick has the prototype HW
-//#define __PREM__
+#define __PREM__
 //#define __REMI__
 
 /*****************************************************************************/
@@ -733,7 +733,9 @@
 //#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
-#define 	X_SPEED 			0.35 		// unit : m/s
+//#define 	X_SPEED 			0.35 		// unit : m/s
+
+#define 	X_SPEED 			0.5 		// unit : m/s
 
 // 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
@@ -784,13 +786,23 @@
 //     deceleration = W_MAX_DECELERATION
 //     max angular vel = W_SPEED
 //     mouse width = 70
-#define 	W_SPEED 			330.0F		// unit : dps
-#define 	W_T1 				273 		// unit : ms
-#define 	W_T2 				328			// unit : ms
+// Normal
+//#define 	W_SPEED 			330.0F		// unit : dps
+//#define 	W_T1 				273 		// unit : ms
+//#define 	W_T2 				328			// unit : ms
+// Nomral ++
+#define 	W_SPEED 			540.0F		// unit : dps
+#define 	W_T1 				167 		// unit : ms
+#define 	W_T2 				235		    // unit : ms
+
 
 // 2.03. Set rotation acceleration
-#define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
-#define		W_MAX_DECELERATION 	6000		// unit : dps^2
+// Normal
+//#define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
+//#define		W_MAX_DECELERATION 	6000		// unit : dps^2
+// Normal ++
+#define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
+#define		W_MAX_DECELERATION 	8000		// unit : dps^2
 
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
