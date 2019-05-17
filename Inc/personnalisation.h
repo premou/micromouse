@@ -718,7 +718,7 @@
 // distance offset to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
 // sum distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			190.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			200.0 	// unit : mm
 // delta distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			0.0 	// unit : mm
 #define WALL_FRONT_ANGLE_TURNING_DELTA_coef			0.0 	// unit : mm to ms
@@ -733,9 +733,9 @@
 //#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
-//#define 	X_SPEED 			0.35 		// unit : m/s
+#define 	X_SPEED 			0.35 		// unit : m/s
 
-#define 	X_SPEED 			0.5 		// unit : m/s
+//#define 	X_SPEED 			0.5 		// unit : m/s
 
 // 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
@@ -787,22 +787,22 @@
 //     max angular vel = W_SPEED
 //     mouse width = 70
 // Normal
-//#define 	W_SPEED 			330.0F		// unit : dps
-//#define 	W_T1 				273 		// unit : ms
-//#define 	W_T2 				328			// unit : ms
+#define 	W_SPEED 			330.0F		// unit : dps
+#define 	W_T1 				273 		// unit : ms
+#define 	W_T2 				328			// unit : ms
 // Nomral ++
-#define 	W_SPEED 			540.0F		// unit : dps
-#define 	W_T1 				167 		// unit : ms
-#define 	W_T2 				235		    // unit : ms
+//#define 	W_SPEED 			540.0F		// unit : dps
+//#define 	W_T1 				167 		// unit : ms
+//#define 	W_T2 				235		    // unit : ms
 
 
 // 2.03. Set rotation acceleration
 // Normal
-//#define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
-//#define		W_MAX_DECELERATION 	6000		// unit : dps^2
+#define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
+#define		W_MAX_DECELERATION 	6000		// unit : dps^2
 // Normal ++
-#define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
-#define		W_MAX_DECELERATION 	8000		// unit : dps^2
+//#define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
+//#define		W_MAX_DECELERATION 	8000		// unit : dps^2
 
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn
