@@ -13,10 +13,10 @@
 /*****************************************************************************/
 
 // DECLARE OWNER (only one at once)
-//#define __ALICE__		// All has the a HW revision 0.00
+#define __ALICE__		// All has the a HW revision 0.00
 //#define __FRANCOIS__
 //#define __PATRICK__ 	// Patrick has the prototype HW
-#define __PREM__
+//#define __PREM__
 //#define __REMI__
 
 /*****************************************************************************/
@@ -42,7 +42,7 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
@@ -71,7 +71,7 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-//#define FIXED_MOVES // disable AI
+#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 #define 	X_SPEED 			0.35 		// unit : m/s
@@ -100,7 +100,7 @@
 //#define SC_START_STOP // 180mm
 //#define SC_START_RUN_STOP // 360mm
 //#define SC_START_RUN2_STOP // 540mm
-//#define SC_START_RUN3_STOP // 720mm
+#define SC_START_RUN3_STOP // 720mm
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
 
