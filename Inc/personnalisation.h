@@ -13,8 +13,8 @@
 /*****************************************************************************/
 
 // DECLARE OWNER (only one at once)
-//#define __ALICE__		// All has the a HW revision 0.00
-#define __FRANCOIS__
+#define __ALICE__		// All has the a HW revision 0.00
+//#define __FRANCOIS__
 //#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
@@ -74,7 +74,7 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-//#define FIXED_MOVES // disable AI
+#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 // Normal
@@ -107,7 +107,7 @@
 //#define SC_START_STOP // 180mm
 //#define SC_START_RUN_STOP // 360mm
 //#define SC_START_RUN2_STOP // 540mm
-//#define SC_START_RUN3_STOP // 720mm
+#define SC_START_RUN3_STOP // 720mm
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
 
