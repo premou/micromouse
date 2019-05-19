@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include "controller.h"
 #include "serial.h"
 #include "WallSensor.h"
@@ -8,7 +8,7 @@
 #include "timer_us.h"
 
 // Verbose mode
-//#define VERBOSE_MAZE
+#define VERBOSE_MAZE
 
 // Extern
 extern HAL_Serial_Handler com;
@@ -308,7 +308,7 @@ void init_inter_list(maze_ctx_t *pCtx)
 
 void init_shortest_array(maze_ctx_t *pCtx)
 {
-#if 0
+#if 1
     uint32_t x, y;
     for(x=0; x<MAX_MAZE_DEPTH; x++)
     {
@@ -318,11 +318,10 @@ void init_shortest_array(maze_ctx_t *pCtx)
             pCtx->shortest_array[x][y] = CASE_UNKNOWN;
         }
     }
-#endif
-
+#else
     memset((void *)&pCtx->solve_array[0],    0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
     memset((void *)&pCtx->shortest_array[0], 0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
-
+#endif
     // Initialize the minimum distance and copy flag
     pCtx->min_dist  = MAX_INT;
 }
@@ -330,10 +329,24 @@ void init_shortest_array(maze_ctx_t *pCtx)
 // Fill the array maze with case unknown pattern
 void maze_ctx_init(maze_ctx_t *pCtx)
 {
+#if 1
+    uint32_t x, y;
+    for(x=0; x<MAX_MAZE_DEPTH; x++)
+    {
+        for(y=0; y<MAX_MAZE_DEPTH; y++)
+        {
+            pCtx->maze_array[x][y]     = CASE_UNKNOWN;
+            pCtx->solve_array[x][y]    = CASE_UNKNOWN;
+            pCtx->shortest_array[x][y] = CASE_UNKNOWN;
+            pCtx->inter_array[x][y]    = CASE_UNKNOWN;
+        }
+    }
+#else
     memset((void *)&pCtx->maze_array[0],     0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
     memset((void *)&pCtx->solve_array[0],    0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
     memset((void *)&pCtx->shortest_array[0], 0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
     memset((void *)&pCtx->inter_array[0],    0, sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+#endif
 
 	// Initialization action list
 	init_action_list(pCtx);
@@ -513,7 +526,7 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
                                        pCtx->current_x, pCtx->current_y,
 									   pInter->x, pInter->y,
                                        0,
-									   0);
+									   1);
                     if(pCtx->min_dist < min_dist)
                     {
                     	// Keep in mind the shortest distance i.e. nearest intersection
@@ -532,7 +545,8 @@ action_t get_next_action(maze_ctx_t *pCtx, maze_case_t wall_sensor)
 						pCtx->current_x,
 						pCtx->current_y,
 						pCtx->inter_list[min_dist_index].x,
-						pCtx->inter_list[min_dist_index].y);
+						pCtx->inter_list[min_dist_index].y,
+						1);
 
 #if defined(VERBOSE_MAZE)
             	HAL_Serial_Print(&com, ">[build action f(%d,%d) t(%d,%d)]>",
@@ -967,7 +981,7 @@ void find_shortest_path(maze_ctx_t *pCtx,
                         int i, int j, // current position
                         int x, int y, // exit
                         int dist,
-						int build_result)
+						int search_inter)
 {
     int x_from, x_to;
     int y_from, y_to;
@@ -976,33 +990,24 @@ void find_shortest_path(maze_ctx_t *pCtx,
     // if destination is found, update min_dist
     if (i == x && j == y)
     {
-        if(dist < pCtx->min_dist)
-        {
-            pCtx->min_dist = dist ;
+    	if(dist < pCtx->min_dist)
+    	{
+    		pCtx->min_dist = dist ;
 
-            if(build_result)
-            {
-                memcpy((void *)&pCtx->shortest_array[0],
-                       (void *)&pCtx->solve_array[0],
-                       sizeof(maze_case_t) * MAX_MAZE_DEPTH * MAX_MAZE_DEPTH);
+    		int yy;
+    		int xx;
+    		for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
+    		{
+    			for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
+    			{
+    				pCtx->shortest_array[xx][yy] = pCtx->solve_array[xx][yy];
+    			}
+    		}
 
-#if 0
-                int yy;
-                int xx;
-            	for(yy=(MAX_MAZE_DEPTH-1); yy>=0; yy--)
-            	{
-            		for(xx=0; xx<MAX_MAZE_DEPTH; xx++)
-            		{
-            			pCtx->shortest_array[xx][yy] = pCtx->solve_array[xx][yy];
-            		}
-            	}
-#endif
-            }
-
-            // Flag the last position
-            pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
-        }
-        return;
+    		// Flag the last position
+			pCtx->shortest_array[x][y] = pCtx->min_dist + 1 ;
+    	}
+    	return;
     }
 
     // set (i, j) cell as visited
@@ -1018,9 +1023,9 @@ void find_shortest_path(maze_ctx_t *pCtx,
     b = is_safe(pCtx, x_to, y_to);
     c = is_no_wall_1(pCtx, x_from, y_from, CASE_WALL_E, x_to, y_to);
     d = is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_W, x_to, y_to);
-    if (a && b && (c||d))
+    if (a && b && (c|| (d&&search_inter)))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, search_inter);
     }
 
     x_to = i;
@@ -1029,9 +1034,9 @@ void find_shortest_path(maze_ctx_t *pCtx,
     b = is_safe(pCtx, x_to, y_to);
     c = is_no_wall_1(pCtx, x_from, y_from, CASE_WALL_N, x_to, y_to);
     d = is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_S, x_to, y_to);
-    if (a && b && (c || d))
+    if (a && b && (c || (d&&search_inter) ))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, search_inter);
     }
 
     x_to = i-1;
@@ -1040,9 +1045,9 @@ void find_shortest_path(maze_ctx_t *pCtx,
     b = is_safe(pCtx, x_to, y_to);
     c= is_no_wall_1(pCtx, x_from, y_from, CASE_WALL_W, x_to, y_to);
     d= is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_E, x_to, y_to);
-    if (a && b && (c || d))
+    if (a && b && (c || (d&&search_inter)))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, search_inter);
     }
 
     x_to = i;
@@ -1051,9 +1056,9 @@ void find_shortest_path(maze_ctx_t *pCtx,
     b = is_safe(pCtx, x_to, y_to);
     c = is_no_wall_1(pCtx, x_from, y_from, CASE_WALL_S, x_to, y_to);
     d = is_no_wall_2(pCtx, x_from, y_from, CASE_WALL_N, x_to, y_to);
-    if (a && b && (c || d))
+    if (a && b && (c || (d&&search_inter)))
     {
-        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, build_result);
+        find_shortest_path(pCtx, x_to, y_to, x, y, dist + 1, search_inter);
     }
 
     // RewindRemove (i, j) from visited matrix
@@ -1065,7 +1070,8 @@ void build_action_list(
 		maze_ctx_t *pCtx,
 		robot_direction_t from_dir,
 		int from_x, int from_y,
-		int to_x, int to_y)
+		int to_x, int to_y,
+		int search_inter)
 {
     int               a, x, y       ;
     int               id_current    ;
@@ -1089,7 +1095,7 @@ void build_action_list(
                        from_x, from_y,
                        to_x, to_y,
                        0,
-					   1);
+					   search_inter);
     if(pCtx->min_dist > MAX_ACTION)
     {
 #if defined(VERBOSE_MAZE)
@@ -1545,7 +1551,7 @@ action_t update_maze_ctx(maze_ctx_t *pCtx)
             pCtx->mode = SOLVE;
 
             // Build the action list for the SOLVE mode
-            build_action_list(pCtx, DIR_N, pCtx->start_x, pCtx->start_y, pCtx->end_x, pCtx->end_y);
+            build_action_list(pCtx, DIR_N, pCtx->start_x, pCtx->start_y, pCtx->end_x, pCtx->end_y, 0);
         }
     }
     else

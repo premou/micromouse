@@ -67,7 +67,9 @@ void wall_sensor_update_one(uint32_t sensor_id)
 	//////raw_ambiant_IR = read_adc(&hadc1, sensor_id); // ambiant light suppression
 	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_SET); // Turn ON IR LED
 	timer_us_delay(100); // Wait for 100us (IR LED warm-up)
-	ctx.raw[sensor_id]= read_adc(&hadc1, sensor_id) - raw_ambiant_IR;
+	int32_t new = read_adc(&hadc1, sensor_id) - raw_ambiant_IR;
+	//ctx.raw[sensor_id]= (float)(new)*0.2 + (float)(ctx.raw[sensor_id])*0.8;
+	ctx.raw[sensor_id] = new;
 	// FIX make it positive
 	HAL_GPIO_WritePin(id_to_port[sensor_id],id_to_pin[sensor_id],GPIO_PIN_RESET); // Turn OFF IR LED
 	timer_us_delay(30); // Wait for 50us (IR LED cooling)

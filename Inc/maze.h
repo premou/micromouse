@@ -169,11 +169,12 @@ void         find_shortest_path(maze_ctx_t *pCtx,
 		int i, int j, // from
 		int x, int y, // to
 		int dist,
-		int build_result);
+		int search_inter);
 void         build_action_list(maze_ctx_t *pCtx,
 		robot_direction_t from_dir,
 		int from_x, int from_y,
-		int to_x, int to_y);
+		int to_x, int to_y,
+		int search_inter);
 action_t     get_next_next_action(maze_ctx_t *pCtx);
 void         update_intersection(maze_ctx_t *pCtx);
 
