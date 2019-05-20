@@ -42,7 +42,7 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
@@ -50,13 +50,15 @@
 // maximal distance to left or right wall
 #define 	SIDE_WALL_DISTANCE 					90		// unit : mm
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	25.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	35.0	// unit : mm
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	25.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	32.0	// unit : mm
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.130 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL_RIGHT 0.110 //0.130 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL_LEFT 0.100 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.125 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST_RIGHT 0.120 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST_LEFT 0.090 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
 #define WALL_FRONT_DISTANCE_mm 					35.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
@@ -74,7 +76,7 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-#define FIXED_MOVES // disable AI
+//#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 // Normal
@@ -98,7 +100,7 @@
 
 // 1.04. Set wheel diameter and micro gear ratio
 #define 	GEAR_BOX_RATIO		1.0F/30.0F	// 1:30
-#define 	WHEEL_DIAMETER      0.0265F	// unit : mm
+#define 	WHEEL_DIAMETER      0.0267F	// unit : mm
 // the greater is the wheel diameter, lesser is the distance traveled
 
 // 1.05, use visualization and physics to adjust all these parameters in order to :
@@ -107,7 +109,7 @@
 //#define SC_START_STOP // 180mm
 //#define SC_START_RUN_STOP // 360mm
 //#define SC_START_RUN2_STOP // 540mm
-#define SC_START_RUN3_STOP // 720mm
+//#define SC_START_RUN3_STOP // 720mm
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
 
@@ -118,7 +120,7 @@
 
 // 2.01 Set the sensitivity correction
 // >>> physics using turn table : one turn gives 360° heading exactly (display heading)
-#define 	GYRO_SENSITIVITY_CORRECTION 		1.01F //0.990F	// unit : %
+#define 	GYRO_SENSITIVITY_CORRECTION 		0.99F //0.990F	// unit : %
 // #define 	SCALE_500_DPS // default
 #define 	SCALE_1000_DPS
 // the greater is the correction, lesser the robot turn
