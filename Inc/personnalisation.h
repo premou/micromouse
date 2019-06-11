@@ -13,8 +13,8 @@
 /*****************************************************************************/
 
 // DECLARE OWNER (only one at once)
-#define __ALICE__		// All has the a HW revision 0.00
-//#define __FRANCOIS__
+//#define __ALICE__		// All has the a HW revision 0.00
+#define __FRANCOIS__
 //#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
@@ -74,7 +74,7 @@
 // First, we set the parameters for running forward with controlled acceleration, speed and position.
 
 // 1.00. Define FIXED_MOVES for the following tests and configuration
-#define FIXED_MOVES // disable AI
+//#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
 // Normal
@@ -107,7 +107,7 @@
 //#define SC_START_STOP // 180mm
 //#define SC_START_RUN_STOP // 360mm
 //#define SC_START_RUN2_STOP // 540mm
-#define SC_START_RUN3_STOP // 720mm
+//#define SC_START_RUN3_STOP // 720mm
 
 // Next, we set the parameters for turning with controlled acceleration, speed and position.
 
@@ -238,6 +238,9 @@
 
 #ifdef __FRANCOIS__
 
+// SPEED flag: Normal versus Normal ++
+#define NORMAL_SPEED
+
 // Recommendation : Always charge up battery to maximum capacity/voltage (8.4V)
 
 // 0.01. Adjust voltage divider ration
@@ -251,27 +254,27 @@
 // 		>> diagonal sensor point to middle of side walls when mouse placed before cell
 // >> then use "banc micrmouse" to compute linear regression (theta)
 //#define RAW_IR_TRACE //to calibrate wall IR sensors when IDLE
-//#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
+#define CALIBRATED_IR_TRACE //to check calibrate wall IR sensors when IDLE
 
 // 0.03. Use "banc micromouse " to set the distance to walls
 // maximal distance to front wall (sum of both sensors)
-#define 	FRONT_WALL_DISTANCE 				320		// unit : mm
+#define 	FRONT_WALL_DISTANCE 				345		// unit : mm old value 320
 // maximal distance to left or right wall
-#define 	SIDE_WALL_DISTANCE 					65		// unit : mm
+#define 	SIDE_WALL_DISTANCE 					75		// unit : mm old value 60
 // distance to left wall when mouse in middle
-#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	30.0	// unit : mm
+#define 	LEFT_WALL_DISTANCE_NO_SIDE_ERROR 	42.0	// unit : mm old value 30
 // distance to right wall when mouse in middle
-#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	30.0	// unit : mm
+#define 	RIGHT_WALL_DISTANCE_NO_SIDE_ERROR 	42.0	// unit : mm old value 30
 // position of micromouse when wall fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.130 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_WALL_TO_NO_WALL 0.110 	// unit : mm
 // position of micromouse when post fades (140mm)
-#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.115 	// unit : mm
+#define REMAINING_DIST_RUN_AFTER_POST_TO_NO_POST 0.100 	// unit : mm
 // distance to front wall when micromouse doint dead end turn back
-#define WALL_FRONT_DISTANCE_mm 					35.0 	// unit : mm
+#define WALL_FRONT_DISTANCE_mm 					25.0 	// unit : mm
 // distance offset to front wall when micromouse doint dead end turn back
-#define WALL_FRONT_ANGLE_mm 					0.0 	// unit : mm
+#define WALL_FRONT_ANGLE_mm 					-5.0 	// unit : mm
 // sum distance to front wall when micromouse doing curve turn
-#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			160.0 	// unit : mm
+#define WALL_FRONT_ANGLE_TURNING_SUM_mm 			190.0 	// unit : mm
 // delta distance to front wall when micromouse doing curve turn
 #define WALL_FRONT_ANGLE_TURNING_DELTA_mm 			0.0 	// unit : mm
 #define WALL_FRONT_ANGLE_TURNING_DELTA_coef			0.0 	// unit : mm to ms
@@ -286,11 +289,13 @@
 //#define FIXED_MOVES // disable AI
 
 // 1.01. Set forward speed of learning run and turns
-// Normal
-//#define 	X_SPEED 			0.35 		// unit : m/s
-// Normal ++
-#define 	X_SPEED 			0.5 		// unit : m/s
-
+#ifdef NORMAL_SPEED
+  // Normal
+  #define 	X_SPEED 			0.35 		// unit : m/s
+#else
+  // Normal ++
+  #define 	X_SPEED 			0.5 		// unit : m/s
+#endif
 
 // 1.02. Set forward acceleration
 #define 	X_MAX_ACCELERATION 	5.0F 		// unit : m/s^2
@@ -343,24 +348,28 @@
 //     deceleration = W_MAX_DECELERATION
 //     max angular vel = W_SPEED
 //     mouse width = 70
-// Normal
-//#define 	W_SPEED 			330.0F		// unit : dps
-//#define 	W_T1 				273 		// unit : ms
-//#define 	W_T2 				328			// unit : ms
-// Nomral ++
-#define 	W_SPEED 			540.0F		// unit : dps
-#define 	W_T1 				167 		// unit : ms
-#define 	W_T2 				235		    // unit : ms
-
+#ifdef NORMAL_SPEED
+  // Normal
+  #define 	W_SPEED 			330.0F		// unit : dps
+  #define 	W_T1 				273 		// unit : ms
+  #define 	W_T2 				328			// unit : ms
+#else
+  // Normal ++
+  #define 	W_SPEED 			540.0F		// unit : dps
+  #define 	W_T1 				167 		// unit : ms
+  #define 	W_T2 				235		    // unit : ms
+#endif
 
 // 2.03. Set rotation acceleration
-// Normal
-//#define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
-//#define		W_MAX_DECELERATION 	6000		// unit : dps^2
-// Normal ++
-#define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
-#define		W_MAX_DECELERATION 	8000		// unit : dps^2
-
+#ifdef NORMAL_SPEED
+  // Normal
+  #define 	W_MAX_ACCELERATION 	6000		// unit : dps^2
+  #define		W_MAX_DECELERATION 	6000		// unit : dps^2
+#else
+  // Normal ++
+  #define 	W_MAX_ACCELERATION 	8000		// unit : dps^2
+  #define		W_MAX_DECELERATION 	8000		// unit : dps^2
+#endif
 
 // 2.04, use visualization and physics to adjust all these parameters in order to :
 // >>> physics : return to home exactly after each turn

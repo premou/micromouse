@@ -169,7 +169,8 @@ void         find_shortest_path(maze_ctx_t *pCtx,
 		int i, int j, // from
 		int x, int y, // to
 		int dist,
-		int search_inter);
+		int search_inter,
+		int do_copy);
 void         build_action_list(maze_ctx_t *pCtx,
 		robot_direction_t from_dir,
 		int from_x, int from_y,
