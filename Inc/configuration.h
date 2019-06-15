@@ -11,7 +11,7 @@
 #include <string.h>
 
 // Remove comment to read command from serial link
-//#define READ_SERIAL_LINK
+#define READ_SERIAL_LINK
 
 // Macro
 // =-=-=
@@ -22,7 +22,6 @@
 // Prototypes
 // =-=-=-=-=-
 void configuration_init();
-void configuration_save();
 void configuration_parse_cli(char in);
 
 #endif /* CONFIGURATION_H_ */

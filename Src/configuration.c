@@ -211,23 +211,12 @@ unsigned char * base64_decode(unsigned char *src,
     return out;
 }// end of base64_decode
 
-
 // Configuration
 // =-=-=-=-=-=-=
 void configuration_init()
 {
     // Pre compilation test
     BUILD_BUG_ON(COUNT(parameters_in_ram) != COUNT(parameters_txt));
-
-	// Read parameters from flash and (1) copy in ram & (2) convert in uint_32
-	for(int p=0 ; p<(NB_MAX_PARAM - 1 /* without CRC32 */) ; p++)
-	{
-		parameters_in_ram[p] = (uint32_t) (parameters_in_flash[p] * 1000.0);
-	}
-}
-
-void configuration_save()
-{
 }
 
 void configuration_parse_cli(char in)
@@ -240,7 +229,6 @@ void configuration_parse_cli(char in)
     unsigned char *pDecodedBase64 ;
     uint32_t       length_encode  ;
     uint32_t       length_decode  ;
-
 
 	// 0) fill buffer
     // =-=-=-=-=-=-=-
@@ -261,10 +249,7 @@ void configuration_parse_cli(char in)
 		// =-=-=-=
 		if(strcmp(token,"get_api")==0)
 		{
-			// Copy the parameters from flash to ram
-			configuration_init();
-
-			// Response: api [nomber of parameters] [list of text parameters]
+			// Response: api [number of parameters] [list of text parameters]
 			HAL_Serial_Print(&com,"configuration get_api %d ", NB_MAX_PARAM);
 			for(p=0 ; p<NB_MAX_PARAM ; p++)
 			{
@@ -278,12 +263,19 @@ void configuration_parse_cli(char in)
 		// =-=-=-=
 		else if(strcmp(token,"get_all")==0)
 		{
-			// a) compute CRC32
+			// a) copy the parameters from flash to ram
+			// Read parameters from flash and (1) copy in ram & (2) convert in uint_32
+			for(int p=0 ; p<(NB_MAX_PARAM - 1 /* without CRC32 */) ; p++)
+			{
+				parameters_in_ram[p] = (uint32_t) (parameters_in_flash[p] * 1000.0);
+			}
+
+			// b) compute CRC32
 		    crc32_encode = compute_crc32((unsigned char *)&parameters_in_ram,
 		    			        		  sizeof(parameters_in_ram) - CRC32_SIZE);
 		    parameters_in_ram[CRC32_INDEX] = crc32_encode ;
 
-		    // b) build base64 message
+		    // c) build base64 message
 		    length_encode = 0;
 		    pEncodedBase64 = base64_encode((unsigned char *)&parameters_in_ram,
 		                                    sizeof(parameters_in_ram),
@@ -333,7 +325,7 @@ void configuration_parse_cli(char in)
 			                                   &length_decode);
 			    if((pDecodedBase64 != NULL) && (sizeof(parameters_in_ram) == length_decode))
 			    {
-			    	// b) compute and compare crc32
+			    	// b) compute crc32
 			    	crc32_decode = compute_crc32((unsigned char *)pDecodedBase64,
 	    					                     sizeof(parameters_in_ram) - CRC32_SIZE);
 			    	memcpy((void *)&crc32_encode,
@@ -344,6 +336,13 @@ void configuration_parse_cli(char in)
 			    	if(crc32_decode == crc32_encode)
 			    	{
 			            memcpy((void *)parameters_in_ram, (void *)pDecodedBase64, length_decode);
+
+						// d) copy the parameters from ram flash
+						// Read parameters from flash and (1) copy in ram & (2) convert in uint_32
+						for(p=0 ; p<(NB_MAX_PARAM-1 /* without CRC32 field */) ; p++)
+						{
+							parameters_in_flash[p] = ((float) parameters_in_ram[p]) / 1000.0 ;
+						}
 			            HAL_Serial_Print(&com,"configuration set_all CRC32 OK\n");
 			    	}
 			    	else
@@ -374,75 +373,6 @@ void configuration_parse_cli(char in)
 		memset(command,0,COMMAND_MAX_SIZE);
 	}
 }
-
-#if 0
-void configuration_parse_cli(char in)
-{
-	#define COMMAND_MAX_SIZE 256
-	static char command[COMMAND_MAX_SIZE];
-	static size_t position = 0;
-	// 0) fill buffer
-	command[position++] = in;
-	// 1) end of line or full
-	if( (position==COMMAND_MAX_SIZE-1) || (in=='\n') )
-	{
-		command[position] = 0; // null terminated string
-		char * token = strtok(command," \n\r");
-		if(strcmp(token,"get")==0)
-		{
-			HAL_Serial_Print(&com,"get ");
-			for(size_t index=0;index<CONFIGURATION_COUNT;++index)
-			{
-				HAL_Serial_Print(&com,"%d ",(int32_t)(config[index]*1000.0)); // apply x1000 factor to see decimals
-				HAL_Delay(1);
-			}
-			HAL_Serial_Print(&com,"\r\n");
-		}
-		else if(strcmp(token,"set")==0)
-		{
-			token = strtok(NULL," \r\n");
-			size_t index = 0;
-			while( token != NULL )
-			{
-				config[index++] = (float)(atoi(token))/1000.0;
-				token = strtok(NULL," \r\n");
-			}
-			HAL_Serial_Print(&com,"\r\n  UDPATED to:");
-			for(size_t index=0;index<CONFIGURATION_COUNT;++index)
-			{
-				HAL_Serial_Print(&com,"%d ",(int32_t)(config[index]*1000.0)); // apply x1000 factor to see decimals
-				HAL_Delay(1);
-			}
-			HAL_Serial_Print(&com,"\r\n");
-		}
-		else if(strcmp(token,"save")==0)
-		{
-			configuration_save();
-			HAL_Serial_Print(&com,"\r\n  SAVED to:");
-			for(size_t index=0;index<CONFIGURATION_COUNT;++index)
-			{
-				HAL_Serial_Print(&com,"%d ",(int32_t)(config[index]*1000.0)); // apply x1000 factor to see decimals
-				HAL_Delay(1);
-			}
-			HAL_Serial_Print(&com,"\r\n");
-		}
-		else if(strcmp(token,"load")==0)
-		{
-			configuration_load();
-			HAL_Serial_Print(&com,"\r\n  LOADED to:");
-			for(size_t index=0;index<CONFIGURATION_COUNT;++index)
-			{
-				HAL_Serial_Print(&com,"%d ",(int32_t)(config[index]*1000.0)); // apply x1000 factor to see decimals
-				HAL_Delay(1);
-			}
-			HAL_Serial_Print(&com,"\r\n");
-		}
-		// reset parser
-		position = 0; // reset position
-		memset(command,0,COMMAND_MAX_SIZE);
-	}
-}
-#endif
 
 #if 0
 #define CONFIGURATION_FLASH_ADDR ((uint32_t*)(0x080E0000))
