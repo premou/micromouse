@@ -30,25 +30,15 @@ const char *parameters_txt[] = {
 
 // Parameters in FLASH
 // =-=-=-=-=-=-=-=-=-=
-float parameters_in_flash[] = {
+double parameters_in_flash[] = {
     /*   0 */		100.0,
 	/*   1 */		0.3,
 	/*   2 */		12.0,
 };
 
-// Parameters in RAM
-// =-=-=-=-=-=-=-=-=
-uint32_t parameters_in_ram[] = {
-    /*   0 */		0,
-	/*   1 */		0,
-	/*   2 */		0,
-
-    /* CRC */		0  // <<<<= MUST BE THE LAST ENTRY
-};
-
 // Define
 // =-=-=-
-#define NB_MAX_PARAM            COUNT(parameters_in_ram)
+#define NB_MAX_PARAM            (COUNT(parameters_in_flash) + 1)
 #define CRC32_INDEX             (NB_MAX_PARAM - 1)
 #define COMMAND_MAX_SIZE        (1 * 1024)
 
@@ -215,8 +205,8 @@ unsigned char * base64_decode(unsigned char *src,
 // =-=-=-=-=-=-=
 void configuration_init()
 {
-    // Pre compilation test
-    BUILD_BUG_ON(COUNT(parameters_in_ram) != COUNT(parameters_txt));
+    // Pre-compilation test
+    BUILD_BUG_ON(COUNT(parameters_in_flash) != (COUNT(parameters_txt) - 1));
 }
 
 void configuration_parse_cli(char in)
@@ -229,6 +219,7 @@ void configuration_parse_cli(char in)
     unsigned char *pDecodedBase64 ;
     uint32_t       length_encode  ;
     uint32_t       length_decode  ;
+    unsigned char *pData          ;
 
 	// 0) fill buffer
     // =-=-=-=-=-=-=-
@@ -263,22 +254,18 @@ void configuration_parse_cli(char in)
 		// =-=-=-=
 		else if(strcmp(token,"get_all")==0)
 		{
-			// a) copy the parameters from flash to ram
-			// Read parameters from flash and (1) copy in ram & (2) convert in uint_32
-			for(int p=0 ; p<(NB_MAX_PARAM - 1 /* without CRC32 */) ; p++)
-			{
-				parameters_in_ram[p] = (uint32_t) (parameters_in_flash[p] * 1000.0);
-			}
+			// a) compute CRC32
+		    crc32_encode = compute_crc32((unsigned char *)&parameters_in_flash,
+		    			        		  sizeof(parameters_in_flash));
 
-			// b) compute CRC32
-		    crc32_encode = compute_crc32((unsigned char *)&parameters_in_ram,
-		    			        		  sizeof(parameters_in_ram) - CRC32_SIZE);
-		    parameters_in_ram[CRC32_INDEX] = crc32_encode ;
+		    pData = malloc(sizeof(parameters_in_flash) + CRC32_SIZE);
+		    memcpy(pData, (void *)&parameters_in_flash, sizeof(parameters_in_flash));
+		    memcpy(pData + sizeof(parameters_in_flash), (void *)&crc32_encode, CRC32_SIZE);
 
-		    // c) build base64 message
+		    // b) build base64 message
 		    length_encode = 0;
-		    pEncodedBase64 = base64_encode((unsigned char *)&parameters_in_ram,
-		                                    sizeof(parameters_in_ram),
+		    pEncodedBase64 = base64_encode((unsigned char *)pData,
+		    								sizeof(parameters_in_flash) + CRC32_SIZE,
 		                                    &length_encode);
 		    if((NULL != pEncodedBase64) && (length_encode < COMMAND_MAX_SIZE))
 		    {
@@ -294,21 +281,6 @@ void configuration_parse_cli(char in)
 		    	free(pEncodedBase64);
 		    }
 		}
-		// =-=-=-=-
-		// show_all
-		// =-=-=-=-
-		else if(strcmp(token,"show_all")==0)
-		{
-			// Response: display all the parameter in int format
-			HAL_Serial_Print(&com,"configuration show_all %d parameters\n", NB_MAX_PARAM);
-			for(p=0 ; p<NB_MAX_PARAM ; p++)
-			{
-				HAL_Serial_Print(&com,"# %s => %d (0x%x)\n",
-						         parameters_txt[p], parameters_in_ram[p], parameters_in_ram[p]);
-				HAL_Delay(1);
-			}
-			HAL_Serial_Print(&com,"\r\n");
-		}
 		// =-=-=-=
 		// set_all
 		// =-=-=-=
@@ -323,26 +295,19 @@ void configuration_parse_cli(char in)
 				pDecodedBase64 = base64_decode((unsigned char *)token,
 			                                   length_encode,
 			                                   &length_decode);
-			    if((pDecodedBase64 != NULL) && (sizeof(parameters_in_ram) == length_decode))
+			    if((pDecodedBase64 != NULL) && ((sizeof(parameters_in_flash) + CRC32_SIZE) == length_decode))
 			    {
 			    	// b) compute crc32
 			    	crc32_decode = compute_crc32((unsigned char *)pDecodedBase64,
-	    					                     sizeof(parameters_in_ram) - CRC32_SIZE);
+	    					                     sizeof(parameters_in_flash));
 			    	memcpy((void *)&crc32_encode,
-			    		   ((unsigned char *)pDecodedBase64) + sizeof(parameters_in_ram) - CRC32_SIZE,
+			    		   ((unsigned char *)pDecodedBase64) + sizeof(parameters_in_flash),
 						   CRC32_SIZE);
 
 			    	// c) check crc32
 			    	if(crc32_decode == crc32_encode)
 			    	{
-			            memcpy((void *)parameters_in_ram, (void *)pDecodedBase64, length_decode);
-
-						// d) copy the parameters from ram flash
-						// Read parameters from flash and (1) copy in ram & (2) convert in uint_32
-						for(p=0 ; p<(NB_MAX_PARAM-1 /* without CRC32 field */) ; p++)
-						{
-							parameters_in_flash[p] = ((float) parameters_in_ram[p]) / 1000.0 ;
-						}
+			            memcpy((void *)parameters_in_flash, (void *)pDecodedBase64, sizeof(parameters_in_flash));
 			            HAL_Serial_Print(&com,"configuration set_all CRC32 OK\n");
 			    	}
 			    	else

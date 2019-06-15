@@ -43,11 +43,12 @@ def GET():
   base64_encoded = res[2]
   base64_decoded = base64.b64decode(base64_encoded)
   format = ''
-  for x in range(nbParameters):
-    format += 'I'
+  for x in range(nbParameters - 1):
+    format += 'd'
+  format += 'I'
   var = unpack(format, base64_decoded)
   crc32_hex = hex(var[nbParameters-1]).split('x')[-1]
-  crc32_computed     = binascii.crc32(base64_decoded[:((nbParameters-1) * 4)])
+  crc32_computed     = binascii.crc32(base64_decoded[:((nbParameters-1) * 8)])
   crc32_computed_hex = hex(crc32_computed).split('x')[-1]
   if crc32_hex != crc32_computed_hex:
     print(f'ERROR: bad crc32 in get_all response: {crc32_hex} != {crc32_computed_hex}\n')
@@ -62,8 +63,8 @@ def SET():
   paramValueList = []
   format = ''
   for x in range(nbParameters - 1):
-    format += 'I'
-    paramValueList.append(int(paramCtx[x]['object'].get()))
+    format += 'd'
+    paramValueList.append(float(paramCtx[x]['object'].get()))
   var   = struct.pack(format, *paramValueList)
   crc32 = binascii.crc32(var)
   ctx = paramCtx[nbParameters - 1]['object']
@@ -71,9 +72,11 @@ def SET():
   ctx.insert(0,crc32)
   paramValueListWithCrc = []
   format = ''
-  for x in range(nbParameters):
-    format += 'I'
-    paramValueListWithCrc.append(int(paramCtx[x]['object'].get()))
+  for x in range(nbParameters - 1):
+    format += 'd'
+    paramValueListWithCrc.append(float(paramCtx[x]['object'].get()))
+  format += 'I'
+  paramValueListWithCrc.append(int(paramCtx[nbParameters - 1]['object'].get()))
   var = struct.pack(format, *paramValueListWithCrc)
   base64_encoded = base64.b64encode(var)
   sio.write(str(SET_ALL + ' ') + base64_encoded.decode("utf-8") + str('\r\n'))
@@ -138,7 +141,7 @@ if (res[0]!=CONFIG) or (res[1]!=GET_API):
 nbParameters = int(res[2])
 paramCtx = {}
 for p in range(0, nbParameters):
-  paramCtx[p] = {'label': res[3+p], 'value': 0, 'object': None}
+  paramCtx[p] = {'label': res[3+p], 'value': 0.0, 'object': None}
 
 # Main frame for get/set and save action
 frame = Tk()
