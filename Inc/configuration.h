@@ -10,30 +10,19 @@
 
 #include <string.h>
 
-enum
-{
-	XKP = 0,
-	XKI,
-	XKD,
-	WKP,
-	WKI,
-	WKD,
-	XSPEED_LEARNING,
-	WSPEED_LEARNING,
-	WT1,
-	WT2,
-	WUT1,
-	WUT2,
-	WD,
-	// TODO : add new configuration data
-	CONFIGURATION_COUNT
-};
+// Remove comment to read command from serial link
+//#define READ_SERIAL_LINK
 
+// Macro
+// =-=-=
+#define COUNT(x)                ((int)(sizeof(x)/sizeof(*(x))))
+#define CRC32_SIZE              (sizeof(uint32_t))
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+
+// Prototypes
+// =-=-=-=-=-
 void configuration_init();
-void configuration_load();
 void configuration_save();
-float configuration_get_ptr(size_t index);
-
 void configuration_parse_cli(char in);
 
 #endif /* CONFIGURATION_H_ */

@@ -297,11 +297,13 @@ int main(void)
 		  }
 #endif
 
+#ifdef READ_SERIAL_LINK
 		  // decode CLI
-//		  while(HAL_Serial_Available(&com)>0)
-//		  {
-//			  configuration_parse_cli(HAL_Serial_GetChar(&com));
-//		  }
+		  while(HAL_Serial_Available(&com)>0)
+		  {
+			  configuration_parse_cli(HAL_Serial_GetChar(&com));
+		  }
+#endif // READ_SERIAL_LINK
 
 		  if(controller_init_result != 0) // check controller::gyro
 		  {
