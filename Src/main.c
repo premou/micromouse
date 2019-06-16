@@ -58,6 +58,9 @@
 #include "motor.h"
 #include "encoder.h"
 
+#include "ann.h"
+#include "weights.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -261,7 +264,40 @@ int main(void)
 				  wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
 				  );
 			HAL_Delay(10);
+			/// TEST ANN HERE : TO BE DELETED
+			/// TEST ANN HERE : TO BE DELETED
+			/// TEST ANN HERE : TO BE DELETED
+			uint16_t start_us = timer_us_get();
+			double inputs[4] = {
+					wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG),
+					wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT),
+					 wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT),
+					 wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
+			};
+			double outputs[8];
+			ann_forward_propagation(outputs,inputs,weights);
+			uint16_t end_us = timer_us_get();
+			uint16_t diff_us = end_us-start_us;
+			HAL_Serial_Print(&com,"     %d %d %d %d %d %d %d %d in %d us\r\n",
+					(int32_t)(outputs[0]>0.5),
+					(int32_t)(outputs[1]>0.5),
+					(int32_t)(outputs[2]>0.5),
+					(int32_t)(outputs[3]>0.5),
+					(int32_t)(outputs[4]>0.5),
+					(int32_t)(outputs[5]>0.5),
+					(int32_t)(outputs[6]>0.5),
+					(int32_t)(outputs[7]>0.5),
+					(int32_t)diff_us
+				  );
+
+			/// TEST ANN HERE : TO BE DELETED
+			/// TEST ANN HERE : TO BE DELETED
+			/// TEST ANN HERE : TO BE DELETED
+
+			HAL_Delay(10);
 		}
+
+
 	}
 #endif
 #ifdef CALIBRATED_IR_TRACE
