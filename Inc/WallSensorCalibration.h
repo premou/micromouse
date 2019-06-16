@@ -16,7 +16,6 @@
 #ifdef __ALICE__
 
 #include "../Src/wall_sensor_table_alice.h"
-//#include "../Src/wall_sensor_table_francois.h"
 
 #endif
 
