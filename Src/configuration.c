@@ -384,22 +384,22 @@ void configuration_save_to_flash()
 
 	// programming into flash
 	// =-=-=-=-=-=-=-=-=-=-=-
-	uint32_t size = sizeof(parameters_in_flash);
-	uint32_t flash_address = (uint32_t)(CONFIGURATION_FLASH_ADDR);
-	uint64_t data_address  = (uint64_t)( &parameters_in_flash[0] );
+	uint32_t  size          = sizeof(parameters_in_flash) / sizeof(uint32_t) ;
+	uint32_t  flash_address = (uint32_t)(CONFIGURATION_FLASH_ADDR)           ;
+	uint32_t *pData         = (uint32_t *)(&parameters_in_flash[0])          ;
 	HAL_StatusTypeDef res;
 	for(uint32_t index=0; index < size; ++index)
 	{
 		res  = HAL_ERROR;
-		res = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, flash_address, data_address);
+		res = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, (uint64_t)(*pData));
 		if(res != HAL_OK)
 		{
 			HAL_Serial_Print(&com,"ERROR sav_all write returns %d\r\n", res);
 			HAL_FLASH_Lock();
 			return;
 		}
-		flash_address += 1;
-		data_address  += 1;
+		flash_address += sizeof(uint32_t) ;
+		pData++;
 	}
 
 	HAL_FLASH_Lock();
