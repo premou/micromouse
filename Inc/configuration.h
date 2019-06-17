@@ -23,5 +23,6 @@
 // =-=-=-=-=-
 void configuration_init();
 void configuration_parse_cli(char in);
+void configuration_save_to_flash(void);
 
 #endif /* CONFIGURATION_H_ */

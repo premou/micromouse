@@ -93,6 +93,13 @@ def SAVE():
   global sio
   sio.write(str(SAV_ALL+'\r\n'))
   sio.flush()
+  time.sleep(2)
+  line = sio.readline()
+  if len(line) == 0:
+    return
+  else:
+    print(f'{line}')
+  GET()
 
 def QUIT():
   # Global

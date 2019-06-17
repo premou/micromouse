@@ -9,6 +9,7 @@
 // =-=-=-=-
 #include "configuration.h"
 #include "serial.h"
+#include "stm32f7xx_hal.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,16 +32,17 @@ const char *parameters_txt[] = {
 // Parameters in FLASH
 // =-=-=-=-=-=-=-=-=-=
 double parameters_in_flash[] = {
-    /*   0 */		100.0,
-	/*   1 */		0.3,
-	/*   2 */		12.0,
+    /*   0 */		0.0,
+	/*   1 */		0.0,
+	/*   2 */		0.0,
 };
 
 // Define
 // =-=-=-
-#define NB_MAX_PARAM            (COUNT(parameters_in_flash) + 1)
-#define CRC32_INDEX             (NB_MAX_PARAM - 1)
-#define COMMAND_MAX_SIZE        (1 * 1024)
+#define NB_MAX_PARAM             (COUNT(parameters_in_flash) + 1)
+#define CRC32_INDEX              (NB_MAX_PARAM - 1)
+#define COMMAND_MAX_SIZE         (1 * 1024)
+#define CONFIGURATION_FLASH_ADDR ((uint32_t*)(0x080E0000))
 
 // Const
 // =-=-=
@@ -207,6 +209,9 @@ void configuration_init()
 {
     // Pre-compilation test
     BUILD_BUG_ON(COUNT(parameters_in_flash) != (COUNT(parameters_txt) - 1));
+
+    // Copy flash to ram
+    memcpy((void *)parameters_in_flash, (void *)CONFIGURATION_FLASH_ADDR, sizeof(parameters_in_flash));
 }
 
 void configuration_parse_cli(char in)
@@ -240,6 +245,8 @@ void configuration_parse_cli(char in)
 		// =-=-=-=
 		if(strcmp(token,"get_api")==0)
 		{
+			configuration_init();
+
 			// Response: api [number of parameters] [list of text parameters]
 			HAL_Serial_Print(&com,"configuration get_api %d ", NB_MAX_PARAM);
 			for(p=0 ; p<NB_MAX_PARAM ; p++)
@@ -324,6 +331,14 @@ void configuration_parse_cli(char in)
 
 			}
 		}
+		// =-=-=-=
+		// sav_all
+		// =-=-=-=
+		else if(strcmp(token,"sav_all")==0)
+		{
+			configuration_save_to_flash();
+			HAL_Serial_Print(&com,"sav_all OK 0x%x vs 0x%x\r\n", *((int *)&parameters_in_flash[0]), *((int *)(CONFIGURATION_FLASH_ADDR)));
+		}
 		// =-=-=-=-=-=-=-=
 		// Unknown command
 		// =-=-=-=-=-=-=-=
@@ -339,13 +354,17 @@ void configuration_parse_cli(char in)
 	}
 }
 
-#if 0
-#define CONFIGURATION_FLASH_ADDR ((uint32_t*)(0x080E0000))
 void configuration_save_to_flash()
 {
-	HAL_FLASH_Unlock();
+	if(HAL_OK != HAL_FLASH_Unlock())
+	{
+		HAL_Serial_Print(&com,"ERROR sav_all unlock\r\n");
+		HAL_FLASH_Lock();
+		return;
+	}
 
 	// erasing
+	// =-=-=-=
 	FLASH_EraseInitTypeDef erase = {
 			FLASH_TYPEERASE_SECTORS,
 			FLASH_BANK_1,
@@ -353,32 +372,35 @@ void configuration_save_to_flash()
 			1,
 			FLASH_VOLTAGE_RANGE_3
 	};
-	uint32_t error = 0;
-	HAL_FLASHEx_Erase(&erase,&error);
 
-	// programming 256-bit word into flash
+	uint32_t error = 0;
+	HAL_FLASHEx_Erase(&erase, &error);
+	if(error!=0xFFFFFFFF)
 	{
-		uint32_t size_256bits = sizeof(configuration_data)/32;
-		uint32_t flash_address = (uint32_t)(CONFIGURATION_FLASH_ADDR);
-		uint64_t data_address = (uint64_t)( (uint64_t const *)(&config) );
-		for(uint64_t index=0; index<size_256bits; ++index)
-		{
-			HAL_FLASH_Program( FLASH_TYPEPROGRAM_FLASHWORD, flash_address, data_address );
-			flash_address += 32;
-			data_address += 32;
-		}
+		HAL_Serial_Print(&com,"ERROR sav_all erase returns %d\r\n", error);
+		HAL_FLASH_Lock();
+		return;
 	}
+
+	// programming into flash
+	// =-=-=-=-=-=-=-=-=-=-=-
+	uint32_t size = sizeof(parameters_in_flash);
+	uint32_t flash_address = (uint32_t)(CONFIGURATION_FLASH_ADDR);
+	uint64_t data_address  = (uint64_t)( &parameters_in_flash[0] );
+	HAL_StatusTypeDef res;
+	for(uint32_t index=0; index < size; ++index)
+	{
+		res  = HAL_ERROR;
+		res = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, flash_address, data_address);
+		if(res != HAL_OK)
+		{
+			HAL_Serial_Print(&com,"ERROR sav_all write returns %d\r\n", res);
+			HAL_FLASH_Lock();
+			return;
+		}
+		flash_address += 1;
+		data_address  += 1;
+	}
+
 	HAL_FLASH_Lock();
 }
-
-void configuration_load_from_flash()
-{
-	// read back
-	uint32_t size_64bits = sizeof(configuration_data)/8;
-	uint64_t * ptr = (uint64_t *)(&config);
-	for(uint32_t index=0; index<size_64bits; ++index)
-	{
-		*(ptr+index) = *((uint64_t *)CONFIGURATION_FLASH_ADDR+index);
-	}
-}
-#endif
