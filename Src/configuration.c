@@ -21,28 +21,34 @@ extern HAL_Serial_Handler com;
 // Parameters txt: * SIZE MUST BE EQUAL TO 8 CHAR *
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const char *parameters_txt[] = {
-//  "12345678"
-    "ID_____0",
+	"ID_____0",
     "ID_____1",
     "ID_____2",
-
-    "CRC___32" // <<<<= CRC should always be at the end
+    "CRC32___" // <<<<= CRC should always be at the end
 };
 
 // Parameters in FLASH
 // =-=-=-=-=-=-=-=-=-=
-double parameters_in_flash[] = {
-    /*   0 */		0.0,
-	/*   1 */		0.0,
-	/*   2 */		0.0,
+char   name_from_flash[] = {
+  "_______\0"
+};
+
+double parameters_from_flash[] = {
+  /*   0 */		0.0,
+  /*   1 */		0.0,
+  /*   2 */		0.0,
 };
 
 // Define
 // =-=-=-
-#define NB_MAX_PARAM             (COUNT(parameters_in_flash) + 1)
+#define NB_MAX_PARAM             (COUNT(parameters_from_flash) + 1)
+#define PARAMETERS_SIZE          (sizeof(parameters_from_flash))
+#define NAME_SIZE                (sizeof(name_from_flash))
 #define CRC32_INDEX              (NB_MAX_PARAM - 1)
 #define COMMAND_MAX_SIZE         (1 * 1024)
 #define CONFIGURATION_FLASH_ADDR ((uint32_t*)(0x080E0000))
+#define NAME_FLASH_ADDR          (CONFIGURATION_FLASH_ADDR)
+#define PARAMETERS_FLASH_ADDR    (NAME_FLASH_ADDR + NAME_SIZE)
 
 // Const
 // =-=-=
@@ -208,10 +214,16 @@ unsigned char * base64_decode(unsigned char *src,
 void configuration_init()
 {
     // Pre-compilation test
-    BUILD_BUG_ON(COUNT(parameters_in_flash) != (COUNT(parameters_txt) - 1));
+    BUILD_BUG_ON(COUNT(parameters_from_flash) != (COUNT(parameters_txt) - 1));
 
     // Copy flash to ram
-    memcpy((void *)parameters_in_flash, (void *)CONFIGURATION_FLASH_ADDR, sizeof(parameters_in_flash));
+    memcpy((void *)name_from_flash, (void *)NAME_FLASH_ADDR, NAME_SIZE);
+    if(strnlen(name_from_flash, NAME_SIZE) != NAME_SIZE)
+    {
+    	memcpy((void *)name_from_flash, (void *)"UNKNOWN\0", NAME_SIZE);
+    }
+    name_from_flash[NAME_SIZE - 1] = '\0';
+    memcpy((void *)parameters_from_flash, (void *)PARAMETERS_FLASH_ADDR, PARAMETERS_SIZE);
 }
 
 void configuration_parse_cli(char in)
@@ -257,22 +269,29 @@ void configuration_parse_cli(char in)
 			HAL_Serial_Print(&com,"\r\n");
 		}
 		// =-=-=-=
+		// get_nam
+		// =-=-=-=
+		if(strcmp(token,"get_nam")==0)
+		{
+			HAL_Serial_Print(&com,"configuration get_nam %s\r\n", name_from_flash);
+		}
+		// =-=-=-=
 		// get_all
 		// =-=-=-=
 		else if(strcmp(token,"get_all")==0)
 		{
 			// a) compute CRC32
-		    crc32_encode = compute_crc32((unsigned char *)&parameters_in_flash,
-		    			        		  sizeof(parameters_in_flash));
+		    crc32_encode = compute_crc32((unsigned char *)&parameters_from_flash,
+		    			        		  PARAMETERS_SIZE);
 
-		    pData = malloc(sizeof(parameters_in_flash) + CRC32_SIZE);
-		    memcpy(pData, (void *)&parameters_in_flash, sizeof(parameters_in_flash));
-		    memcpy(pData + sizeof(parameters_in_flash), (void *)&crc32_encode, CRC32_SIZE);
+		    pData = malloc(PARAMETERS_SIZE + CRC32_SIZE);
+		    memcpy(pData, (void *)&parameters_from_flash, PARAMETERS_SIZE);
+		    memcpy(pData + PARAMETERS_SIZE, (void *)&crc32_encode, CRC32_SIZE);
 
 		    // b) build base64 message
 		    length_encode = 0;
 		    pEncodedBase64 = base64_encode((unsigned char *)pData,
-		    								sizeof(parameters_in_flash) + CRC32_SIZE,
+		    		                        PARAMETERS_SIZE + CRC32_SIZE,
 		                                    &length_encode);
 		    if((NULL != pEncodedBase64) && (length_encode < COMMAND_MAX_SIZE))
 		    {
@@ -302,19 +321,19 @@ void configuration_parse_cli(char in)
 				pDecodedBase64 = base64_decode((unsigned char *)token,
 			                                   length_encode,
 			                                   &length_decode);
-			    if((pDecodedBase64 != NULL) && ((sizeof(parameters_in_flash) + CRC32_SIZE) == length_decode))
+			    if((pDecodedBase64 != NULL) && ((PARAMETERS_SIZE + CRC32_SIZE) == length_decode))
 			    {
 			    	// b) compute crc32
 			    	crc32_decode = compute_crc32((unsigned char *)pDecodedBase64,
-	    					                     sizeof(parameters_in_flash));
+			    			                     PARAMETERS_SIZE);
 			    	memcpy((void *)&crc32_encode,
-			    		   ((unsigned char *)pDecodedBase64) + sizeof(parameters_in_flash),
+			    		   ((unsigned char *)pDecodedBase64) + PARAMETERS_SIZE,
 						   CRC32_SIZE);
 
 			    	// c) check crc32
 			    	if(crc32_decode == crc32_encode)
 			    	{
-			            memcpy((void *)parameters_in_flash, (void *)pDecodedBase64, sizeof(parameters_in_flash));
+			            memcpy((void *)parameters_from_flash, (void *)pDecodedBase64, PARAMETERS_SIZE);
 			            HAL_Serial_Print(&com,"configuration set_all CRC32 OK\n");
 			    	}
 			    	else
@@ -330,6 +349,15 @@ void configuration_parse_cli(char in)
 			    }
 
 			}
+
+			// name
+			token = strtok(NULL," \r\n");
+			if(token != NULL)
+			{
+				length_encode = strnlen(token, NAME_SIZE);
+				memcpy((void *)name_from_flash, (void *)token, NAME_SIZE);
+				name_from_flash[NAME_SIZE - 1] = '\0';
+			}
 		}
 		// =-=-=-=
 		// sav_all
@@ -337,7 +365,7 @@ void configuration_parse_cli(char in)
 		else if(strcmp(token,"sav_all")==0)
 		{
 			configuration_save_to_flash();
-			HAL_Serial_Print(&com,"sav_all OK 0x%x vs 0x%x\r\n", *((int *)&parameters_in_flash[0]), *((int *)(CONFIGURATION_FLASH_ADDR)));
+			HAL_Serial_Print(&com,"sav_all OK\r\n");
 		}
 		// =-=-=-=-=-=-=-=
 		// Unknown command
@@ -356,6 +384,13 @@ void configuration_parse_cli(char in)
 
 void configuration_save_to_flash()
 {
+	uint32_t           size          ;
+	uint32_t           flash_address ;
+	uint32_t          *pData         ;
+	HAL_StatusTypeDef  res           ;
+	uint32_t           error         ;
+	uint32_t           index         ;
+
 	if(HAL_OK != HAL_FLASH_Unlock())
 	{
 		HAL_Serial_Print(&com,"ERROR sav_all unlock\r\n");
@@ -373,7 +408,7 @@ void configuration_save_to_flash()
 			FLASH_VOLTAGE_RANGE_3
 	};
 
-	uint32_t error = 0;
+	error = 0;
 	HAL_FLASHEx_Erase(&erase, &error);
 	if(error!=0xFFFFFFFF)
 	{
@@ -384,11 +419,27 @@ void configuration_save_to_flash()
 
 	// programming into flash
 	// =-=-=-=-=-=-=-=-=-=-=-
-	uint32_t  size          = sizeof(parameters_in_flash) / sizeof(uint32_t) ;
-	uint32_t  flash_address = (uint32_t)(CONFIGURATION_FLASH_ADDR)           ;
-	uint32_t *pData         = (uint32_t *)(&parameters_in_flash[0])          ;
-	HAL_StatusTypeDef res;
-	for(uint32_t index=0; index < size; ++index)
+	size          = NAME_SIZE / sizeof(uint32_t)      ;
+	flash_address = (uint32_t)(NAME_FLASH_ADDR)       ;
+	pData         = (uint32_t *)(&name_from_flash[0]) ;
+	for(index=0; index < size; ++index)
+	{
+		res  = HAL_ERROR;
+		res = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, (uint64_t)(*pData));
+		if(res != HAL_OK)
+		{
+			HAL_Serial_Print(&com,"ERROR sav_all write returns %d\r\n", res);
+			HAL_FLASH_Lock();
+			return;
+		}
+		flash_address += sizeof(uint32_t) ;
+		pData++;
+	}
+
+	size          = PARAMETERS_SIZE / sizeof(uint32_t)      ;
+	flash_address = (uint32_t)(PARAMETERS_FLASH_ADDR)       ;
+	pData         = (uint32_t *)(&parameters_from_flash[0]) ;
+	for(index=0; index < size; ++index)
 	{
 		res  = HAL_ERROR;
 		res = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flash_address, (uint64_t)(*pData));
@@ -404,3 +455,5 @@ void configuration_save_to_flash()
 
 	HAL_FLASH_Lock();
 }
+
+// End of file configuration

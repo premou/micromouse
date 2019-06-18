@@ -14,8 +14,8 @@
 
 // DECLARE OWNER (only one at once)
 //#define __ALICE__		// All has the a HW revision 0.00
-//#define __FRANCOIS__
-#define __PATRICK__ 	// Patrick has the prototype HW
+#define __FRANCOIS__
+//#define __PATRICK__ 	// Patrick has the prototype HW
 //#define __PREM__
 //#define __REMI__
 

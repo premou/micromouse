@@ -19,6 +19,7 @@ from tkinter import *
 SPLIT   = ' '
 CONFIG  = 'configuration'
 GET_API = 'get_api'
+GET_NAM = 'get_nam'
 GET_ALL = 'get_all'
 SET_ALL = 'set_all'
 SAV_ALL = 'sav_all'
@@ -59,6 +60,21 @@ def GET():
       ctx.delete(0,END)
       ctx.insert(0,var[p])
 
+  sio.write(str(GET_NAM+'\r\n'))
+  sio.flush()
+  time.sleep(0.5)
+  line = sio.readline()
+  if len(line) == 0:
+    print('ERROR: no response to get_nam command')
+  res = line.rstrip('\n').rstrip(SPLIT).split(SPLIT)
+  if (res[0]!=CONFIG) or (res[1]!=GET_NAM):
+    print(f'ERROR: bad response to get_nam command: {res}\n')
+    return 
+  print(f'{res}')
+  ctx = paramCtx[nbParameters]['object']
+  ctx.delete(0,END)
+  ctx.insert(0,res[2])
+
 def SET():
   paramValueList = []
   format = ''
@@ -79,7 +95,7 @@ def SET():
   paramValueListWithCrc.append(int(paramCtx[nbParameters - 1]['object'].get()))
   var = struct.pack(format, *paramValueListWithCrc)
   base64_encoded = base64.b64encode(var)
-  sio.write(str(SET_ALL + ' ') + base64_encoded.decode("utf-8") + str('\r\n'))
+  sio.write(str(SET_ALL + ' ') + base64_encoded.decode("utf-8") + str(' ' + paramCtx[nbParameters]['object'].get() ) + str('\r\n'))
   sio.flush()
   time.sleep(0.5)
   line = sio.readline()
@@ -149,18 +165,26 @@ nbParameters = int(res[2])
 paramCtx = {}
 for p in range(0, nbParameters):
   paramCtx[p] = {'label': res[3+p], 'value': 0.0, 'object': None}
+paramCtx[nbParameters] = {'label': 'NAME____', 'value': 'UKNOWN__', 'object': None}
 
 # Main frame for get/set and save action
 frame = Tk()
 frame.title('GET/SET parameters')
+
+# All parameters
 for p in range(0, nbParameters):
   Label(frame, text=paramCtx[p]['label']).grid(row=p, column=0)
   paramCtx[p]['object'] = Entry(frame)
   paramCtx[p]['object'].grid(row=p, column=1)
 
-Button(frame, text="Get ", command=GET ).grid(row=(nbParameters), column=2)
-Button(frame, text="Set ", command=SET ).grid(row=(nbParameters), column=3)
-Button(frame, text="Save", command=SAVE).grid(row=(nbParameters), column=4)	
+# Name
+Label(frame, text=paramCtx[nbParameters]['label']).grid(row=nbParameters, column=0)
+paramCtx[nbParameters]['object'] = Entry(frame)
+paramCtx[nbParameters]['object'].grid(row=nbParameters, column=1)
+
+Button(frame, text="Get all   ", command=GET ).grid(row=(nbParameters), column=2)
+Button(frame, text="Set@RAM   ", command=SET ).grid(row=(nbParameters), column=3)
+Button(frame, text="Save@FLASH", command=SAVE).grid(row=(nbParameters), column=4)	
 
 # Request the values
 frame.update_idletasks()
