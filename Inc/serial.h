@@ -29,7 +29,7 @@
 
 typedef struct
 {
-	uint8_t data[size_of_tx_buffer];
+	uint8_t data[size_of_tx_buffer] __attribute__((aligned(4)));
 	uint32_t length;
 } tx_buffer;
 
@@ -42,7 +42,7 @@ typedef struct
     uint32_t tx_tail_position;
     volatile uint32_t tx_dma;
 
-    uint8_t rx_circular_buffer[size_of_rx_circular_buffer];
+    uint8_t rx_circular_buffer[size_of_rx_circular_buffer] __attribute__((aligned(4)));
     uint8_t const * rx_tail_ptr;
 
 } HAL_Serial_Handler;

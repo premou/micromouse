@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    sensor_network.c
   * @author  AST Embedded Analytics Research Platform
-  * @date    Fri Jun 21 23:20:54 2019
+  * @date    Sat Jun 22 01:32:18 2019
   * @brief   AI Tool Automatic Code Generator for Embedded NN computing
   ******************************************************************************
   * @attention
@@ -53,7 +53,7 @@
 #endif
 
 #undef AI_TOOLS_DATE_TIME
-#define AI_TOOLS_DATE_TIME   "Fri Jun 21 23:20:54 2019"
+#define AI_TOOLS_DATE_TIME   "Sat Jun 22 01:32:18 2019"
 
 #undef AI_TOOLS_COMPILE_TIME
 #define AI_TOOLS_COMPILE_TIME    __DATE__ " " __TIME__

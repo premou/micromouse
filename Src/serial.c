@@ -63,6 +63,10 @@ char HAL_Serial_GetChar(HAL_Serial_Handler * hserial)
 {
     if(hserial->huart == 0)
         return 0;
+    SCB_CleanInvalidateDCache_by_Addr(
+              (uint32_t *)hserial->rx_circular_buffer,
+			  size_of_rx_circular_buffer
+      );
     uint8_t const * head = hserial->rx_circular_buffer + size_of_rx_circular_buffer - __HAL_DMA_GET_COUNTER(hserial->huart->hdmarx);
     uint8_t const * tail = hserial->rx_tail_ptr;
     if(head!=tail)
@@ -80,6 +84,11 @@ int HAL_Serial_Read(HAL_Serial_Handler * hserial, uint8_t * ptr, int len )
 {
     if(hserial->huart == 0)
         return 0;
+    SCB_CleanInvalidateDCache_by_Addr(
+              (uint32_t *)hserial->rx_circular_buffer,
+			  size_of_rx_circular_buffer
+      );
+
     uint8_t const * head = hserial->rx_circular_buffer + size_of_rx_circular_buffer - __HAL_DMA_GET_COUNTER(hserial->huart->hdmarx);
     int counter = 0;
     while(counter!=len)
@@ -103,6 +112,10 @@ int HAL_Serial_Write(HAL_Serial_Handler * hserial, uint8_t const * ptr, int len 
     hserial->tx_buffer_pool[hserial->tx_head_position].length = len;
     uint8_t * dst = hserial->tx_buffer_pool[hserial->tx_head_position].data;
     memcpy(dst,ptr,len);
+    SCB_CleanDCache_by_Addr(
+                 (uint32_t *)dst,
+				 size_of_tx_buffer
+          );
     hserial->tx_head_position = (hserial->tx_head_position + 1 ) % size_of_tx_pool;
 
     // if no tx dma running, start tx dma
