@@ -278,15 +278,25 @@ int main(void)
 			ann_forward_propagation(outputs,inputs,weights);
 			uint16_t end_us = timer_us_get();
 			uint16_t diff_us = end_us-start_us;
-			HAL_Serial_Print(&com,"     %d %d %d %d %d %d %d %d in %d us\r\n",
-					(int32_t)(outputs[0]>0.5),
-					(int32_t)(outputs[1]>0.5),
-					(int32_t)(outputs[2]>0.5),
-					(int32_t)(outputs[3]>0.5),
-					(int32_t)(outputs[4]>0.5),
-					(int32_t)(outputs[5]>0.5),
-					(int32_t)(outputs[6]>0.5),
-					(int32_t)(outputs[7]>0.5),
+			char * const class_name[8] = {
+			    "NONE",
+			    "LW",
+			    "FW",
+			    "RW",
+			    "FW+RW",
+			    "FW+LW",
+			    "LW+RW",
+			    "ALL"
+			};
+			HAL_Serial_Print(&com,"    NoW:%d%%  LW:%d%%  FW:%d%%  RW:%d%%  FW+RW:%d%%  FW+LW:%d%%  RW+LW:%d%%  AllW:%d%% in %d us\r\n",
+					(int32_t)(outputs[0]*100.0),
+					(int32_t)(outputs[1]*100.0),
+					(int32_t)(outputs[2]*100.0),
+					(int32_t)(outputs[3]*100.0),
+					(int32_t)(outputs[4]*100.0),
+					(int32_t)(outputs[5]*100.0),
+					(int32_t)(outputs[6]*100.0),
+					(int32_t)(outputs[7]*100.0),
 					(int32_t)diff_us
 				  );
 
