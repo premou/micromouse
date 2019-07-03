@@ -39,8 +39,8 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
+#include "app_x-cube-ai.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -83,6 +83,8 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;
 DMA_HandleTypeDef hdma_adc3;
 
+CRC_HandleTypeDef hcrc;
+
 I2C_HandleTypeDef hi2c3;
 
 TIM_HandleTypeDef htim1;
@@ -100,6 +102,7 @@ DMA_HandleTypeDef hdma_usart1_tx;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 HAL_Serial_Handler com;
+ai_handle sensor_ann = AI_HANDLE_NULL;
 
 /* USER CODE END PV */
 
@@ -115,15 +118,10 @@ static void MX_TIM5_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM9_Init(void);
-static void MX_GFXSIMULATOR_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_TIM10_Init(void);
-
-// Choise right or left hand algo
-extern void maze_ctx_set_alfo_to_left_hand(void);
-extern void maze_ctx_set_alfo_to_right_hand(void);
-
+static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -143,6 +141,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
+  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -170,10 +169,11 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_TIM9_Init();
-  MX_GFXSIMULATOR_Init();
   MX_ADC3_Init();
   MX_I2C3_Init();
   MX_TIM10_Init();
+  MX_CRC_Init();
+  MX_X_CUBE_AI_Init();
   /* USER CODE BEGIN 2 */
 
 	// turn OFF LEDs
@@ -195,6 +195,31 @@ int main(void)
 	timer_us_init();
 	uint32_t controller_init_result = controller_init();
 
+
+	ai_error err = ai_mnetwork_create("sensor_network",&sensor_ann,NULL);
+	if(err.type != AI_ERROR_NONE)
+	{
+		HAL_Serial_Print(&com,"AI ERROR %d %d\r\n",err.type,err.code);
+	}
+	else
+	{
+		HAL_Serial_Print(&com,"ai_mnetwork_create(sensor_network) [PASS]\r\n",err.type,err.code);
+	}
+	AI_ALIGNED(4)
+	static ai_u8 activations[AI_SENSOR_NETWORK_DATA_ACTIVATIONS_SIZE];
+	const ai_network_params params = {
+			AI_SENSOR_NETWORK_DATA_WEIGHTS(ai_sensor_network_data_weights_get()),
+			AI_SENSOR_NETWORK_DATA_ACTIVATIONS(activations)
+	};
+	if(!ai_mnetwork_init(sensor_ann,&params))
+	{
+		err = ai_mnetwork_get_error(&sensor_ann);
+		HAL_Serial_Print(&com,"AI ERRPR %d %d\r\n",err.type,err.code);
+	}
+	else
+	{
+		HAL_Serial_Print(&com,"ai_mnetwork_init(sensor_network) [PASS]\r\n",err.type,err.code);
+	}
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -207,6 +232,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+  MX_X_CUBE_AI_Process();
     /* USER CODE BEGIN 3 */
 
 
@@ -268,26 +294,51 @@ int main(void)
 			/// TEST ANN HERE : TO BE DELETED
 			/// TEST ANN HERE : TO BE DELETED
 			uint16_t start_us = timer_us_get();
-			double inputs[4] = {
-					wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG),
-					wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT),
-					 wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT),
-					 wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
-			};
-			double outputs[8];
-			ann_forward_propagation(outputs,inputs,weights);
+//			double inputs[4] = {
+//					wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG),
+//					wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT),
+//					 wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT),
+//					 wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)
+//			};
+//			double outputs[8];
+//			ann_forward_propagation(outputs,inputs,weights);
+			ai_float inputs[AI_SENSOR_NETWORK_IN_1_SIZE] = {
+										wall_sensor_get_raw(WALL_SENSOR_LEFT_DIAG)/4096.0,
+										wall_sensor_get_raw(WALL_SENSOR_LEFT_STRAIGHT)/4096.0,
+										 wall_sensor_get_raw(WALL_SENSOR_RIGHT_STRAIGHT)/4096.0,
+										 wall_sensor_get_raw(WALL_SENSOR_RIGHT_DIAG)/4096.0
+								};
+			ai_float outputs[AI_SENSOR_NETWORK_OUT_1_SIZE];
+			static ai_buffer ai_input[AI_SENSOR_NETWORK_IN_NUM] = { AI_SENSOR_NETWORK_IN_1 };
+			static ai_buffer ai_output[AI_SENSOR_NETWORK_OUT_NUM] = { AI_SENSOR_NETWORK_OUT_1 };
+			ai_input[0].n_batches = 1;
+			ai_output[0].n_batches = 1;
+			ai_input[0].data = AI_HANDLE_PTR(inputs);
+			ai_output[0].data = AI_HANDLE_PTR(outputs);
+			ai_i32 nbatch = ai_mnetwork_run(sensor_ann, ai_input, ai_output);
 			uint16_t end_us = timer_us_get();
 			uint16_t diff_us = end_us-start_us;
-			HAL_Serial_Print(&com,"     %d %d %d %d %d %d %d %d in %d us\r\n",
-					(int32_t)(outputs[0]>0.5),
-					(int32_t)(outputs[1]>0.5),
-					(int32_t)(outputs[2]>0.5),
-					(int32_t)(outputs[3]>0.5),
-					(int32_t)(outputs[4]>0.5),
-					(int32_t)(outputs[5]>0.5),
-					(int32_t)(outputs[6]>0.5),
-					(int32_t)(outputs[7]>0.5),
-					(int32_t)diff_us
+//			char * const class_name[8] = {
+//			    "NONE",
+//			    "LW",
+//			    "FW",
+//			    "RW",
+//			    "FW+RW",
+//			    "FW+LW",
+//			    "LW+RW",
+//			    "ALL"
+//			};
+			HAL_Serial_Print(&com,"    NoW:%d%%  LW:%d%%  FW:%d%%  RW:%d%%  FW+RW:%d%%  FW+LW:%d%%  RW+LW:%d%%  AllW:%d%% in %d us (batch:%d)\r\n",
+					(int32_t)(outputs[0]*100.0),
+					(int32_t)(outputs[1]*100.0),
+					(int32_t)(outputs[2]*100.0),
+					(int32_t)(outputs[3]*100.0),
+					(int32_t)(outputs[4]*100.0),
+					(int32_t)(outputs[5]*100.0),
+					(int32_t)(outputs[6]*100.0),
+					(int32_t)(outputs[7]*100.0),
+					(int32_t)diff_us,
+					(int32_t)nbatch
 				  );
 
 			/// TEST ANN HERE : TO BE DELETED
@@ -680,23 +731,33 @@ static void MX_ADC3_Init(void)
 }
 
 /**
-  * @brief GFXSIMULATOR Initialization Function
+  * @brief CRC Initialization Function
   * @param None
   * @retval None
   */
-static void MX_GFXSIMULATOR_Init(void)
+static void MX_CRC_Init(void)
 {
 
-  /* USER CODE BEGIN GFXSIMULATOR_Init 0 */
+  /* USER CODE BEGIN CRC_Init 0 */
 
-  /* USER CODE END GFXSIMULATOR_Init 0 */
+  /* USER CODE END CRC_Init 0 */
 
-  /* USER CODE BEGIN GFXSIMULATOR_Init 1 */
+  /* USER CODE BEGIN CRC_Init 1 */
 
-  /* USER CODE END GFXSIMULATOR_Init 1 */
-  /* USER CODE BEGIN GFXSIMULATOR_Init 2 */
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+  hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+  hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+  hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
 
-  /* USER CODE END GFXSIMULATOR_Init 2 */
+  /* USER CODE END CRC_Init 2 */
 
 }
 
