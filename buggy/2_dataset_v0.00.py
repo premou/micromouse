@@ -34,6 +34,9 @@ height_start = 30 # 720p x 25% x 30pix (lower)
 height_end = 60 # 720p x 25% x 30pix (lower)
 height = 30 # 720p x 25% x 30pix (lower)
 
+# build stats
+stats = np.zeros((param_classes+1,1))
+
 # build data set
 m = math.floor(len(lines)/3)
 print(str(m))
@@ -68,6 +71,8 @@ for i in range(0,m):
         position = 16
         # list of positions
         positions = [position, position, position]
+        #stats
+        stats[int(position),0] += 3
     else:
         #resize Y too (25%)
         position = np.floor(position / 4) # 0..320
@@ -77,6 +82,9 @@ for i in range(0,m):
         assert(position >= 0)
         # list of positions
         positions = [position, position, (param_classes-1)-position]
+        # stats
+        stats[int(position),0] += 2
+        stats[int((param_classes-1)-position),0] += 1
     # append into data set with data set augmentation (+3)
     for j in range(0,3):
         current_image = images[j]
@@ -101,3 +109,6 @@ for i in range(0,m):
     
 np.savetxt("Xtrain.txt",X_train,fmt="%f")
 np.savetxt("Ytrain.txt",Y_train,fmt="%d")
+
+print("statistics per classes:")
+print(str(stats))

@@ -37,26 +37,14 @@ model.summary()
 
 # input picture
 width = 320 # 1280 x 25% 
-height_start = 90 #30 720p x 25% x 30pix (lower)
-height_end = 120 #60 720p x 25% x 30pix (lower)
+height_start_1 = 30 #30 720p x 25% x 30pix (lower)
+height_end_1 = 60 #60 720p x 25% x 30pix (lower)
+height_start_2 = 90
+height_end_2 = 120
 height = 30 #30 720p x 25% x 30pix (lower)
 
 # load images
 list = os.listdir('images_test/')
-##list =[ "images4/scene400169.jpg",
-##        "images4/scene400089.jpg",
-##        "images4/scene400193.jpg",
-##        "images4/scene400273.jpg",
-##        "images4/scene400561.jpg",
-##        "images2/scene200945.jpg",
-##        "images2/scene201473.jpg",
-##        "images2/scene201377.jpg",
-##        "images/scene00871.jpg",
-##        "images/scene00731.jpg",
-##        "images7/scene1500137.jpg",
-##        "images7/scene700121.jpg",
-##        "images7/scene1500177.jpg"
-##        ]
 for i in list:
     print("images_test/"+i)
     image = cv2.imread("images_test/"+i,cv2.IMREAD_COLOR)
@@ -65,19 +53,25 @@ for i in list:
     dim = (width,180)
     im_resized = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
     assert(im_resized.shape == (180,width,3))
-    # crop 50% bottom
-    im_croped = im_resized[180-height_end:180-height_start,:width]
-    assert(im_croped.shape == (height,width,3))
-    #x = image2vector(im_croped)
-    #assert(x.shape == (height*width*3,1))
+    # crop
+    im_croped_1 = im_resized[180-height_end_1:180-height_start_1,:width]
+    assert(im_croped_1.shape == (height,width,3))
+    im_croped_2 = im_resized[180-height_end_2:180-height_start_2,:width]
+    assert(im_croped_2.shape == (height,width,3))
     #make a prediction
-    #y = model.predict(np.transpose(x))
-    y = model.predict(im_croped.reshape(1,30,320,3))
-    print(str(y))
-    plt.imshow(im_croped)
+    y_1 = model.predict(im_croped_1.reshape(1,30,320,3))
+    y_2 = model.predict(im_croped_2.reshape(1,30,320,3))
+    print(str(y_1))
+    print(str(y_2))
+    plt.imshow(image)
+    l_1 = 8
+    l_2 = 8
     for l in range(0,param_classes):
-        if y[0,l] >= 0.5:
-            plt.axvline(x=(l+0.5)*(320/param_classes),linewidth=2)    
+        if y_1[0,l] >= 0.5:
+            l_1 = l;
+        if y_2[0,l] >= 0.5:
+            l_2 = l
+    plt.plot([(l_1+0.5)*1280/param_classes, (l_2+0.5)*1280/param_classes], [(180-height_start_1-height/2)*4,(180-height_end_2+height/2)*4])
     plt.show()
 
 

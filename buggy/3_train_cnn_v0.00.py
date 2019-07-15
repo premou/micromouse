@@ -63,7 +63,7 @@ Y_test = Y_shuffled[m_train:]
 width = 320 # 1280 x 25% 
 height = 30 # 720p x 25% x 30pixels (lower)
 
-# create model conv 32x5x5/2 conv 64x3x3/2 pol 2x2
+# create model conv 32x5x5/2, conv 64x3x3/2, pol 2x2/1
 model = Sequential()
 model.add(Conv2D(32, kernel_size=(5, 5), strides=(2, 2), activation='relu', input_shape=inmage_shape))
 model.add(Conv2D(64, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
@@ -75,7 +75,7 @@ model.add(Flatten())
 #model.add(Dense(param_units_hidden_1,use_bias=False,activity_regularizer=l2(hyp_l2_regularization))) #input_dim=X_train.shape[1],activity_regularizer=l2(hyp_l2_regularization)
 #model.add(BatchNormalization())
 #model.add(Activation("relu"))
-model.add(Dropout(hyp_weight_dropout))
+#model.add(Dropout(hyp_weight_dropout))
 model.add(Dense(param_units_hidden_2,use_bias=False,activity_regularizer=l2(hyp_l2_regularization)))
 model.add(BatchNormalization())
 model.add(Activation("relu"))

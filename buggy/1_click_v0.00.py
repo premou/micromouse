@@ -24,17 +24,17 @@ if args.gif_directory == None:
     sys.exit(0)
 
 # Convert jpeg to gif, if any
-##image_dir = args.gif_directory
-##included_extensions = ['jpg', 'jpeg']
-##file_names = [fn for fn in os.listdir(image_dir) if any(fn.endswith(ext) for ext in included_extensions)]
-##for j in file_names:
-##    print(f'# Converting {image_dir}/{j} to {image_dir}/{j}.gif')
-##    img     = PIL.Image.open(image_dir + '/' + j)
-##    img_rgb = img.convert('RGB')
-##    try:
-##        img_rgb.save(image_dir + '/' + j + '.gif', 'GIF')
-##    except:
-##        print('error')
+image_dir = args.gif_directory
+included_extensions = ['jpg', 'jpeg']
+file_names = [fn for fn in os.listdir(image_dir) if any(fn.endswith(ext) for ext in included_extensions)]
+for j in file_names:
+    print(f'# Converting {image_dir}/{j} to {image_dir}/{j}.gif')
+    img     = PIL.Image.open(image_dir + '/' + j)
+    img_rgb = img.convert('RGB')
+    try:
+        img_rgb.save(image_dir + '/' + j + '.gif', 'GIF')
+    except:
+        print('error')
 
 # Find how many images should be displayed
 image_dir = args.gif_directory
