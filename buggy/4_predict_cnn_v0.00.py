@@ -63,7 +63,6 @@ for i in list:
     y_2 = model.predict(im_croped_2.reshape(1,30,320,3))
     print(str(y_1))
     print(str(y_2))
-    plt.imshow(image)
     l_1 = 8
     l_2 = 8
     for l in range(0,param_classes):
@@ -71,8 +70,11 @@ for i in list:
             l_1 = l;
         if y_2[0,l] >= 0.5:
             l_2 = l
+    plt.clf()
+    plt.imshow(image)
     plt.plot([(l_1+0.5)*1280/param_classes, (l_2+0.5)*1280/param_classes], [(180-height_start_1-height/2)*4,(180-height_end_2+height/2)*4])
-    plt.show()
+    #plt.show()
+    plt.pause(1)
 
 
 
